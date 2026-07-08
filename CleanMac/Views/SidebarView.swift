@@ -9,7 +9,7 @@ struct SidebarView: View {
                 .tag(section.rawValue)
         }
         .listStyle(.sidebar)
-        .navigationTitle("CleanMac")
+        .navigationTitle(L.t("app.name"))
         .navigationSplitViewColumnWidth(min: 190, ideal: 220)
         .onAppear {
             if selection == nil {

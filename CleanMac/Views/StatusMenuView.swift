@@ -1,5 +1,4 @@
 import AppKit
-import CleanMacCore
 import SwiftUI
 
 struct StatusMenuView: View {
@@ -15,7 +14,7 @@ struct StatusMenuView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("CleanMac")
                         .font(.headline)
-                    Text(CleanMacCoreInfo.status)
+                    Text(L.t("status.idle"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -26,17 +25,16 @@ struct StatusMenuView: View {
             Divider()
 
             Button {
-                openWindow(id: "main")
-                NSApp.activate(ignoringOtherApps: true)
+                MainWindowController.show(openWindow: openWindow)
             } label: {
-                Label("Open CleanMac", systemImage: "macwindow")
+                Label(L.t("menu.open"), systemImage: "macwindow")
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             Button {
                 NSApp.terminate(nil)
             } label: {
-                Label("Quit", systemImage: "power")
+                Label(L.t("menu.quit"), systemImage: "power")
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }

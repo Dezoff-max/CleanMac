@@ -1,0 +1,98 @@
+"app.name" = "CleanMac";
+"status.idle" = "Ожидание";
+
+"section.dashboard" = "Обзор";
+"section.scan" = "Сканирование";
+"section.results" = "Результаты";
+"section.permissions" = "Доступы";
+"section.settings" = "Настройки";
+
+"menu.open" = "Открыть CleanMac";
+"menu.quit" = "Выйти";
+
+"button.scan" = "Сканировать";
+"button.scanning" = "Сканирование";
+"button.startScan" = "Начать сканирование";
+"button.scanSelected" = "Сканировать выбранное";
+"button.selectAll" = "Выбрать всё";
+"button.cleanSelected" = "Очистить выбранное";
+"button.openSystemSettings" = "Открыть настройки системы";
+
+"dashboard.title" = "CleanMac";
+"dashboard.subtitle" = "Рабочее пространство очистки macOS";
+"dashboard.nextScan.title" = "Готово";
+"dashboard.lastScan.title" = "Последнее сканирование";
+"dashboard.selectedAreas" = "Выбрано областей: %d";
+"dashboard.lastScan.summary" = "Найдено: %d, объём: %@, время: %@ с";
+"dashboard.safety.title" = "Безопасность";
+"dashboard.safety.scanOnly" = "Сначала только чтение и сканирование";
+"dashboard.safety.confirmation" = "Очистка потребует подтверждения";
+"dashboard.safety.disabledCleanup" = "Удаление заблокировано до внедрения проверки";
+
+"banner.ready.title" = "Готово к безопасному сканированию";
+"banner.ready.message" = "CleanMac проверяет выбранные папки и ничего не удаляет.";
+"banner.review.title" = "Результаты готовы";
+"banner.review.message" = "Проверь найденные элементы. Очистка пока отключена в этой сборке.";
+"banner.scanIssues.title" = "Некоторые места требуют внимания";
+
+"metric.selected.title" = "Области";
+"metric.selected.footnote" = "Будут включены в следующий скан";
+"metric.found.title" = "Найдено";
+"metric.found.footnote" = "По последнему скану";
+"metric.space.title" = "Потенциально";
+"metric.space.empty" = "Запусти скан для оценки";
+"metric.space.footnote" = "Оценка без удаления";
+
+"scan.title" = "Сканирование";
+"scan.subtitle" = "Выбери области перед проверкой результатов";
+"scan.running.title" = "Сканирую выбранные области";
+"scan.running.message" = "CleanMac читает только метаданные и размеры.";
+"scan.selected" = "Выбрано: %d";
+"scan.area.enabled" = "Включено";
+"scan.area.skipped" = "Пропущено";
+"scan.issue.count" = "Проблем сканирования: %d";
+
+"results.title" = "Результаты";
+"results.subtitle" = "Проверь элементы перед очисткой";
+"results.empty.title" = "Результатов нет";
+"results.empty.description" = "Запусти сканирование, чтобы увидеть кандидатов на очистку.";
+"results.readyGroups" = "Готово к проверке: %d";
+"results.cleanupDisabled.help" = "Очистка включится после реализации подтверждения.";
+"results.summary.items" = "Элементов: %d";
+"results.summary.unavailable" = "Недоступно";
+"results.estimated" = "оценка";
+
+"permissions.title" = "Доступы";
+"permissions.subtitle" = "Управление тем, что CleanMac может проверять";
+"permission.files.title" = "Файлы и папки";
+"permission.files.detail" = "Нужно для сканирования выбранных пользовательских папок.";
+"permission.fullDisk.title" = "Полный доступ к диску";
+"permission.fullDisk.detail" = "Нужно только для глубокого сканирования Library и близких к системе папок.";
+"permission.automation.title" = "Автоматизация";
+"permission.automation.detail" = "Опционально для открытия Finder и системных настроек.";
+"permission.state.recommended" = "Рекомендуется";
+"permission.state.later" = "Позже";
+
+"settings.title" = "Настройки";
+"settings.subtitle" = "Поведение очистки и управление приложением";
+"settings.safeMode" = "Безопасный режим";
+"settings.confirmBeforeCleanup" = "Подтверждать перед очисткой";
+"settings.showMenuBarStatus" = "Показывать статус в меню";
+
+"area.userCaches.title" = "Кэши пользователя";
+"area.userCaches.detail" = "Папки кэша приложений в пользовательской Library.";
+"area.logs.title" = "Логи";
+"area.logs.detail" = "Старые и ротированные диагностические логи.";
+"area.temporary.title" = "Временные файлы";
+"area.temporary.detail" = "Временные папки, которые нужно проверять перед удалением.";
+"area.trash.title" = "Корзина";
+"area.trash.detail" = "Элементы, уже перемещённые в корзину.";
+"area.downloads.title" = "Проверка загрузок";
+"area.downloads.detail" = "Крупные загрузки и установщики, требующие ручной проверки.";
+"area.xcode.title" = "Derived Data Xcode";
+"area.xcode.detail" = "Кэши сборки, которые быстро растут при разработке.";
+
+"risk.safe" = "Безопасно";
+"risk.review" = "Проверить";
+"size.zero" = "0 КБ";
+"date.unknown" = "Неизвестно";

@@ -9,27 +9,27 @@ struct SettingsView: View {
         PageContainer {
             VStack(alignment: .leading, spacing: 20) {
                 PageHeader(
-                    title: "Settings",
-                    subtitle: "Cleanup behavior and app controls",
+                    title: L.t("settings.title"),
+                    subtitle: L.t("settings.subtitle"),
                     systemImage: "gearshape"
                 )
 
                 InfoPanel {
                     VStack(alignment: .leading, spacing: 14) {
                         Toggle(isOn: $safeModeEnabled) {
-                            Label("Safe Mode", systemImage: "shield")
+                            Label(L.t("settings.safeMode"), systemImage: "shield")
                         }
 
                         Divider()
 
                         Toggle(isOn: $confirmBeforeCleanup) {
-                            Label("Confirm Before Cleanup", systemImage: "checkmark.seal")
+                            Label(L.t("settings.confirmBeforeCleanup"), systemImage: "checkmark.seal")
                         }
 
                         Divider()
 
                         Toggle(isOn: $showMenuBarStatus) {
-                            Label("Show Menu Bar Status", systemImage: "menubar.rectangle")
+                            Label(L.t("settings.showMenuBarStatus"), systemImage: "menubar.rectangle")
                         }
                     }
                 }

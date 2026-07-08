@@ -1,3 +1,4 @@
+import CleanMacCore
 import SwiftUI
 
 struct MainWindowView: View {
@@ -8,6 +9,8 @@ struct MainWindowView: View {
             .map(\.id)
     )
     @State private var scanResults: [ScanResult] = []
+    @State private var scanReport: CleanupScanReport?
+    @State private var scanError: String?
     @State private var isScanning = false
 
     @AppStorage("CleanMac.safeModeEnabled") private var safeModeEnabled = true
@@ -27,19 +30,24 @@ struct MainWindowView: View {
                 .toolbar {
                     ToolbarItemGroup {
                         Button {
-                            runPreviewScan()
+                            runScan()
                         } label: {
-                            Label(isScanning ? "Scanning" : "Scan", systemImage: "magnifyingglass")
+                            Label(isScanning ? L.t("button.scanning") : L.t("button.scan"), systemImage: "magnifyingglass")
                         }
+                        .accessibilityLabel(isScanning ? L.t("button.scanning") : L.t("button.scan"))
                         .disabled(isScanning || selectedAreaIDs.isEmpty)
 
                         Button {
                             selectedSectionID = CleanMacSection.settings.rawValue
                         } label: {
-                            Label("Settings", systemImage: "gearshape")
+                            Label(L.t("section.settings"), systemImage: "gearshape")
                         }
+                        .accessibilityLabel(L.t("section.settings"))
                     }
                 }
+                .background(WindowAccessor { window in
+                    MainWindowController.configure(window)
+                })
         }
     }
 
@@ -48,19 +56,25 @@ struct MainWindowView: View {
         switch selectedSection {
         case .dashboard:
             DashboardView(
+                report: scanReport,
                 resultCount: scanResults.count,
                 selectedAreaCount: selectedAreaIDs.count,
                 isScanning: isScanning,
-                onStartScan: runPreviewScan
+                scanError: scanError,
+                onStartScan: runScan
             )
         case .scan:
             ScanView(
                 selectedAreaIDs: $selectedAreaIDs,
                 isScanning: isScanning,
-                onStartScan: runPreviewScan
+                onStartScan: runScan
             )
         case .results:
-            ResultsView(results: scanResults)
+            ResultsView(
+                results: scanResults,
+                report: scanReport,
+                scanError: scanError
+            )
         case .permissions:
             PermissionsView()
         case .settings:
@@ -72,17 +86,38 @@ struct MainWindowView: View {
         }
     }
 
-    private func runPreviewScan() {
+    private var selectedCategories: [CleanupCategory] {
+        selectedAreaIDs.compactMap { CleanupCategory(rawValue: $0) }
+    }
+
+    private func runScan() {
+        guard !isScanning else {
+            return
+        }
+
+        let categories = selectedCategories
+        guard !categories.isEmpty else {
+            return
+        }
+
         isScanning = true
+        scanError = nil
         selectedSectionID = CleanMacSection.scan.rawValue
 
         Task {
-            try? await Task.sleep(nanoseconds: 700_000_000)
-            let results = CleanMacCatalog.previewResults(for: selectedAreaIDs)
-            await MainActor.run {
-                scanResults = results
-                selectedSectionID = CleanMacSection.results.rawValue
-                isScanning = false
+            let report = await Task.detached(priority: .userInitiated) {
+                CleanupScanner().scan(categories: categories)
+            }.value
+
+            scanReport = report
+            scanResults = report.items.map(ScanResult.init)
+            selectedSectionID = CleanMacSection.results.rawValue
+            isScanning = false
+
+            if report.issues.isEmpty {
+                scanError = nil
+            } else {
+                scanError = L.f("scan.issue.count", report.issues.count)
             }
         }
     }

@@ -6,8 +6,8 @@ struct PermissionsView: View {
         PageContainer {
             VStack(alignment: .leading, spacing: 20) {
                 PageHeader(
-                    title: "Permissions",
-                    subtitle: "Control what CleanMac can inspect",
+                    title: L.t("permissions.title"),
+                    subtitle: L.t("permissions.subtitle"),
                     systemImage: "lock.shield"
                 )
 
@@ -23,7 +23,7 @@ struct PermissionsView: View {
                     Button {
                         openPrivacySettings()
                     } label: {
-                        Label("Open System Settings", systemImage: "gearshape")
+                        Label(L.t("button.openSystemSettings"), systemImage: "gearshape")
                     }
                 }
             }

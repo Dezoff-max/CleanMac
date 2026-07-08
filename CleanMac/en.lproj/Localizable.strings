@@ -1,0 +1,98 @@
+"app.name" = "CleanMac";
+"status.idle" = "Idle";
+
+"section.dashboard" = "Dashboard";
+"section.scan" = "Scan";
+"section.results" = "Results";
+"section.permissions" = "Permissions";
+"section.settings" = "Settings";
+
+"menu.open" = "Open CleanMac";
+"menu.quit" = "Quit";
+
+"button.scan" = "Scan";
+"button.scanning" = "Scanning";
+"button.startScan" = "Start Scan";
+"button.scanSelected" = "Scan Selected";
+"button.selectAll" = "Select All";
+"button.cleanSelected" = "Clean Selected";
+"button.openSystemSettings" = "Open System Settings";
+
+"dashboard.title" = "CleanMac";
+"dashboard.subtitle" = "System cleanup workspace";
+"dashboard.nextScan.title" = "Ready";
+"dashboard.lastScan.title" = "Last Scan";
+"dashboard.selectedAreas" = "%d areas selected";
+"dashboard.lastScan.summary" = "%d items, %@ found in %@s";
+"dashboard.safety.title" = "Safety";
+"dashboard.safety.scanOnly" = "Read-only scanning first";
+"dashboard.safety.confirmation" = "Cleanup will require confirmation";
+"dashboard.safety.disabledCleanup" = "Deletion is locked until review is implemented";
+
+"banner.ready.title" = "Ready for a safe scan";
+"banner.ready.message" = "CleanMac checks selected folders and does not delete anything.";
+"banner.review.title" = "Results ready";
+"banner.review.message" = "Review the detected items. Cleanup is still disabled in this build.";
+"banner.scanIssues.title" = "Some locations need attention";
+
+"metric.selected.title" = "Selected Areas";
+"metric.selected.footnote" = "Included in the next scan";
+"metric.found.title" = "Found Items";
+"metric.found.footnote" = "From the last scan";
+"metric.space.title" = "Potential Space";
+"metric.space.empty" = "Run a scan to estimate";
+"metric.space.footnote" = "Read-only estimate";
+
+"scan.title" = "Scan";
+"scan.subtitle" = "Choose areas before cleanup review";
+"scan.running.title" = "Scanning selected areas";
+"scan.running.message" = "CleanMac is reading metadata and sizes only.";
+"scan.selected" = "%d selected";
+"scan.area.enabled" = "Enabled";
+"scan.area.skipped" = "Skipped";
+"scan.issue.count" = "%d scan issue(s)";
+
+"results.title" = "Results";
+"results.subtitle" = "Review items before cleanup";
+"results.empty.title" = "No Results";
+"results.empty.description" = "Run a scan to review cleanup candidates.";
+"results.readyGroups" = "%d items ready";
+"results.cleanupDisabled.help" = "Cleanup will be enabled after confirmation logic is implemented.";
+"results.summary.items" = "%d items";
+"results.summary.unavailable" = "Not available";
+"results.estimated" = "estimated";
+
+"permissions.title" = "Permissions";
+"permissions.subtitle" = "Control what CleanMac can inspect";
+"permission.files.title" = "Files and Folders";
+"permission.files.detail" = "Required for scanning selected user folders.";
+"permission.fullDisk.title" = "Full Disk Access";
+"permission.fullDisk.detail" = "Needed only for deeper Library and system-adjacent scans.";
+"permission.automation.title" = "Automation";
+"permission.automation.detail" = "Optional for opening Finder and System Settings shortcuts.";
+"permission.state.recommended" = "Recommended";
+"permission.state.later" = "Later";
+
+"settings.title" = "Settings";
+"settings.subtitle" = "Cleanup behavior and app controls";
+"settings.safeMode" = "Safe Mode";
+"settings.confirmBeforeCleanup" = "Confirm Before Cleanup";
+"settings.showMenuBarStatus" = "Show Menu Bar Status";
+
+"area.userCaches.title" = "User Caches";
+"area.userCaches.detail" = "Application cache folders in the current user Library.";
+"area.logs.title" = "Logs";
+"area.logs.detail" = "Rotated and older diagnostic logs.";
+"area.temporary.title" = "Temporary Files";
+"area.temporary.detail" = "Temporary folders that should be scanned before removal.";
+"area.trash.title" = "Trash";
+"area.trash.detail" = "Items already moved to Trash.";
+"area.downloads.title" = "Downloads Review";
+"area.downloads.detail" = "Large downloads and installers that need manual review.";
+"area.xcode.title" = "Xcode Derived Data";
+"area.xcode.detail" = "Build caches that can grow quickly during development.";
+
+"risk.safe" = "Safe";
+"risk.review" = "Review";
+"size.zero" = "0 KB";
+"date.unknown" = "Unknown";

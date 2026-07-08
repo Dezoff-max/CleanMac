@@ -14,7 +14,7 @@
   Confidence: high
   Score: high impact / low risk / medium
 
-- [ ] ID: TASK-002
+- [x] ID: TASK-002
   Title: Read-only cleanup scanner
   Goal: Add safe scanning for common cleanup areas without deleting files.
   What to do: Implement scanner models and services for caches, logs, temporary files, Trash, Downloads review, and Xcode derived data.
@@ -28,7 +28,7 @@
   Confidence: medium
   Score: high impact / medium risk / medium
 
-- [ ] ID: TASK-003
+- [x] ID: TASK-003
   Title: Scan results review
   Goal: Let the user review and select scanned items before cleanup.
   What to do: Bind real scan results to the Results UI with grouping, selection, size totals, and risk labels.
@@ -69,3 +69,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-006
+  Title: Localization and window focus polish
+  Goal: Add English/Russian localization and make menu Open focus the existing window before creating a new one.
+  What to do: Add localized string resources, route visible UI copy through localization, and add a narrow AppKit window bridge for main-window focus.
+  Files: `CleanMac/**`, `CleanMac.xcodeproj/project.pbxproj`, Loop docs
+  Definition of done: Russian and English resources exist, UI uses localized strings, system language chooses localization by default, and Open reuses/focuses an existing main window.
+  Verification: `./script/build_and_run.sh --verify`; app bundle contains `en.lproj` and `ru.lproj`; manual/System Events window count check
+  Priority: high
+  Impact: high
+  Risk: low
+  Effort: medium
+  Confidence: high
+  Score: high impact / low risk / medium

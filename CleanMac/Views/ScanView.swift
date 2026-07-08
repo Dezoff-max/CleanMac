@@ -9,10 +9,19 @@ struct ScanView: View {
         PageContainer {
             VStack(alignment: .leading, spacing: 20) {
                 PageHeader(
-                    title: "Scan",
-                    subtitle: "Choose areas before cleanup review",
+                    title: L.t("scan.title"),
+                    subtitle: L.t("scan.subtitle"),
                     systemImage: "magnifyingglass"
                 )
+
+                if isScanning {
+                    StatusBanner(
+                        title: L.t("scan.running.title"),
+                        message: L.t("scan.running.message"),
+                        systemImage: "clock.arrow.circlepath",
+                        tint: .blue
+                    )
+                }
 
                 VStack(spacing: 10) {
                     ForEach(CleanMacCatalog.cleanupAreas) { area in
@@ -32,16 +41,22 @@ struct ScanView: View {
                     }
                 }
 
-                HStack {
-                    Text("\(selectedAreaIDs.count) selected")
+                HStack(spacing: 12) {
+                    Label(L.f("scan.selected", selectedAreaIDs.count), systemImage: "checkmark.circle")
                         .foregroundStyle(.secondary)
 
                     Spacer()
 
                     Button {
+                        selectedAreaIDs = Set(CleanMacCatalog.cleanupAreas.map(\.id))
+                    } label: {
+                        Label(L.t("button.selectAll"), systemImage: "checklist.checked")
+                    }
+
+                    Button {
                         onStartScan()
                     } label: {
-                        Label(isScanning ? "Scanning" : "Scan Selected", systemImage: "play.fill")
+                        Label(isScanning ? L.t("button.scanning") : L.t("button.scanSelected"), systemImage: "play.fill")
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(isScanning || selectedAreaIDs.isEmpty)
@@ -67,6 +82,7 @@ private struct CleanupAreaRow: View {
                     .font(.title3)
                     .frame(width: 28)
                     .foregroundStyle(.tint)
+                    .symbolRenderingMode(.hierarchical)
 
                 VStack(alignment: .leading, spacing: 5) {
                     HStack(spacing: 10) {
@@ -81,13 +97,18 @@ private struct CleanupAreaRow: View {
                     Text(area.pathHint)
                         .font(.caption.monospaced())
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                 }
 
                 Spacer()
 
-                Text(area.estimate)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.secondary)
+                Text(isSelected ? L.t("scan.area.enabled") : L.t("scan.area.skipped"))
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(isSelected ? .green : .secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.quaternary, in: Capsule())
             }
         }
     }
