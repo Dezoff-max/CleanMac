@@ -65,30 +65,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Build Release app
-        run: |
-          xcodebuild \
-            -project CleanMac.xcodeproj \
-            -scheme CleanMac \
-            -configuration Release \
-            -derivedDataPath build/XcodeData \
-            build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGN_IDENTITY=""
-
-      - name: Package app zip
-        run: |
-          mkdir -p artifacts
-          APP_PATH="build/XcodeData/Build/Products/Release/CleanMac.app"
-          ZIP_PATH="artifacts/CleanMac-${GITHUB_SHA::7}-unsigned.zip"
-          ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
-          shasum -a 256 "$ZIP_PATH" > "$ZIP_PATH.sha256"
+      - name: Package Release app
+        run: ./script/package_release.sh
 
       - name: Upload app artifact
         uses: actions/upload-artifact@v4
         with:
           name: CleanMac-unsigned-${{ github.sha }}
           path: |
-            artifacts/*.zip
-            artifacts/*.sha256
+            dist/*.zip
+            dist/*.sha256
           if-no-files-found: error
