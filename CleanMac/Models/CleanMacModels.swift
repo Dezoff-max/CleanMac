@@ -76,6 +76,7 @@ struct ScanResult: Identifiable {
     let title: String
     let location: String
     let size: String
+    let sizeBytes: Int64
     let risk: CleanupRisk
     let isDirectory: Bool
     let isSizeEstimate: Bool
@@ -87,6 +88,7 @@ struct ScanResult: Identifiable {
         title = item.displayName
         location = item.path
         size = CleanMacFormatters.bytes(item.sizeBytes)
+        sizeBytes = item.sizeBytes
         risk = CleanupRisk(item.risk)
         isDirectory = item.isDirectory
         isSizeEstimate = item.isSizeEstimate

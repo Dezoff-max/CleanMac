@@ -2,15 +2,15 @@
 
 ## Task
 
-- ID: TASK-007
-- Title: Dashboard scan area discoverability and initial fit
+- ID: TASK-004/TASK-005/TASK-008
+- Title: Safe cleanup, scan filters, and v0.1.0 release
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the Dashboard says four areas are selected, but it does not show which areas or where to change them; after the added list, the default/restored window height can cut off the Safety block.
-- Expected value: make the scan selection understandable and make the first visible Dashboard feel complete rather than clipped.
-- Main risk: adding clutter or changing scanner behavior when this should be a small UI discoverability fix.
+- Why this task now: the user selected real safe cleanup, scan selection improvements, and a GitHub Release.
+- Expected value: make CleanMac useful end-to-end while keeping destructive behavior guarded and reversible.
+- Main risk: unsafe deletion. The implementation must move files to Trash only after confirmation and allowlist validation.
 
 ## Builder Scope
 
@@ -34,30 +34,35 @@
   - `./script/package_release.sh`
   - read-only inspection commands
 - Out of scope:
-  - real file deletion;
-  - scanner logic changes;
+  - permanent deletion with `removeItem` for user cleanup;
+  - notarization or Developer ID signing;
   - changing deployment target;
   - adding third-party dependencies;
-  - notarization, signing, or release tagging.
+  - broad scanner heuristics beyond existing categories.
 - Dependencies allowed: no
 - Destructive actions allowed: no
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - Dashboard shows the selected scan area names and path hints.
-  - Dashboard has a direct action to open the Scan screen for changing areas.
-  - The app opens/restores the main window at a height that shows Dashboard blocks without cutting off the Safety panel on this Mac.
-  - New visible copy is localized in English and Russian.
-  - Scanner behavior and cleanup safety remain unchanged.
+  - CleanMacCore can build a cleanup plan from scan items and reject paths outside category roots.
+  - Cleanup execution moves allowlisted items to Trash and reports moved/failed/rejected items.
+  - Core tests cover allowlist rejection and executor behavior without permanent deletion.
+  - Results UI supports selecting scan results and requires explicit confirmation before cleanup.
+  - Review-risk items are visibly distinct and not silently selected by default after scanning.
+  - Scan screen has all/safe/review filters and quick selection presets.
+  - English and Russian strings cover new UI.
+  - GitHub tag `v0.1.0` has a Release with unsigned zip and sha256 assets.
 - Required verification:
   - `./script/build_and_run.sh --verify`
   - `swift test --package-path CleanMacCore`
   - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
   - `git diff --check`
+  - `./script/package_release.sh`
+  - GitHub Actions release workflow for `v0.1.0`
 - Manual checks:
-  - Visually confirm selected areas and the Safety panel are visible on Dashboard.
-  - Confirm the Choose Areas action opens the Scan screen.
+  - Visually confirm filters/presets and confirmation UI.
+  - Confirm app release assets are present in GitHub.
 - Evidence to collect:
   - Build/run command exit status.
   - Core test exit status.
@@ -69,11 +74,11 @@ Restart or shrink the task if:
 - verification fails twice for the same reason;
 - work requires out-of-scope files;
 - the done criteria cannot be proven;
-- the task grows into real scanner or cleanup engine work;
+- cleanup cannot be made Trash-only and allowlisted;
 - user-facing behavior diverges from this contract.
 
 ## Result
 
-- Status: complete
-- Verification result: passed
-- Notes: Dashboard now lists selected scan areas, includes a Choose Areas action that opens the Scan section, and expands restored short windows to show all Dashboard blocks. Scanner and cleanup behavior were not changed.
+- Status: pending release verification
+- Verification result: implementation checks passed; GitHub Release verification pending.
+- Notes: Safe cleanup planning, Trash execution, scan filters, and confirmation UI are implemented. TASK-005 remains open until `v0.1.0` creates a Release with zip and sha256 assets.

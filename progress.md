@@ -34,9 +34,19 @@ Append-only history. Do not erase previous entries.
 
 ## Handoff
 
-- Current state: TASK-007 complete. CleanMac Dashboard now shows which areas are selected, where to change them, and opens tall enough to show all Dashboard blocks on this Mac.
-- Next recommended task: TASK-004 safe cleanup planning with explicit confirmation and strict deletion boundaries.
+- Current state: TASK-004 and TASK-008 implementation complete. TASK-005 release workflow is implemented but waiting for tag/release verification.
+- Next recommended task: Push `main`, tag `v0.1.0`, watch GitHub Actions Release, and verify Release assets.
 - Known blockers: local Xcode reports a CoreSimulator warning, but macOS app builds are not blocked.
 - Commands that passed: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; `osascript` window size check.
 - Commands that failed: none.
-- Current bottleneck: cleanup safety design
+- Current bottleneck: release
+
+## 2026-07-08 - TASK-004/TASK-008 - Safe cleanup and scan selection controls
+
+- What changed: Added allowlisted cleanup planning, Trash-based execution, result selection with explicit confirmation, safe-only default result selection, scan filters, and quick selection presets.
+- Files touched: `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/ResultsView.swift`, `CleanMac/Views/ScanView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `CleanMacCore/Sources/CleanMacCore/CleanupExecutor.swift`, `CleanMacCore/Sources/CleanMacCore/CleanupPathPolicy.swift`, `CleanMacCore/Sources/CleanMacCore/CleanupPlanModels.swift`, `CleanMacCore/Sources/CleanMacCore/CleanupPlanner.swift`, `CleanMacCore/Sources/CleanMacCore/CleanupScanner.swift`, `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`, `.github/workflows/release.yml`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; `rg -n "removeItem|trashItem|rm -rf|unlink\\(|rmdir\\(" CleanMac CleanMacCore script .github`; UI smoke test for Scan filters, Results selection, and cleanup confirmation alert.
+- Result: Passed for TASK-004 and TASK-008. Cleanup is confirmation-gated and uses `FileManager.trashItem`; no production permanent deletion path was added.
+- Next step: Finish TASK-005 by pushing `main`, creating tag `v0.1.0`, watching the Release workflow, and verifying the uploaded zip and sha256 assets.
+- Bottleneck: release
+- Handoff: The UI confirmation was opened and cancelled during testing, so no scanned user files were moved.

@@ -2,8 +2,7 @@ import Foundation
 
 public struct CleanupScanner {
     private let fileManager: FileManager
-    private let homeDirectory: URL
-    private let temporaryDirectory: URL
+    private let rootResolver: CleanupRootResolver
 
     private let resourceKeys: Set<URLResourceKey> = [
         .isDirectoryKey,
@@ -21,8 +20,10 @@ public struct CleanupScanner {
         temporaryDirectory: URL = FileManager.default.temporaryDirectory
     ) {
         self.fileManager = fileManager
-        self.homeDirectory = homeDirectory
-        self.temporaryDirectory = temporaryDirectory
+        self.rootResolver = CleanupRootResolver(
+            homeDirectory: homeDirectory,
+            temporaryDirectory: temporaryDirectory
+        )
     }
 
     public func scan(
@@ -207,20 +208,7 @@ public struct CleanupScanner {
     }
 
     private func rootURL(for category: CleanupCategory) -> URL {
-        switch category {
-        case .userCaches:
-            homeDirectory.appending(path: "Library/Caches", directoryHint: .isDirectory)
-        case .logs:
-            homeDirectory.appending(path: "Library/Logs", directoryHint: .isDirectory)
-        case .temporaryFiles:
-            temporaryDirectory
-        case .trash:
-            homeDirectory.appending(path: ".Trash", directoryHint: .isDirectory)
-        case .downloads:
-            homeDirectory.appending(path: "Downloads", directoryHint: .isDirectory)
-        case .xcodeDerivedData:
-            homeDirectory.appending(path: "Library/Developer/Xcode/DerivedData", directoryHint: .isDirectory)
-        }
+        rootResolver.rootURL(for: category)
     }
 
     private func risk(for category: CleanupCategory) -> CleanupRiskLevel {

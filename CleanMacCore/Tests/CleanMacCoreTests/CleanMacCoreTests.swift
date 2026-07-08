@@ -59,6 +59,61 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertEqual(report.summaries.first?.isAvailable, false)
     }
 
+    func testCleanupPlannerAcceptsOnlyAllowlistedChildPaths() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let cacheFolder = home.appending(path: "Library/Caches/TestApp", directoryHint: .isDirectory)
+        let outsideFile = root.appending(path: "outside.log")
+        let cacheRoot = home.appending(path: "Library/Caches", directoryHint: .isDirectory)
+
+        try FileManager.default.createDirectory(at: cacheFolder, withIntermediateDirectories: true)
+        try writeBytes(count: 10, to: outsideFile)
+
+        let accepted = makeScanItem(category: .userCaches, path: cacheFolder.path)
+        let outside = makeScanItem(category: .userCaches, path: outsideFile.path)
+        let rootItem = makeScanItem(category: .userCaches, path: cacheRoot.path)
+
+        let planner = CleanupPlanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+        let plan = planner.plan(for: [accepted, outside, rootItem])
+
+        XCTAssertEqual(plan.items.map(\.id), [accepted.id])
+        XCTAssertEqual(plan.rejectedItems.count, 2)
+        XCTAssertEqual(Set(plan.rejectedItems.map(\.reason)), [.outsideAllowedRoot, .categoryRoot])
+    }
+
+    func testCleanupExecutorMovesPlannedItemsWithInjectedTrashHandler() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let cacheFolder = home.appending(path: "Library/Caches/TestApp", directoryHint: .isDirectory)
+        let trash = root.appending(path: "LocalTrash", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: cacheFolder, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: trash, withIntermediateDirectories: true)
+        try writeBytes(count: 32, to: cacheFolder.appending(path: "cache.bin"))
+
+        let item = makeScanItem(category: .userCaches, path: cacheFolder.path, sizeBytes: 32, isDirectory: true)
+        let plan = CleanupPlanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+            .plan(for: [item])
+
+        let executor = CleanupExecutor { url in
+            let destination = trash.appending(path: url.lastPathComponent)
+            try FileManager.default.moveItem(at: url, to: destination)
+            return destination
+        }
+
+        let report = executor.execute(plan: plan)
+
+        XCTAssertEqual(report.movedItems.count, 1)
+        XCTAssertEqual(report.failedItems.count, 0)
+        XCTAssertEqual(report.rejectedItems.count, 0)
+        XCTAssertEqual(report.totalMovedBytes, 32)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: cacheFolder.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: trash.appending(path: "TestApp").path))
+    }
+
     private func makeTemporaryRoot() throws -> URL {
         let root = FileManager.default.temporaryDirectory
             .appending(path: "CleanMacCoreTests-\(UUID().uuidString)", directoryHint: .isDirectory)
@@ -72,5 +127,24 @@ final class CleanMacCoreTests: XCTestCase {
 
     private func canonicalPath(_ path: String) -> String {
         URL(fileURLWithPath: path).resolvingSymlinksInPath().path
+    }
+
+    private func makeScanItem(
+        category: CleanupCategory,
+        path: String,
+        sizeBytes: Int64 = 1,
+        isDirectory: Bool = false
+    ) -> CleanupScanItem {
+        CleanupScanItem(
+            id: "\(category.rawValue):\(path)",
+            category: category,
+            path: path,
+            displayName: URL(fileURLWithPath: path).lastPathComponent,
+            sizeBytes: sizeBytes,
+            isDirectory: isDirectory,
+            isSizeEstimate: false,
+            modifiedAt: nil,
+            risk: category == .downloads || category == .trash || category == .xcodeDerivedData ? .review : .safe
+        )
     }
 }

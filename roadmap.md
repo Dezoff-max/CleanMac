@@ -42,13 +42,13 @@
   Confidence: medium
   Score: high impact / medium risk / medium
 
-- [ ] ID: TASK-004
+- [x] ID: TASK-004
   Title: Safe cleanup planning
   Goal: Prepare cleanup operations with confirmation and rollback-friendly boundaries.
-  What to do: Add cleanup plan generation, confirmation UI, and safeguards for system/user-critical paths.
+  What to do: Add cleanup plan generation, confirmation UI, Trash-based execution, and safeguards for system/user-critical paths.
   Files: `CleanMac/**`, `CleanMacCore/**`
-  Definition of done: Cleanup actions require explicit confirmation and only target approved scan results.
-  Verification: `swift test --package-path CleanMacCore`; manual app review
+  Definition of done: Cleanup actions require explicit confirmation, only target allowlisted scan results, and move accepted items to Trash instead of permanently deleting files.
+  Verification: `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; manual app review
   Priority: high
   Impact: high
   Risk: high
@@ -61,9 +61,23 @@
   Goal: Create GitHub Releases automatically from version tags.
   What to do: Add a release workflow for `v*` tags that uploads the unsigned zip and checksum.
   Files: `.github/workflows/**`, `script/**`, docs
-  Definition of done: Pushing a version tag creates a GitHub Release with zip and sha256 assets.
-  Verification: workflow dry review, optional test tag after approval
+  Definition of done: Pushing `v0.1.0` creates a GitHub Release with zip and sha256 assets.
+  Verification: `./script/package_release.sh`; tag workflow success; GitHub Release asset check
   Priority: medium
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small
+
+- [x] ID: TASK-008
+  Title: Scan filters and selection presets
+  Goal: Make scan area selection faster and clearer.
+  What to do: Add filter controls for all/safe/review areas plus actions to select safe areas, select review-only areas, and clear selection.
+  Files: `CleanMac/Views/ScanView.swift`, `CleanMac/*/Localizable.strings`
+  Definition of done: Scan screen can filter visible areas and quickly apply safe/review/clear selection presets.
+  Verification: `./script/build_and_run.sh --verify`; visual app review
+  Priority: high
   Impact: medium
   Risk: low
   Effort: small

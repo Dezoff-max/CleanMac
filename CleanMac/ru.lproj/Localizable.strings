@@ -16,7 +16,13 @@
 "button.scanSelected" = "Сканировать выбранное";
 "button.chooseAreas" = "Выбрать области";
 "button.selectAll" = "Выбрать всё";
+"button.selectSafe" = "Выбрать безопасные";
+"button.reviewOnly" = "Только проверить";
+"button.clearSelection" = "Снять выбор";
 "button.cleanSelected" = "Очистить выбранное";
+"button.moveToTrash" = "В Корзину";
+"button.cleaning" = "Очищаю";
+"button.cancel" = "Отмена";
 "button.openSystemSettings" = "Открыть настройки системы";
 
 "dashboard.title" = "CleanMac";
@@ -29,12 +35,12 @@
 "dashboard.safety.title" = "Безопасность";
 "dashboard.safety.scanOnly" = "Сначала только чтение и сканирование";
 "dashboard.safety.confirmation" = "Очистка потребует подтверждения";
-"dashboard.safety.disabledCleanup" = "Удаление заблокировано до внедрения проверки";
+"dashboard.safety.disabledCleanup" = "Разрешённые элементы перемещаются в Корзину";
 
 "banner.ready.title" = "Готово к безопасному сканированию";
 "banner.ready.message" = "CleanMac проверяет выбранные папки и ничего не удаляет.";
 "banner.review.title" = "Результаты готовы";
-"banner.review.message" = "Проверь найденные элементы. Очистка пока отключена в этой сборке.";
+"banner.review.message" = "Проверь найденные элементы перед перемещением в Корзину.";
 "banner.scanIssues.title" = "Некоторые места требуют внимания";
 
 "metric.selected.title" = "Области";
@@ -53,16 +59,31 @@
 "scan.area.enabled" = "Включено";
 "scan.area.skipped" = "Пропущено";
 "scan.issue.count" = "Проблем сканирования: %d";
+"scan.filter.title" = "Фильтр";
+"scan.filter.all" = "Все";
+"scan.filter.safe" = "Безопасные";
+"scan.filter.review" = "Проверить";
 
 "results.title" = "Результаты";
 "results.subtitle" = "Проверь элементы перед очисткой";
 "results.empty.title" = "Результатов нет";
 "results.empty.description" = "Запусти сканирование, чтобы увидеть кандидатов на очистку.";
 "results.readyGroups" = "Готово к проверке: %d";
-"results.cleanupDisabled.help" = "Очистка включится после реализации подтверждения.";
+"results.selected.summary" = "Выбрано: %d, %@";
+"results.cleanupDisabled.help" = "Очистка перемещает разрешённые элементы в Корзину после подтверждения.";
 "results.summary.items" = "Элементов: %d";
 "results.summary.unavailable" = "Недоступно";
 "results.estimated" = "оценка";
+
+"cleanup.confirm.title" = "Переместить выбранное в Корзину?";
+"cleanup.confirm.message" = "CleanMac переместит выбранные элементы: %d, общий объём: %@, в Корзину. При необходимости их можно восстановить.";
+"cleanup.noneSelected" = "Выбери хотя бы один результат перед очисткой.";
+"cleanup.success" = "Перемещено в Корзину: %d, общий объём: %@.";
+"cleanup.problems" = "Некоторые элементы не очищены. Ошибок: %d, отклонено проверкой безопасности: %d.";
+"cleanup.status.title" = "Очистка завершена";
+"cleanup.problem.title" = "Нужно проверить очистку";
+"cleanup.complete.title" = "Все видимые результаты очищены";
+"cleanup.complete.message" = "Запусти сканирование снова, чтобы обновить оценку очистки.";
 
 "permissions.title" = "Доступы";
 "permissions.subtitle" = "Управление тем, что CleanMac может проверять";

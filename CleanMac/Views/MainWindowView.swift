@@ -8,10 +8,15 @@ struct MainWindowView: View {
             .filter(\.isDefaultSelected)
             .map(\.id)
     )
+    @State private var scanItems: [CleanupScanItem] = []
     @State private var scanResults: [ScanResult] = []
     @State private var scanReport: CleanupScanReport?
     @State private var scanError: String?
+    @State private var selectedResultIDs = Set<String>()
+    @State private var cleanupStatusMessage: String?
+    @State private var cleanupProblemMessage: String?
     @State private var isScanning = false
+    @State private var isCleaning = false
 
     @AppStorage("CleanMac.safeModeEnabled") private var safeModeEnabled = true
     @AppStorage("CleanMac.confirmBeforeCleanup") private var confirmBeforeCleanup = true
@@ -77,7 +82,12 @@ struct MainWindowView: View {
             ResultsView(
                 results: scanResults,
                 report: scanReport,
-                scanError: scanError
+                scanError: scanError,
+                selectedResultIDs: $selectedResultIDs,
+                isCleaning: isCleaning,
+                cleanupStatusMessage: cleanupStatusMessage,
+                cleanupProblemMessage: cleanupProblemMessage,
+                onConfirmCleanup: cleanupSelectedItems
             )
         case .permissions:
             PermissionsView()
@@ -110,6 +120,8 @@ struct MainWindowView: View {
 
         isScanning = true
         scanError = nil
+        cleanupStatusMessage = nil
+        cleanupProblemMessage = nil
         selectedSectionID = CleanMacSection.scan.rawValue
 
         Task {
@@ -118,7 +130,9 @@ struct MainWindowView: View {
             }.value
 
             scanReport = report
+            scanItems = report.items
             scanResults = report.items.map(ScanResult.init)
+            selectedResultIDs = Set(report.items.filter { $0.risk == .safe }.map(\.id))
             selectedSectionID = CleanMacSection.results.rawValue
             isScanning = false
 
@@ -126,6 +140,51 @@ struct MainWindowView: View {
                 scanError = nil
             } else {
                 scanError = L.f("scan.issue.count", report.issues.count)
+            }
+        }
+    }
+
+    private func cleanupSelectedItems() {
+        guard !isCleaning else {
+            return
+        }
+
+        let selectedItems = scanItems.filter { selectedResultIDs.contains($0.id) }
+        guard !selectedItems.isEmpty else {
+            cleanupProblemMessage = L.t("cleanup.noneSelected")
+            return
+        }
+
+        isCleaning = true
+        cleanupStatusMessage = nil
+        cleanupProblemMessage = nil
+
+        Task {
+            let report = await Task.detached(priority: .userInitiated) {
+                let plan = CleanupPlanner().plan(for: selectedItems)
+                return CleanupExecutor().execute(plan: plan)
+            }.value
+
+            let movedIDs = Set(report.movedItems.map(\.id))
+            scanItems.removeAll { movedIDs.contains($0.id) }
+            scanResults.removeAll { movedIDs.contains($0.id) }
+            selectedResultIDs.subtract(movedIDs)
+            isCleaning = false
+
+            if !report.movedItems.isEmpty {
+                cleanupStatusMessage = L.f(
+                    "cleanup.success",
+                    report.movedItems.count,
+                    CleanMacFormatters.bytes(report.totalMovedBytes)
+                )
+            }
+
+            if report.hasProblems {
+                cleanupProblemMessage = L.f(
+                    "cleanup.problems",
+                    report.failedItems.count,
+                    report.rejectedItems.count
+                )
             }
         }
     }

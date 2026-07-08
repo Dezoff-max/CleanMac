@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: macos-26
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Package Release app
+        run: ./script/package_release.sh
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag_name="${GITHUB_REF_NAME:-manual-release}"
+          gh release create "$tag_name" \
+            dist/*.zip \
+            dist/*.sha256 \
+            --title "CleanMac $tag_name" \
+            --notes "Unsigned CleanMac build. Download the zip and verify it with the attached sha256 file."

@@ -5,9 +5,24 @@ struct ScanView: View {
     let isScanning: Bool
     let onStartScan: () -> Void
 
+    @State private var filter: ScanAreaFilter = .all
+
+    private var visibleAreas: [CleanupArea] {
+        CleanMacCatalog.cleanupAreas.filter { area in
+            switch filter {
+            case .all:
+                true
+            case .safe:
+                area.risk == .safe
+            case .review:
+                area.risk == .review
+            }
+        }
+    }
+
     var body: some View {
         PageContainer {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 16) {
                 PageHeader(
                     title: L.t("scan.title"),
                     subtitle: L.t("scan.subtitle"),
@@ -23,8 +38,29 @@ struct ScanView: View {
                     )
                 }
 
+                InfoPanel {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 12) {
+                                filterPicker
+                                Spacer()
+                                presetButtons
+                            }
+
+                            VStack(alignment: .leading, spacing: 12) {
+                                filterPicker
+                                presetButtons
+                            }
+                        }
+
+                        Divider()
+
+                        scanActions
+                    }
+                }
+
                 VStack(spacing: 10) {
-                    ForEach(CleanMacCatalog.cleanupAreas) { area in
+                    ForEach(visibleAreas) { area in
                         CleanupAreaRow(
                             area: area,
                             isSelected: Binding(
@@ -40,28 +76,98 @@ struct ScanView: View {
                         )
                     }
                 }
+            }
+        }
+    }
 
-                HStack(spacing: 12) {
-                    Label(L.f("scan.selected", selectedAreaIDs.count), systemImage: "checkmark.circle")
-                        .foregroundStyle(.secondary)
+    private var filterPicker: some View {
+        Picker(L.t("scan.filter.title"), selection: $filter) {
+            ForEach(ScanAreaFilter.allCases) { filter in
+                Text(filter.title).tag(filter)
+            }
+        }
+        .pickerStyle(.segmented)
+        .frame(maxWidth: 360)
+    }
 
+    private var presetButtons: some View {
+        HStack(spacing: 8) {
+            Button {
+                selectedAreaIDs = Set(CleanMacCatalog.cleanupAreas.filter { $0.risk == .safe }.map(\.id))
+            } label: {
+                Label(L.t("button.selectSafe"), systemImage: "checkmark.shield")
+            }
+
+            Button {
+                selectedAreaIDs = Set(CleanMacCatalog.cleanupAreas.filter { $0.risk == .review }.map(\.id))
+            } label: {
+                Label(L.t("button.reviewOnly"), systemImage: "exclamationmark.triangle")
+            }
+
+            Button {
+                selectedAreaIDs.removeAll()
+            } label: {
+                Label(L.t("button.clearSelection"), systemImage: "xmark.circle")
+            }
+        }
+    }
+
+    private var scanActions: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                selectionSummary
+                Spacer()
+                selectAllButton
+                startScanButton
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                selectionSummary
+                HStack(spacing: 10) {
+                    selectAllButton
                     Spacer()
-
-                    Button {
-                        selectedAreaIDs = Set(CleanMacCatalog.cleanupAreas.map(\.id))
-                    } label: {
-                        Label(L.t("button.selectAll"), systemImage: "checklist.checked")
-                    }
-
-                    Button {
-                        onStartScan()
-                    } label: {
-                        Label(isScanning ? L.t("button.scanning") : L.t("button.scanSelected"), systemImage: "play.fill")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(isScanning || selectedAreaIDs.isEmpty)
+                    startScanButton
                 }
             }
+        }
+    }
+
+    private var selectionSummary: some View {
+        Label(L.f("scan.selected", selectedAreaIDs.count), systemImage: "checkmark.circle")
+            .foregroundStyle(.secondary)
+    }
+
+    private var selectAllButton: some View {
+        Button {
+            selectedAreaIDs = Set(CleanMacCatalog.cleanupAreas.map(\.id))
+        } label: {
+            Label(L.t("button.selectAll"), systemImage: "checklist.checked")
+        }
+    }
+
+    private var startScanButton: some View {
+        Button {
+            onStartScan()
+        } label: {
+            Label(isScanning ? L.t("button.scanning") : L.t("button.scanSelected"), systemImage: "play.fill")
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(isScanning || selectedAreaIDs.isEmpty)
+    }
+}
+
+private enum ScanAreaFilter: String, CaseIterable, Identifiable {
+    case all
+    case safe
+    case review
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .all: L.t("scan.filter.all")
+        case .safe: L.t("scan.filter.safe")
+        case .review: L.t("scan.filter.review")
         }
     }
 }
