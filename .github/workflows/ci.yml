@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test core package
+    runs-on: macos-26
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Tool versions
+        run: |
+          sw_vers
+          xcodebuild -version
+          swift --version
+
+      - name: Swift tests
+        run: swift test --package-path CleanMacCore
+
+  build:
+    name: Build macOS app
+    runs-on: macos-26
+    timeout-minutes: 30
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Debug app
+        run: |
+          xcodebuild \
+            -project CleanMac.xcodeproj \
+            -scheme CleanMac \
+            -configuration Debug \
+            -derivedDataPath build/XcodeData \
+            build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY=""
+
+  release-artifact:
+    name: Build unsigned release zip
+    runs-on: macos-26
+    timeout-minutes: 30
+    needs: test
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Release app
+        run: |
+          xcodebuild \
+            -project CleanMac.xcodeproj \
+            -scheme CleanMac \
+            -configuration Release \
+            -derivedDataPath build/XcodeData \
+            build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package app zip
+        run: |
+          mkdir -p artifacts
+          APP_PATH="build/XcodeData/Build/Products/Release/CleanMac.app"
+          ZIP_PATH="artifacts/CleanMac-${GITHUB_SHA::7}-unsigned.zip"
+          ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
+          shasum -a 256 "$ZIP_PATH" > "$ZIP_PATH.sha256"
+
+      - name: Upload app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CleanMac-unsigned-${{ github.sha }}
+          path: |
+            artifacts/*.zip
+            artifacts/*.sha256
+          if-no-files-found: error
