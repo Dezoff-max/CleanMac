@@ -14,6 +14,7 @@
 "button.scanning" = "Сканирование";
 "button.startScan" = "Начать сканирование";
 "button.scanSelected" = "Сканировать выбранное";
+"button.chooseAreas" = "Выбрать области";
 "button.selectAll" = "Выбрать всё";
 "button.cleanSelected" = "Очистить выбранное";
 "button.openSystemSettings" = "Открыть настройки системы";
@@ -24,6 +25,7 @@
 "dashboard.lastScan.title" = "Последнее сканирование";
 "dashboard.selectedAreas" = "Выбрано областей: %d";
 "dashboard.lastScan.summary" = "Найдено: %d, объём: %@, время: %@ с";
+"dashboard.selectedAreas.title" = "Выбранные области";
 "dashboard.safety.title" = "Безопасность";
 "dashboard.safety.scanOnly" = "Сначала только чтение и сканирование";
 "dashboard.safety.confirmation" = "Очистка потребует подтверждения";

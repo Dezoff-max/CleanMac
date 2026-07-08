@@ -22,11 +22,21 @@ Append-only history. Do not erase previous entries.
 - Bottleneck: cleanup safety design
 - Handoff: The current app can inspect and estimate cleanup candidates only. Do not enable deletion until TASK-004 defines allowlists, confirmation UI, and tests.
 
+## 2026-07-08 - TASK-007 - Dashboard scan area discoverability and initial fit
+
+- What changed: The Dashboard now shows the selected scan area names and path hints, includes a `Choose Areas` / `Выбрать области` button that opens the Scan screen, uses tighter vertical spacing, and expands restored short windows to show all Dashboard blocks.
+- Files touched: `CleanMac/CleanMacApp.swift`, `CleanMac/Support/MainWindowController.swift`, `CleanMac/Views/CleanMacComponents.swift`, `CleanMac/Views/DashboardView.swift`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; `osascript` window size check; visual screenshot check.
+- Result: Passed. The Dashboard shows `Выбранные области` with the four default areas and paths, plus a direct action to change them; the reopened window measured `980x720` and the Safety panel was fully visible.
+- Next step: TASK-004 safe cleanup planning with explicit confirmation and strict deletion boundaries.
+- Bottleneck: cleanup safety design
+- Handoff: This was a UI discoverability and window fit fix only. Scanner behavior and deletion safety were unchanged.
+
 ## Handoff
 
-- Current state: TASK-002/TASK-003/TASK-006 complete. CleanMac now has a read-only scanner, real results UI, RU/EN localization, and menu Open window reuse.
+- Current state: TASK-007 complete. CleanMac Dashboard now shows which areas are selected, where to change them, and opens tall enough to show all Dashboard blocks on this Mac.
 - Next recommended task: TASK-004 safe cleanup planning with explicit confirmation and strict deletion boundaries.
 - Known blockers: local Xcode reports a CoreSimulator warning, but macOS app builds are not blocked.
-- Commands that passed: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; `./script/package_release.sh`.
-- Commands that failed: none for required verification. One deep recursive System Events tree dump was stopped because SwiftUI traversal was too slow; narrower UI checks passed.
+- Commands that passed: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; `osascript` window size check.
+- Commands that failed: none.
 - Current bottleneck: cleanup safety design

@@ -59,9 +59,13 @@ struct MainWindowView: View {
                 report: scanReport,
                 resultCount: scanResults.count,
                 selectedAreaCount: selectedAreaIDs.count,
+                selectedAreas: selectedAreas,
                 isScanning: isScanning,
                 scanError: scanError,
-                onStartScan: runScan
+                onStartScan: runScan,
+                onChooseAreas: {
+                    selectedSectionID = CleanMacSection.scan.rawValue
+                }
             )
         case .scan:
             ScanView(
@@ -88,6 +92,10 @@ struct MainWindowView: View {
 
     private var selectedCategories: [CleanupCategory] {
         selectedAreaIDs.compactMap { CleanupCategory(rawValue: $0) }
+    }
+
+    private var selectedAreas: [CleanupArea] {
+        CleanMacCatalog.cleanupAreas.filter { selectedAreaIDs.contains($0.id) }
     }
 
     private func runScan() {

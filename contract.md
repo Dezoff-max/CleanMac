@@ -2,15 +2,15 @@
 
 ## Task
 
-- ID: TASK-002/TASK-003/TASK-006
-- Title: Read-only scanner, results UI, localization, and window focus polish
+- ID: TASK-007
+- Title: Dashboard scan area discoverability and initial fit
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user selected scanner, UI polish, smarter Open behavior, and system-language Russian support as the next step.
-- Expected value: make CleanMac perform real read-only inspection, show useful results, feel more complete, and work naturally in Russian or English.
-- Main risk: accidentally introducing deletion behavior or over-scanning too much of the file system.
+- Why this task now: the Dashboard says four areas are selected, but it does not show which areas or where to change them; after the added list, the default/restored window height can cut off the Safety block.
+- Expected value: make the scan selection understandable and make the first visible Dashboard feel complete rather than clipped.
+- Main risk: adding clutter or changing scanner behavior when this should be a small UI discoverability fix.
 
 ## Builder Scope
 
@@ -35,6 +35,7 @@
   - read-only inspection commands
 - Out of scope:
   - real file deletion;
+  - scanner logic changes;
   - changing deployment target;
   - adding third-party dependencies;
   - notarization, signing, or release tagging.
@@ -44,22 +45,19 @@
 ## Evaluator Checklist
 
 - Done criteria:
-  - CleanMacCore exposes a read-only scanner for selected cleanup categories.
-  - Scanner returns typed items with category, path, size, and risk metadata.
-  - Scanner tests prove files are detected and not deleted.
-  - UI runs the scanner instead of fake preview results.
-  - Dashboard/Scan/Results UI is more informative and keeps cleanup disabled until confirmation logic exists.
-  - Menu Open focuses an existing main window before creating a new one.
-  - English and Russian localizations exist and app resources include both languages.
-  - No real cleanup or deletion code is introduced.
+  - Dashboard shows the selected scan area names and path hints.
+  - Dashboard has a direct action to open the Scan screen for changing areas.
+  - The app opens/restores the main window at a height that shows Dashboard blocks without cutting off the Safety panel on this Mac.
+  - New visible copy is localized in English and Russian.
+  - Scanner behavior and cleanup safety remain unchanged.
 - Required verification:
   - `./script/build_and_run.sh --verify`
   - `swift test --package-path CleanMacCore`
-  - `./script/package_release.sh`
+  - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
+  - `git diff --check`
 - Manual checks:
-  - Review the scanner and UI for non-destructive behavior.
-  - Confirm localization resources are copied into the app bundle.
-  - Confirm the menu Open action does not create duplicate windows while one exists.
+  - Visually confirm selected areas and the Safety panel are visible on Dashboard.
+  - Confirm the Choose Areas action opens the Scan screen.
 - Evidence to collect:
   - Build/run command exit status.
   - Core test exit status.
@@ -78,4 +76,4 @@ Restart or shrink the task if:
 
 - Status: complete
 - Verification result: passed
-- Notes: Added the read-only scanner, bound UI results to scanner output, added English/Russian localization resources, and verified that menu Open keeps a single main window. Cleanup/delete actions remain intentionally disabled.
+- Notes: Dashboard now lists selected scan areas, includes a Choose Areas action that opens the Scan section, and expands restored short windows to show all Dashboard blocks. Scanner and cleanup behavior were not changed.

@@ -10,7 +10,8 @@ struct PageContainer<Content: View>: View {
     var body: some View {
         ScrollView {
             content
-                .padding(28)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 20)
                 .frame(maxWidth: 1080, alignment: .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -53,7 +54,7 @@ struct InfoPanel<Content: View>: View {
 
     var body: some View {
         content
-            .padding(16)
+            .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             .overlay {
@@ -86,7 +87,7 @@ struct StatusBanner: View {
 
             Spacer()
         }
-        .padding(16)
+        .padding(14)
         .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)

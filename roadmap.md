@@ -83,3 +83,17 @@
   Effort: medium
   Confidence: high
   Score: high impact / low risk / medium
+
+- [x] ID: TASK-007
+  Title: Dashboard scan area discoverability and initial fit
+  Goal: Make selected scan areas visible and keep Dashboard blocks visible when the window opens.
+  What to do: Show the currently selected scan areas on the Dashboard, add a direct action that opens the Scan section, compact the Dashboard layout, and expand restored windows that are shorter than the intended first-run height.
+  Files: `CleanMac/CleanMacApp.swift`, `CleanMac/Support/MainWindowController.swift`, `CleanMac/Views/CleanMacComponents.swift`, `CleanMac/Views/DashboardView.swift`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: Dashboard shows selected area names and paths, the user can jump from Dashboard to the Scan screen to change them, and the initial Dashboard shows all main blocks without cutting off the Safety panel.
+  Verification: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; visual screenshot check.
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small

@@ -9,7 +9,7 @@ struct CleanMacApp: App {
         WindowGroup("CleanMac", id: "main") {
             MainWindowView()
         }
-        .defaultSize(width: 980, height: 640)
+        .defaultSize(width: 980, height: 720)
         .windowResizability(.contentMinSize)
 
         MenuBarExtra("CleanMac", image: "MenuBarIcon") {

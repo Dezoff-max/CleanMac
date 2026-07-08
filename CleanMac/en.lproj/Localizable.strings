@@ -14,6 +14,7 @@
 "button.scanning" = "Scanning";
 "button.startScan" = "Start Scan";
 "button.scanSelected" = "Scan Selected";
+"button.chooseAreas" = "Choose Areas";
 "button.selectAll" = "Select All";
 "button.cleanSelected" = "Clean Selected";
 "button.openSystemSettings" = "Open System Settings";
@@ -24,6 +25,7 @@
 "dashboard.lastScan.title" = "Last Scan";
 "dashboard.selectedAreas" = "%d areas selected";
 "dashboard.lastScan.summary" = "%d items, %@ found in %@s";
+"dashboard.selectedAreas.title" = "Selected areas";
 "dashboard.safety.title" = "Safety";
 "dashboard.safety.scanOnly" = "Read-only scanning first";
 "dashboard.safety.confirmation" = "Cleanup will require confirmation";
