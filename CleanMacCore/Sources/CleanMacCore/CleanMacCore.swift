@@ -1,3 +1,3 @@
 public enum CleanMacCoreInfo {
-    public static let status = "Ready for rebuild"
+    public static let status = "Idle"
 }
