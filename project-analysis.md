@@ -11,6 +11,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - `script/build_and_run.sh`: local Debug build and launch entrypoint.
 - `script/package_release.sh`: local Release `.app`, `.zip`, and `.sha256` packaging.
 - `.github/workflows/ci.yml`: private GitHub CI for core tests, Debug app build, and unsigned Release artifact.
+- `.github/workflows/release.yml`: tag-driven GitHub Release workflow for unsigned zip and sha256 assets.
 - `docs/` and `Design/`: icon and project assets.
 
 ## Tech Stack
@@ -39,33 +40,36 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Main Dashboard/Scan/Results/Permissions/Settings window builds and launches.
 - Menu bar Open focuses the existing main window before creating a new one.
 - `CleanMacCore` has a read-only scanner for user caches, logs, temporary files, Trash, Downloads review, and Xcode Derived Data.
-- Results UI is backed by real scanner output and keeps destructive cleanup disabled.
+- Results UI is backed by real scanner output, safe results are selected by default, and cleanup requires explicit confirmation.
+- Cleanup planning validates paths against category roots and moves accepted items to Trash instead of permanently deleting them.
+- Scan UI has all/safe/review filters plus safe/review/clear selection presets.
 - English and Russian app localizations are included; macOS selects the language from system preferences.
+- Private GitHub Release `v0.1.0` exists with unsigned zip and sha256 assets.
 
 ## Unfinished Or Risky Parts
 
-- No real cleanup engine or deletion safety layer exists yet.
+- Release builds are unsigned and not notarized; macOS Gatekeeper may warn.
 - Permissions are still an informational UI, not a deep permission workflow.
 - The scanner is intentionally conservative and capped; deeper categories and stale-file heuristics are future work.
-- Any future cleanup implementation must avoid deleting files until scan results, previews, and confirmations are in place.
+- Cleanup is intentionally Trash-based; permanent deletion is still out of scope.
 - Local Xcode emits a CoreSimulator warning; it does not currently block macOS builds.
 
 ## Strengths
 
 - Small codebase with clean ownership boundaries.
 - Separate core package is ready for testable scanning logic.
-- CI and packaging are already working.
+- CI, local packaging, and tag-based GitHub Release packaging are already working.
 - Menu bar plus window lifecycle is a good fit for a cleanup utility.
 
 ## Problems
 
-- Real deletion is not implemented yet.
+- Distribution is not signed or notarized yet.
 - Permission handling is not connected to system authorization checks yet.
 - Toolbar Accessibility exposes descriptions, but SwiftUI does not give stable button names for every automation path.
 
 ## Recommended Next Work
 
-1. Add safe cleanup planning with explicit confirmation, allowlist checks, and no deletion until a final review step.
+1. Add Developer ID signing and notarization for a smoother install flow.
 2. Connect permission state to real system access checks where useful.
 3. Add deeper scanner heuristics for stale files, large downloads, and developer caches.
-4. Add release tagging and signed/notarized distribution later.
+4. Add richer cleanup previews and restore guidance for Trash-moved items.

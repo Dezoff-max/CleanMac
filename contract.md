@@ -79,6 +79,6 @@ Restart or shrink the task if:
 
 ## Result
 
-- Status: pending release verification
-- Verification result: implementation checks passed; GitHub Release verification pending.
-- Notes: Safe cleanup planning, Trash execution, scan filters, and confirmation UI are implemented. TASK-005 remains open until `v0.1.0` creates a Release with zip and sha256 assets.
+- Status: complete
+- Verification result: passed.
+- Notes: Safe cleanup planning, Trash execution, scan filters, confirmation UI, CI, local zip packaging, and GitHub Release `v0.1.0` are verified. Release assets: `CleanMac-bd20fa1-unsigned.zip` and `CleanMac-bd20fa1-unsigned.zip.sha256`.

@@ -34,12 +34,12 @@ Append-only history. Do not erase previous entries.
 
 ## Handoff
 
-- Current state: TASK-004 and TASK-008 implementation complete. TASK-005 release workflow is implemented but waiting for tag/release verification.
-- Next recommended task: Push `main`, tag `v0.1.0`, watch GitHub Actions Release, and verify Release assets.
+- Current state: TASK-004, TASK-005, and TASK-008 complete. Private GitHub Release `v0.1.0` exists with unsigned zip and sha256 assets.
+- Next recommended task: Add Developer ID signing/notarization or expand scanner heuristics with stronger permissions handling.
 - Known blockers: local Xcode reports a CoreSimulator warning, but macOS app builds are not blocked.
-- Commands that passed: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; `osascript` window size check.
+- Commands that passed: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; `./script/package_release.sh`; `shasum -a 256 -c dist/CleanMac-bd20fa1-unsigned.zip.sha256`; GitHub CI run `28939363191`; GitHub Release run `28939469061`; `gh release view v0.1.0 --repo Dezoff-max/CleanMac`.
 - Commands that failed: none.
-- Current bottleneck: release
+- Current bottleneck: signing/notarization
 
 ## 2026-07-08 - TASK-004/TASK-008 - Safe cleanup and scan selection controls
 
@@ -50,3 +50,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Finish TASK-005 by pushing `main`, creating tag `v0.1.0`, watching the Release workflow, and verifying the uploaded zip and sha256 assets.
 - Bottleneck: release
 - Handoff: The UI confirmation was opened and cancelled during testing, so no scanned user files were moved.
+
+## 2026-07-08 - TASK-005 - Release tagging
+
+- What changed: Pushed implementation commit `bd20fa1`, verified GitHub CI, created and pushed tag `v0.1.0`, and verified the GitHub Release assets in the private `Dezoff-max/CleanMac` repository.
+- Files touched: `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `./script/package_release.sh`; `shasum -a 256 -c dist/CleanMac-bd20fa1-unsigned.zip.sha256`; `git push origin main`; GitHub CI run `28939363191`; `git push origin v0.1.0`; GitHub Release run `28939469061`; `gh release view v0.1.0 --repo Dezoff-max/CleanMac --json tagName,name,url,isDraft,isPrerelease,assets,targetCommitish,createdAt,publishedAt`; `gh repo view Dezoff-max/CleanMac --json nameWithOwner,isPrivate,url,visibility`.
+- Result: Passed. Release `https://github.com/Dezoff-max/CleanMac/releases/tag/v0.1.0` is published with `CleanMac-bd20fa1-unsigned.zip` and `CleanMac-bd20fa1-unsigned.zip.sha256`; repository visibility is private.
+- Next step: Add Developer ID signing/notarization or expand scanner heuristics.
+- Bottleneck: signing/notarization
+- Handoff: The release zip is unsigned; macOS Gatekeeper may warn until a Developer ID signing/notarization workflow is added.

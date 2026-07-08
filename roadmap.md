@@ -56,7 +56,7 @@
   Confidence: medium
   Score: high impact / high risk / large
 
-- [ ] ID: TASK-005
+- [x] ID: TASK-005
   Title: Release tagging
   Goal: Create GitHub Releases automatically from version tags.
   What to do: Add a release workflow for `v*` tags that uploads the unsigned zip and checksum.
