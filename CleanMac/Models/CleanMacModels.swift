@@ -97,11 +97,17 @@ struct ScanResult: Identifiable {
 }
 
 enum PermissionState {
+    case granted
+    case limited
+    case unknown
     case recommended
     case later
 
     var title: String {
         switch self {
+        case .granted: L.t("permission.state.granted")
+        case .limited: L.t("permission.state.limited")
+        case .unknown: L.t("permission.state.unknown")
         case .recommended: L.t("permission.state.recommended")
         case .later: L.t("permission.state.later")
         }
@@ -155,6 +161,33 @@ enum CleanMacCatalog {
                 isDefaultSelected: true
             ),
             CleanupArea(
+                category: .browserCaches,
+                title: L.t("area.browserCaches.title"),
+                detail: L.t("area.browserCaches.detail"),
+                pathHint: "~/Library/Caches/{Safari, Google, Firefox, ...}",
+                systemImage: "safari",
+                risk: .safe,
+                isDefaultSelected: true
+            ),
+            CleanupArea(
+                category: .nodePackageCaches,
+                title: L.t("area.nodeCaches.title"),
+                detail: L.t("area.nodeCaches.detail"),
+                pathHint: "~/.npm, ~/Library/Caches/Yarn, pnpm",
+                systemImage: "curlybraces.square",
+                risk: .safe,
+                isDefaultSelected: true
+            ),
+            CleanupArea(
+                category: .swiftPackageBuilds,
+                title: L.t("area.swiftpm.title"),
+                detail: L.t("area.swiftpm.detail"),
+                pathHint: "~/Library/Caches/org.swift.swiftpm",
+                systemImage: "swift",
+                risk: .safe,
+                isDefaultSelected: true
+            ),
+            CleanupArea(
                 category: .logs,
                 title: L.t("area.logs.title"),
                 detail: L.t("area.logs.detail"),
@@ -191,6 +224,15 @@ enum CleanMacCatalog {
                 isDefaultSelected: false
             ),
             CleanupArea(
+                category: .downloadedInstallers,
+                title: L.t("area.installers.title"),
+                detail: L.t("area.installers.detail"),
+                pathHint: "~/Downloads/*.dmg, *.pkg, *.zip, *.xip",
+                systemImage: "opticaldiscdrive",
+                risk: .review,
+                isDefaultSelected: false
+            ),
+            CleanupArea(
                 category: .xcodeDerivedData,
                 title: L.t("area.xcode.title"),
                 detail: L.t("area.xcode.detail"),
@@ -202,7 +244,7 @@ enum CleanMacCatalog {
         ]
     }
 
-    static var permissions: [PermissionItem] {
+    static func permissions(fullDiskAccess: FullDiskAccessCheckResult) -> [PermissionItem] {
         [
             PermissionItem(
                 id: "files",
@@ -214,9 +256,9 @@ enum CleanMacCatalog {
             PermissionItem(
                 id: "full-disk",
                 title: L.t("permission.fullDisk.title"),
-                detail: L.t("permission.fullDisk.detail"),
+                detail: fullDiskDetail(for: fullDiskAccess),
                 systemImage: "internaldrive",
-                state: .later
+                state: permissionState(for: fullDiskAccess.state)
             ),
             PermissionItem(
                 id: "automation",
@@ -226,6 +268,25 @@ enum CleanMacCatalog {
                 state: .later
             )
         ]
+    }
+
+    private static func permissionState(for fullDiskState: FullDiskAccessState) -> PermissionState {
+        switch fullDiskState {
+        case .granted: .granted
+        case .limited: .limited
+        case .unknown: .unknown
+        }
+    }
+
+    private static func fullDiskDetail(for result: FullDiskAccessCheckResult) -> String {
+        switch result.state {
+        case .granted:
+            L.f("permission.fullDisk.detail.granted", result.readableProbeCount, result.availableProbeCount)
+        case .limited:
+            L.f("permission.fullDisk.detail.limited", result.readableProbeCount, result.availableProbeCount)
+        case .unknown:
+            L.t("permission.fullDisk.detail.unknown")
+        }
     }
 
     static func area(for category: CleanupCategory) -> CleanupArea {

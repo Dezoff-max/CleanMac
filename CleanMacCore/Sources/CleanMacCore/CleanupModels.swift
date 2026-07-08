@@ -2,10 +2,14 @@ import Foundation
 
 public enum CleanupCategory: String, CaseIterable, Identifiable, Sendable {
     case userCaches = "user-cache"
+    case browserCaches = "browser-cache"
+    case nodePackageCaches = "node-cache"
+    case swiftPackageBuilds = "swiftpm"
     case logs
     case temporaryFiles = "temp"
     case trash
     case downloads
+    case downloadedInstallers = "installers"
     case xcodeDerivedData = "xcode"
 
     public var id: String { rawValue }

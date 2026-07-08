@@ -2,6 +2,8 @@ import AppKit
 import SwiftUI
 
 struct PermissionsView: View {
+    @State private var fullDiskAccess = FullDiskAccessChecker().check()
+
     var body: some View {
         PageContainer {
             VStack(alignment: .leading, spacing: 20) {
@@ -12,13 +14,19 @@ struct PermissionsView: View {
                 )
 
                 VStack(spacing: 10) {
-                    ForEach(CleanMacCatalog.permissions) { permission in
+                    ForEach(CleanMacCatalog.permissions(fullDiskAccess: fullDiskAccess)) { permission in
                         PermissionRow(permission: permission)
                     }
                 }
 
                 HStack {
                     Spacer()
+
+                    Button {
+                        refreshFullDiskAccess()
+                    } label: {
+                        Label(L.t("button.refreshAccess"), systemImage: "arrow.clockwise")
+                    }
 
                     Button {
                         openPrivacySettings()
@@ -28,6 +36,10 @@ struct PermissionsView: View {
                 }
             }
         }
+    }
+
+    private func refreshFullDiskAccess() {
+        fullDiskAccess = FullDiskAccessChecker().check()
     }
 
     private func openPrivacySettings() {
@@ -60,10 +72,33 @@ private struct PermissionRow: View {
 
                 Text(permission.state.title)
                     .font(.caption.weight(.medium))
+                    .foregroundStyle(permission.state.foregroundStyle)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(.quaternary, in: Capsule())
+                    .background(permission.state.backgroundStyle, in: Capsule())
             }
+        }
+    }
+}
+
+private extension PermissionState {
+    var foregroundStyle: Color {
+        switch self {
+        case .granted: .green
+        case .limited: .orange
+        case .unknown: .secondary
+        case .recommended: .blue
+        case .later: .secondary
+        }
+    }
+
+    var backgroundStyle: Color {
+        switch self {
+        case .granted: .green.opacity(0.12)
+        case .limited: .orange.opacity(0.14)
+        case .unknown: .secondary.opacity(0.12)
+        case .recommended: .blue.opacity(0.12)
+        case .later: .secondary.opacity(0.12)
         }
     }
 }

@@ -22,14 +22,23 @@ struct PageHeader: View {
     let title: String
     let subtitle: String
     let systemImage: String
+    let imageAssetName: String?
+
+    init(
+        title: String,
+        subtitle: String,
+        systemImage: String,
+        imageAssetName: String? = nil
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.systemImage = systemImage
+        self.imageAssetName = imageAssetName
+    }
 
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
-            Image(systemName: systemImage)
-                .font(.system(size: 28, weight: .semibold))
-                .foregroundStyle(.tint)
-                .frame(width: 42, height: 42)
-                .symbolRenderingMode(.hierarchical)
+            headerIcon
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
@@ -41,6 +50,23 @@ struct PageHeader: View {
             }
 
             Spacer()
+        }
+    }
+
+    @ViewBuilder
+    private var headerIcon: some View {
+        if let imageAssetName {
+            Image(imageAssetName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 46, height: 46)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        } else {
+            Image(systemName: systemImage)
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundStyle(.tint)
+                .frame(width: 42, height: 42)
+                .symbolRenderingMode(.hierarchical)
         }
     }
 }

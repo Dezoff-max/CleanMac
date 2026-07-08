@@ -42,7 +42,8 @@ public struct CleanupScanner {
             issues.append(contentsOf: result.issues)
         }
 
-        let sortedItems = allItems.sorted {
+        let deduplicatedItems = deduplicate(allItems)
+        let sortedItems = deduplicatedItems.sorted {
             if $0.sizeBytes == $1.sizeBytes {
                 return $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
             }
@@ -62,72 +63,123 @@ public struct CleanupScanner {
         _ category: CleanupCategory,
         options: CleanupScanOptions
     ) -> (items: [CleanupScanItem], summary: CleanupCategorySummary, issues: [CleanupScanIssue]) {
-        let rootURL = rootURL(for: category)
-        let rootPath = rootURL.path
+        var items: [CleanupScanItem] = []
+        var issues: [CleanupScanIssue] = []
+        var scannedPaths: [String] = []
+        var availableRootCount = 0
+        let rootURLs = rootResolver.rootURLs(for: category)
 
-        guard fileManager.fileExists(atPath: rootPath) else {
-            return (
-                [],
-                CleanupCategorySummary(
-                    category: category,
-                    scannedPath: rootPath,
-                    itemCount: 0,
-                    totalSizeBytes: 0,
-                    isAvailable: false
-                ),
-                []
-            )
-        }
-
-        let childURLs: [URL]
-        do {
-            childURLs = try fileManager.contentsOfDirectory(
-                at: rootURL,
-                includingPropertiesForKeys: Array(resourceKeys),
-                options: [.skipsPackageDescendants]
-            )
-        } catch {
-            let issue = CleanupScanIssue(
-                category: category,
-                path: rootPath,
-                message: error.localizedDescription
-            )
-            return (
-                [],
-                CleanupCategorySummary(
-                    category: category,
-                    scannedPath: rootPath,
-                    itemCount: 0,
-                    totalSizeBytes: 0,
-                    isAvailable: true
-                ),
-                [issue]
-            )
-        }
-
-        let items = childURLs
-            .prefix(options.maxItemsPerCategory)
-            .compactMap { item(for: $0, category: category, options: options) }
-            .sorted {
-                if $0.sizeBytes == $1.sizeBytes {
-                    return $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
-                }
-                return $0.sizeBytes > $1.sizeBytes
+        for rootURL in rootURLs {
+            guard items.count < options.maxItemsPerCategory else {
+                break
             }
 
-        let totalSizeBytes = items.reduce(0) { $0 + $1.sizeBytes }
+            let rootPath = rootURL.path
+            scannedPaths.append(rootPath)
+
+            guard fileManager.fileExists(atPath: rootPath) else {
+                continue
+            }
+
+            availableRootCount += 1
+
+            let childURLs: [URL]
+            do {
+                childURLs = try fileManager.contentsOfDirectory(
+                    at: rootURL,
+                    includingPropertiesForKeys: Array(resourceKeys),
+                    options: [.skipsPackageDescendants]
+                )
+            } catch {
+                issues.append(CleanupScanIssue(
+                    category: category,
+                    path: rootPath,
+                    message: error.localizedDescription
+                ))
+                continue
+            }
+
+            let remainingItemLimit = max(0, options.maxItemsPerCategory - items.count)
+            let rootItems = childURLs
+                .filter { shouldInclude($0, in: category) }
+                .prefix(remainingItemLimit)
+                .compactMap { item(for: $0, category: category, options: options) }
+                .sorted {
+                    if $0.sizeBytes == $1.sizeBytes {
+                        return $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
+                    }
+                    return $0.sizeBytes > $1.sizeBytes
+                }
+
+            items.append(contentsOf: rootItems)
+        }
+
+        let sortedItems = items.sorted {
+            if $0.sizeBytes == $1.sizeBytes {
+                return $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
+            }
+            return $0.sizeBytes > $1.sizeBytes
+        }
+
+        let totalSizeBytes = sortedItems.reduce(0) { $0 + $1.sizeBytes }
 
         return (
-            items,
+            sortedItems,
             CleanupCategorySummary(
                 category: category,
-                scannedPath: rootPath,
-                itemCount: items.count,
+                scannedPath: scannedPaths.joined(separator: ", "),
+                itemCount: sortedItems.count,
                 totalSizeBytes: totalSizeBytes,
-                isAvailable: true
+                isAvailable: availableRootCount > 0
             ),
-            []
+            issues
         )
+    }
+
+    private func deduplicate(_ items: [CleanupScanItem]) -> [CleanupScanItem] {
+        var itemsByPath: [String: CleanupScanItem] = [:]
+
+        for item in items {
+            let path = URL(fileURLWithPath: item.path).canonicalPath
+            if let existing = itemsByPath[path] {
+                if priority(for: item.category) > priority(for: existing.category) {
+                    itemsByPath[path] = item
+                }
+            } else {
+                itemsByPath[path] = item
+            }
+        }
+
+        return Array(itemsByPath.values)
+    }
+
+    private func priority(for category: CleanupCategory) -> Int {
+        switch category {
+        case .browserCaches, .nodePackageCaches, .swiftPackageBuilds, .downloadedInstallers:
+            3
+        case .xcodeDerivedData:
+            2
+        case .userCaches, .downloads:
+            1
+        case .logs, .temporaryFiles, .trash:
+            0
+        }
+    }
+
+    private func shouldInclude(_ url: URL, in category: CleanupCategory) -> Bool {
+        switch category {
+        case .downloadedInstallers:
+            isDownloadedInstallerOrArchive(url)
+        default:
+            true
+        }
+    }
+
+    private func isDownloadedInstallerOrArchive(_ url: URL) -> Bool {
+        let allowedExtensions: Set<String> = [
+            "app", "dmg", "iso", "ipsw", "pkg", "xar", "xip", "zip"
+        ]
+        return allowedExtensions.contains(url.pathExtension.lowercased())
     }
 
     private func item(
@@ -207,15 +259,11 @@ public struct CleanupScanner {
         return 0
     }
 
-    private func rootURL(for category: CleanupCategory) -> URL {
-        rootResolver.rootURL(for: category)
-    }
-
     private func risk(for category: CleanupCategory) -> CleanupRiskLevel {
         switch category {
-        case .userCaches, .logs, .temporaryFiles:
+        case .userCaches, .browserCaches, .nodePackageCaches, .swiftPackageBuilds, .logs, .temporaryFiles:
             .safe
-        case .trash, .downloads, .xcodeDerivedData:
+        case .trash, .downloads, .downloadedInstallers, .xcodeDerivedData:
             .review
         }
     }

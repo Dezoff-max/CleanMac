@@ -2,15 +2,16 @@
 
 ## Task
 
-- ID: TASK-004/TASK-005/TASK-008
-- Title: Safe cleanup, scan filters, and v0.1.0 release
+- ID: TASK-009/TASK-010/TASK-011/TASK-012
+- Title: Signed distribution readiness, deeper scanner, real permissions, and icon refresh
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user selected real safe cleanup, scan selection improvements, and a GitHub Release.
-- Expected value: make CleanMac useful end-to-end while keeping destructive behavior guarded and reversible.
-- Main risk: unsafe deletion. The implementation must move files to Trash only after confirmation and allowlist validation.
+- Why this task now: the user selected signing/notarization, deeper scanner heuristics, Full Disk Access status, and replacing the icon everywhere.
+- Expected value: make CleanMac more complete as a real cleanup utility and ready for signed distribution once Apple credentials are available.
+- Main risk: unsafe cleanup expansion. New categories must stay inside explicit allowlisted roots, default to review when broad, and keep Trash-only cleanup.
+- Signing constraint: this Mac currently has no valid Developer ID signing identity, so notarization can only be implemented as a ready-to-run pipeline and verified in unsigned fallback mode.
 
 ## Builder Scope
 
@@ -20,6 +21,9 @@
   - `CleanMacCore/Sources/CleanMacCore/**`
   - `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`
   - `CleanMac.xcodeproj/project.pbxproj`
+  - `.github/workflows/**`
+  - `script/**`
+  - `docs/**`
   - `AGENTS.md`
   - `project-analysis.md`
   - `roadmap.md`
@@ -32,41 +36,41 @@
   - `./script/build_and_run.sh --verify`
   - `swift test --package-path CleanMacCore`
   - `./script/package_release.sh`
+  - `codesign`, `spctl`, and read-only signing inspection commands
   - read-only inspection commands
 - Out of scope:
   - permanent deletion with `removeItem` for user cleanup;
-  - notarization or Developer ID signing;
+  - actual notarization submission without Apple Developer credentials;
   - changing deployment target;
   - adding third-party dependencies;
-  - broad scanner heuristics beyond existing categories.
+  - uploading a new public release without explicit tag/version selection.
 - Dependencies allowed: no
 - Destructive actions allowed: no
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - CleanMacCore can build a cleanup plan from scan items and reject paths outside category roots.
-  - Cleanup execution moves allowlisted items to Trash and reports moved/failed/rejected items.
-  - Core tests cover allowlist rejection and executor behavior without permanent deletion.
-  - Results UI supports selecting scan results and requires explicit confirmation before cleanup.
-  - Review-risk items are visibly distinct and not silently selected by default after scanning.
-  - Scan screen has all/safe/review filters and quick selection presets.
-  - English and Russian strings cover new UI.
-  - GitHub tag `v0.1.0` has a Release with unsigned zip and sha256 assets.
+  - The supplied broom/code icon is used for the app icon, menu bar icon, and visible in-app brand icon.
+  - Scanner includes additional developer/browser/download cleanup categories with explicit roots and risk labels.
+  - Core tests cover at least one newly added category and keep cleanup path allowlisting intact.
+  - Permissions UI shows a live Full Disk Access status derived from protected path readability and has a refresh action.
+  - Packaging supports optional Developer ID signing, hardened runtime verification, and optional notarization when credentials are configured.
+  - CI/release docs explain required private secrets without exposing any secrets.
 - Required verification:
   - `./script/build_and_run.sh --verify`
   - `swift test --package-path CleanMacCore`
   - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
   - `git diff --check`
   - `./script/package_release.sh`
-  - GitHub Actions release workflow for `v0.1.0`
+  - `codesign -dvvv dist/CleanMac.app` and `spctl -a -vv dist/CleanMac.app` inspection, accepting unsigned/ad hoc status when no Developer ID exists
 - Manual checks:
-  - Visually confirm filters/presets and confirmation UI.
-  - Confirm app release assets are present in GitHub.
+  - Visually confirm the refreshed icon appears in the app and menu bar.
+  - Confirm signing/notarization is documented as blocked by missing local certificate unless credentials are later provided.
 - Evidence to collect:
   - Build/run command exit status.
   - Core test exit status.
   - File list touched.
+  - Signing identity check result.
 
 ## Restart Signals
 
@@ -74,11 +78,11 @@ Restart or shrink the task if:
 - verification fails twice for the same reason;
 - work requires out-of-scope files;
 - the done criteria cannot be proven;
-- cleanup cannot be made Trash-only and allowlisted;
+- cleanup cannot remain Trash-only and allowlisted;
 - user-facing behavior diverges from this contract.
 
 ## Result
 
 - Status: complete
-- Verification result: passed.
-- Notes: Safe cleanup planning, Trash execution, scan filters, confirmation UI, CI, local zip packaging, and GitHub Release `v0.1.0` are verified. Release assets: `CleanMac-bd20fa1-unsigned.zip` and `CleanMac-bd20fa1-unsigned.zip.sha256`.
+- Verification result: Passed local implementation checks. `./script/package_release.sh` creates `dist/CleanMac-5f4ae88-unsigned.zip`; the zip checksum verifies and the app extracted from the zip passes `codesign --verify --deep --strict --verbose=2`. `spctl` rejects it as expected because this Mac has no Developer ID identity.
+- Notes: TASK-009/TASK-010/TASK-011/TASK-012 are implemented. Actual Developer ID signing/notarization remains blocked until Apple Developer credentials and CI secrets are configured.

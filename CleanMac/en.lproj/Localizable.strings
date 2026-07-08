@@ -24,6 +24,7 @@
 "button.cleaning" = "Cleaning";
 "button.cancel" = "Cancel";
 "button.openSystemSettings" = "Open System Settings";
+"button.refreshAccess" = "Refresh Access";
 
 "dashboard.title" = "CleanMac";
 "dashboard.subtitle" = "System cleanup workspace";
@@ -91,8 +92,14 @@
 "permission.files.detail" = "Required for scanning selected user folders.";
 "permission.fullDisk.title" = "Full Disk Access";
 "permission.fullDisk.detail" = "Needed only for deeper Library and system-adjacent scans.";
+"permission.fullDisk.detail.granted" = "Granted. CleanMac can inspect protected metadata probes: %d of %d.";
+"permission.fullDisk.detail.limited" = "Limited. CleanMac can inspect protected metadata probes: %d of %d. Enable Full Disk Access for deeper scans.";
+"permission.fullDisk.detail.unknown" = "Status unknown. No protected probe folders were available on this Mac.";
 "permission.automation.title" = "Automation";
 "permission.automation.detail" = "Optional for opening Finder and System Settings shortcuts.";
+"permission.state.granted" = "Granted";
+"permission.state.limited" = "Limited";
+"permission.state.unknown" = "Unknown";
 "permission.state.recommended" = "Recommended";
 "permission.state.later" = "Later";
 
@@ -104,6 +111,12 @@
 
 "area.userCaches.title" = "User Caches";
 "area.userCaches.detail" = "Application cache folders in the current user Library.";
+"area.browserCaches.title" = "Browser Caches";
+"area.browserCaches.detail" = "Safari, Chrome, Firefox, Brave, and Edge cache folders when present.";
+"area.nodeCaches.title" = "Node Package Caches";
+"area.nodeCaches.detail" = "npm, Yarn, and pnpm caches used by JavaScript projects.";
+"area.swiftpm.title" = "SwiftPM Build Cache";
+"area.swiftpm.detail" = "Swift Package Manager cache folders used by Xcode and command-line builds.";
 "area.logs.title" = "Logs";
 "area.logs.detail" = "Rotated and older diagnostic logs.";
 "area.temporary.title" = "Temporary Files";
@@ -112,6 +125,8 @@
 "area.trash.detail" = "Items already moved to Trash.";
 "area.downloads.title" = "Downloads Review";
 "area.downloads.detail" = "Large downloads and installers that need manual review.";
+"area.installers.title" = "Downloaded Installers";
+"area.installers.detail" = "DMG, PKG, ZIP, XIP, and app bundles in Downloads that need manual review.";
 "area.xcode.title" = "Xcode Derived Data";
 "area.xcode.detail" = "Build caches that can grow quickly during development.";
 

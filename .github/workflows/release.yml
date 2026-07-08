@@ -17,10 +17,46 @@ jobs:
     name: Build and publish release
     runs-on: macos-26
     timeout-minutes: 30
+    env:
+      CLEANMAC_SIGN_IDENTITY: ${{ secrets.CLEANMAC_SIGN_IDENTITY }}
+      CLEANMAC_NOTARIZE: ${{ secrets.CLEANMAC_NOTARIZE }}
+      CLEANMAC_NOTARY_KEY_ID: ${{ secrets.CLEANMAC_NOTARY_KEY_ID }}
+      CLEANMAC_NOTARY_ISSUER: ${{ secrets.CLEANMAC_NOTARY_ISSUER }}
+      HAS_SIGNING_CERTIFICATE: ${{ secrets.CLEANMAC_CERTIFICATE_P12_BASE64 != '' }}
+      HAS_NOTARY_KEY: ${{ secrets.CLEANMAC_NOTARY_KEY_BASE64 != '' }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      - name: Import Developer ID certificate
+        if: env.HAS_SIGNING_CERTIFICATE == 'true'
+        env:
+          CLEANMAC_CERTIFICATE_P12_BASE64: ${{ secrets.CLEANMAC_CERTIFICATE_P12_BASE64 }}
+          CLEANMAC_CERTIFICATE_PASSWORD: ${{ secrets.CLEANMAC_CERTIFICATE_PASSWORD }}
+          CLEANMAC_KEYCHAIN_PASSWORD: ${{ secrets.CLEANMAC_KEYCHAIN_PASSWORD }}
+        run: |
+          keychain_path="$RUNNER_TEMP/cleanmac-signing.keychain-db"
+          cert_path="$RUNNER_TEMP/cleanmac-certificate.p12"
+          echo "$CLEANMAC_CERTIFICATE_P12_BASE64" | base64 --decode > "$cert_path"
+          security create-keychain -p "$CLEANMAC_KEYCHAIN_PASSWORD" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "$CLEANMAC_KEYCHAIN_PASSWORD" "$keychain_path"
+          security import "$cert_path" -P "$CLEANMAC_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain_path"
+          security list-keychain -d user -s "$keychain_path" $(security list-keychain -d user | sed s/\"//g)
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$CLEANMAC_KEYCHAIN_PASSWORD" "$keychain_path"
+          security find-identity -p codesigning -v "$keychain_path"
+
+      - name: Prepare notary API key
+        if: env.HAS_NOTARY_KEY == 'true'
+        env:
+          CLEANMAC_NOTARY_KEY_BASE64: ${{ secrets.CLEANMAC_NOTARY_KEY_BASE64 }}
+        run: |
+          key_dir="$RUNNER_TEMP/private_keys"
+          mkdir -p "$key_dir"
+          key_path="$key_dir/AuthKey_${CLEANMAC_NOTARY_KEY_ID}.p8"
+          echo "$CLEANMAC_NOTARY_KEY_BASE64" | base64 --decode > "$key_path"
+          echo "CLEANMAC_NOTARY_KEY_PATH=$key_path" >> "$GITHUB_ENV"
 
       - name: Package Release app
         run: ./script/package_release.sh

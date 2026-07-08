@@ -25,7 +25,8 @@ struct DashboardView: View {
                 PageHeader(
                     title: L.t("dashboard.title"),
                     subtitle: L.t("dashboard.subtitle"),
-                    systemImage: "sparkles"
+                    systemImage: "sparkles",
+                    imageAssetName: "BrandIcon"
                 )
 
                 if let scanError {

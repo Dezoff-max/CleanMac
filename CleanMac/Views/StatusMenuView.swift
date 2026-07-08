@@ -7,9 +7,11 @@ struct StatusMenuView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                Image(nsImage: NSImage(named: "MenuBarIcon") ?? NSImage())
+                Image("BrandIcon")
                     .resizable()
-                    .frame(width: 28, height: 28)
+                    .scaledToFit()
+                    .frame(width: 30, height: 30)
+                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("CleanMac")

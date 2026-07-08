@@ -111,3 +111,59 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-009
+  Title: Developer ID signing and notarization readiness
+  Goal: Make release packaging able to produce signed/notarized builds when Apple credentials are configured.
+  What to do: Add optional signing/notarization support to release packaging, document required secrets, and keep unsigned fallback working when no certificate is present.
+  Files: `script/**`, `.github/workflows/**`, `docs/**`, Loop docs
+  Definition of done: Local packaging still creates unsigned zip without credentials; package script can sign with a Developer ID identity and submit notarization when configured; docs list required private secrets.
+  Verification: `./script/package_release.sh`; `codesign`/`spctl` inspection; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: medium
+  Score: high impact / medium risk / medium
+
+- [x] ID: TASK-010
+  Title: Expanded cleanup scanner categories
+  Goal: Check more useful cleanup areas while preserving safe allowlisted cleanup boundaries.
+  What to do: Add browser cache, Node/npm cache, old downloads/installers, and SwiftPM build cache categories with localized UI.
+  Files: `CleanMacCore/**`, `CleanMac/**`
+  Definition of done: New categories appear in Scan and Results, have explicit roots, risk labels, and tests for scanner/allowlist behavior.
+  Verification: `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: high impact / medium risk / medium
+
+- [x] ID: TASK-011
+  Title: Live Full Disk Access state
+  Goal: Replace static permissions copy with real status checks where macOS allows it.
+  What to do: Add a Full Disk Access checker that probes protected paths by metadata/readability only, show granted/limited/unknown status, and add refresh/open settings actions.
+  Files: `CleanMac/**`, Loop docs
+  Definition of done: Permissions screen shows live Full Disk Access status and updates on refresh without reading user data contents.
+  Verification: `./script/build_and_run.sh --verify`; manual UI check
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: medium
+  Score: medium impact / low risk / small
+
+- [x] ID: TASK-012
+  Title: Refresh icon everywhere
+  Goal: Replace the current broom icon with the supplied broom/code icon in every app surface.
+  What to do: Regenerate AppIcon sizes, MenuBarIcon sizes, and use the asset as the in-app brand icon instead of generic SF Symbols.
+  Files: `CleanMac/Assets.xcassets/**`, `CleanMac/Views/**`, Loop docs
+  Definition of done: App bundle icon, menu bar icon, and Dashboard/StatusMenu brand icon use the supplied image.
+  Verification: `./script/build_and_run.sh --verify`; visual screenshot check
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small

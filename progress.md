@@ -60,3 +60,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Add Developer ID signing/notarization or expand scanner heuristics.
 - Bottleneck: signing/notarization
 - Handoff: The release zip is unsigned; macOS Gatekeeper may warn until a Developer ID signing/notarization workflow is added.
+
+## 2026-07-08 - TASK-009/TASK-010/TASK-011/TASK-012 - Signing readiness, expanded scanner, live access, and icon refresh
+
+- What changed: Replaced the icon everywhere with the supplied broom/code artwork, expanded the scanner with browser cache, Node package cache, SwiftPM cache, and downloaded installer categories, added live Full Disk Access status with refresh, and upgraded release packaging/GitHub Releases for optional Developer ID signing and notarization.
+- Files touched: `.github/workflows/release.yml`, `CleanMac/Assets.xcassets/**`, `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Support/FullDiskAccessChecker.swift`, `CleanMac/Views/*`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `CleanMacCore/Sources/CleanMacCore/**`, `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`, `docs/signing-notarization.md`, `script/package_release.sh`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `swift test --package-path CleanMacCore`; `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `bash -n script/package_release.sh`; `git diff --check`; `./script/build_and_run.sh --verify`; visual screenshots for Dashboard, Scan, Permissions, and menu bar; `./script/package_release.sh`; `shasum -a 256 -c dist/CleanMac-5f4ae88-unsigned.zip.sha256`; zip extraction followed by `codesign --verify --deep --strict --verbose=2`; `spctl -a -vv`; `security find-identity -p codesigning -v`.
+- Result: Passed for implementation and unsigned/ad-hoc package validation. The zip artifact extracts to a valid ad-hoc signed app; `spctl` rejects it as expected without Developer ID signing.
+- Next step: Configure Apple Developer certificate/notary secrets and create a signed/notarized release tag.
+- Bottleneck: Apple Developer credentials
+- Handoff: `security find-identity -p codesigning -v` reports `0 valid identities found`, so actual Developer ID signing/notarization was not possible on this Mac. The workflow and docs are ready for credentials.

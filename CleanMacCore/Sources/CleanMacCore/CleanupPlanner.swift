@@ -53,9 +53,9 @@ public struct CleanupPlanner {
         }
 
         let canonicalPath = url.canonicalPath
-        let rootPath = rootResolver.canonicalRootPath(for: item.category)
+        let rootPaths = rootResolver.canonicalRootPaths(for: item.category)
 
-        guard canonicalPath != rootPath else {
+        guard !rootPaths.contains(canonicalPath) else {
             return .rejected(rejection(
                 for: item,
                 reason: .categoryRoot,
@@ -63,7 +63,7 @@ public struct CleanupPlanner {
             ))
         }
 
-        guard canonicalPath.hasPrefix(rootPath + "/") else {
+        guard rootPaths.contains(where: { canonicalPath.hasPrefix($0 + "/") }) else {
             return .rejected(rejection(
                 for: item,
                 reason: .outsideAllowedRoot,

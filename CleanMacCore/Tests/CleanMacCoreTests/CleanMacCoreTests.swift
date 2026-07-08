@@ -59,6 +59,47 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertEqual(report.summaries.first?.isAvailable, false)
     }
 
+    func testScannerFindsExpandedDeveloperAndInstallerCategories() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let chromeRoot = home.appending(path: "Library/Caches/Google/Chrome", directoryHint: .isDirectory)
+        let npmRoot = home.appending(path: ".npm", directoryHint: .isDirectory)
+        let swiftPMRoot = home.appending(path: "Library/Caches/org.swift.swiftpm", directoryHint: .isDirectory)
+        let downloads = home.appending(path: "Downloads", directoryHint: .isDirectory)
+
+        try FileManager.default.createDirectory(at: chromeRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: npmRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: swiftPMRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: downloads, withIntermediateDirectories: true)
+
+        let chromeCache = chromeRoot.appending(path: "Default", directoryHint: .isDirectory)
+        let npmCache = npmRoot.appending(path: "_cacache", directoryHint: .isDirectory)
+        let swiftCache = swiftPMRoot.appending(path: "repositories", directoryHint: .isDirectory)
+        let installer = downloads.appending(path: "Tool.pkg")
+        let document = downloads.appending(path: "Notes.txt")
+
+        try FileManager.default.createDirectory(at: chromeCache, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: npmCache, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: swiftCache, withIntermediateDirectories: true)
+        try writeBytes(count: 10, to: installer)
+        try writeBytes(count: 10, to: document)
+
+        let scanner = CleanupScanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+        let report = scanner.scan(
+            categories: [.browserCaches, .nodePackageCaches, .swiftPackageBuilds, .downloadedInstallers],
+            options: CleanupScanOptions(maxItemsPerCategory: 10, maxDescendantsPerItem: 50)
+        )
+
+        let itemsByCategory = Dictionary(grouping: report.items, by: \.category)
+        XCTAssertEqual(itemsByCategory[.browserCaches]?.map(\.displayName), ["Chrome"])
+        XCTAssertEqual(itemsByCategory[.nodePackageCaches]?.map(\.displayName), ["_cacache"])
+        XCTAssertEqual(itemsByCategory[.swiftPackageBuilds]?.map(\.displayName), ["repositories"])
+        XCTAssertEqual(itemsByCategory[.downloadedInstallers]?.map(\.displayName), ["Tool.pkg"])
+        XCTAssertFalse(report.items.contains { $0.displayName == "Notes.txt" })
+    }
+
     func testCleanupPlannerAcceptsOnlyAllowlistedChildPaths() throws {
         let root = try makeTemporaryRoot()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -80,6 +121,30 @@ final class CleanMacCoreTests: XCTestCase {
 
         XCTAssertEqual(plan.items.map(\.id), [accepted.id])
         XCTAssertEqual(plan.rejectedItems.count, 2)
+        XCTAssertEqual(Set(plan.rejectedItems.map(\.reason)), [.outsideAllowedRoot, .categoryRoot])
+    }
+
+    func testCleanupPlannerAcceptsExpandedCategoryRoots() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let npmRoot = home.appending(path: ".npm", directoryHint: .isDirectory)
+        let npmCache = npmRoot.appending(path: "_cacache", directoryHint: .isDirectory)
+        let outsideFile = home.appending(path: "Library/Caches/Other/cache.bin")
+
+        try FileManager.default.createDirectory(at: npmCache, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: outsideFile.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try writeBytes(count: 10, to: outsideFile)
+
+        let accepted = makeScanItem(category: .nodePackageCaches, path: npmCache.path, isDirectory: true)
+        let outside = makeScanItem(category: .nodePackageCaches, path: outsideFile.path)
+        let categoryRoot = makeScanItem(category: .nodePackageCaches, path: npmRoot.path, isDirectory: true)
+
+        let planner = CleanupPlanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+        let plan = planner.plan(for: [accepted, outside, categoryRoot])
+
+        XCTAssertEqual(plan.items.map(\.id), [accepted.id])
         XCTAssertEqual(Set(plan.rejectedItems.map(\.reason)), [.outsideAllowedRoot, .categoryRoot])
     }
 
@@ -144,7 +209,11 @@ final class CleanMacCoreTests: XCTestCase {
             isDirectory: isDirectory,
             isSizeEstimate: false,
             modifiedAt: nil,
-            risk: category == .downloads || category == .trash || category == .xcodeDerivedData ? .review : .safe
+            risk: reviewCategories.contains(category) ? .review : .safe
         )
+    }
+
+    private var reviewCategories: Set<CleanupCategory> {
+        [.downloads, .downloadedInstallers, .trash, .xcodeDerivedData]
     }
 }
