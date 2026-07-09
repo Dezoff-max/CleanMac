@@ -120,3 +120,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Decide whether to publish a new GitHub Release with the restored icon.
 - Bottleneck: none
 - Handoff: The previous thin icon failure is documented in `trace.md`. Pillow was not needed.
+
+## 2026-07-09 - TASK-018 - Main content technology background
+
+- What changed: Added the user's supplied light technology image as `MainWindowBackground`, rendered it behind every shared page container, and kept the native macOS sidebar separate from the custom background.
+- Files touched: `CleanMac/Assets.xcassets/MainWindowBackground.imageset/*`, `CleanMac/Views/CleanMacComponents.swift`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`, `trace.md`.
+- Checks run: background PNG dimension check with `sips`; asset JSON validation with `python3 -m json.tool`; `./script/build_and_run.sh --verify`; screenshots `/tmp/cleanmac-background-check-3.png` and `/tmp/cleanmac-background-settings.png`; `swift test --package-path CleanMacCore`; `git diff --check`.
+- Result: Passed. Dashboard and Settings show the supplied background in the main content area, controls remain readable, and the sidebar no longer shows detail content underneath.
+- Next step: Decide whether to package or release the visual refresh.
+- Bottleneck: none
+- Handoff: The first root `ZStack` approach caused sidebar bleed and was replaced with the safer `PageContainer` background approach.

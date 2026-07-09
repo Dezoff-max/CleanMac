@@ -38,6 +38,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Private GitHub repository and CI were configured.
 - Local `dist/` packaging exists and is ignored by git.
 - Main Dashboard/Scan/Results/Permissions/Settings window builds and launches.
+- Main content pages use the supplied light technology background while preserving the native macOS sidebar.
 - Menu bar Open focuses the existing main window before creating a new one.
 - `CleanMacCore` has a read-only scanner for user caches, logs, temporary files, Trash, Downloads review, Xcode Derived Data, browser caches, Node/npm/Yarn/pnpm caches, SwiftPM cache, and downloaded installers.
 - Results UI is backed by real scanner output, safe results are selected by default, and cleanup requires explicit confirmation.

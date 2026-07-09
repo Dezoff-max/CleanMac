@@ -1,4 +1,32 @@
+import AppKit
 import SwiftUI
+
+struct MainWindowBackground: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        ZStack {
+            Image("MainWindowBackground")
+                .resizable()
+                .scaledToFill()
+                .opacity(colorScheme == .dark ? 0.3 : 0.72)
+
+            Color(nsColor: .windowBackgroundColor)
+                .opacity(colorScheme == .dark ? 0.72 : 0.42)
+
+            LinearGradient(
+                colors: [
+                    Color(nsColor: .windowBackgroundColor).opacity(colorScheme == .dark ? 0.34 : 0.58),
+                    Color(nsColor: .windowBackgroundColor).opacity(colorScheme == .dark ? 0.54 : 0.24)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .allowsHitTesting(false)
+    }
+}
 
 struct PageContainer<Content: View>: View {
     let content: Content
@@ -15,6 +43,7 @@ struct PageContainer<Content: View>: View {
                 .frame(maxWidth: 1080, alignment: .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(MainWindowBackground())
     }
 }
 

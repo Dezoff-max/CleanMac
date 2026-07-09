@@ -2,23 +2,23 @@
 
 ## Task
 
-- ID: TASK-017
-- Title: Supplied broom icon restore
+- ID: TASK-018
+- Title: Main content technology background
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user rejected the previous thin minimal icon and supplied the exact broom artwork to use.
-- Expected value: make CleanMac visually consistent across Dock, menu bar, in-app brand surfaces, design assets, and docs with the supplied artwork.
-- Main risk: macOS can keep the old Dock icon in LaunchServices/Dock caches after a rebuild.
-- UX constraint: keep the same supplied image everywhere; do not template-tint the menu bar asset because that collapses the detailed icon into a thin monochrome shape.
+- Why this task now: the user asked to make the main window background match the supplied light technology example.
+- Expected value: make the main app pages feel less plain while keeping controls readable.
+- Main risk: custom backgrounds can interfere with `NavigationSplitView` sidebar behavior or reduce contrast.
+- UX constraint: keep the native macOS sidebar; apply the image only behind main page content.
 
 ## Builder Scope
 
 - Allowed files:
   - `CleanMac/Assets.xcassets/**`
-  - `Design/**`
-  - `docs/assets/**`
+  - `CleanMac/Views/CleanMacComponents.swift`
+  - `CleanMac/Views/MainWindowView.swift`
   - `project-analysis.md`
   - `roadmap.md`
   - `contract.md`
@@ -26,11 +26,11 @@
   - `trace.md`
 - Allowed commands:
   - `./script/build_and_run.sh --verify`
+  - `swift test --package-path CleanMacCore`
   - image dimension/JSON validation commands
   - read-only inspection commands
-  - LaunchServices registration refresh and `killall Dock`
 - Out of scope:
-  - changing app behavior;
+  - changing cleanup behavior;
   - changing bundle identifier/signing/release workflows;
   - adding third-party dependencies.
 - Dependencies allowed: no
@@ -39,17 +39,18 @@
 ## Evaluator Checklist
 
 - Done criteria:
-  - AppIcon, BrandIcon, MenuBarIcon, `Design/`, and `docs/assets` use the supplied broom artwork.
-  - MenuBarIcon is stored as an original color image at 18/36/54 px, without template rendering.
-  - Retina sizes are present and valid.
+  - `MainWindowBackground` asset exists and is valid.
+  - Dashboard and Settings pages show the supplied background in the main content area.
+  - Sidebar remains native and does not show detail content underneath.
+  - Controls, cards, and text remain readable.
   - App builds and launches with the new asset catalog.
-  - LaunchServices/Dock cache is refreshed and a screenshot confirms the Dock shows the new icon.
 - Required verification:
   - `./script/build_and_run.sh --verify`
-  - PNG dimension checks for updated assets
-  - JSON validation for updated asset catalogs
+  - `swift test --package-path CleanMacCore`
+  - PNG dimension check for the background asset
+  - JSON validation for the background asset catalog
 - Manual checks:
-  - Visual screenshot confirms the in-app brand icon, real menu bar icon, and Dock icon use the supplied artwork.
+  - Visual screenshots confirm the Dashboard and Settings page background and sidebar behavior.
 - Evidence to collect:
   - Build/run command exit status.
   - Visual screenshot path.
@@ -59,11 +60,12 @@
 
 Restart or shrink the task if:
 - asset catalog compilation fails;
-- the menu bar icon remains unreadable after template rendering;
+- the background causes sidebar/detail overlap;
+- cards or text become hard to read;
 - the update requires new dependencies.
 
 ## Result
 
 - Status: complete
-- Verification result: Passed. Asset PNG dimensions and JSON are valid, `./script/build_and_run.sh --verify` passes, `/tmp/cleanmac-supplied-icon-preview.png` previews the supplied artwork at app/menu sizes, and `/tmp/cleanmac-icon-runtime-after-refresh.png` confirms the in-app, menu bar, and Dock icons after LaunchServices/Dock refresh.
-- Notes: Pillow was not needed; icons were generated from the supplied PNG with system image tooling.
+- Verification result: Passed. The background asset JSON and dimensions are valid, `./script/build_and_run.sh --verify` passes, `swift test --package-path CleanMacCore` passes, and screenshots `/tmp/cleanmac-background-check-3.png` plus `/tmp/cleanmac-background-settings.png` confirm the background on Dashboard and Settings without sidebar bleed.
+- Notes: The first ZStack approach was rejected during visual QA because it let detail content show under the sidebar; the final approach applies the background inside `PageContainer`.

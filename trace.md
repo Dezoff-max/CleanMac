@@ -2,6 +2,13 @@
 
 Append-only trace of failures, restarts, and judgment divergences.
 
+## 2026-07-09 - TASK-018 - Background under sidebar
+
+- Symptom: the first main-window background implementation used a root detail `ZStack`, and visual QA showed detail content bleeding under the native sidebar.
+- Cause: the custom root background changed how the translucent `NavigationSplitView` sidebar composited with detail content.
+- Fix: moved the background into the shared `PageContainer`, so each page owns its content background while the split view keeps native sidebar behavior.
+- Status: resolved; `/tmp/cleanmac-background-settings.png` shows Settings with the background and clean sidebar.
+
 ## 2026-07-09 - TASK-016 - Thin icon rejected
 
 - Symptom: the generated minimal broom looked like a thin stroke in the window/menu bar, and the Dock still appeared to show the older icon.

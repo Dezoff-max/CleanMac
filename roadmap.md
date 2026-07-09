@@ -237,3 +237,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-018
+  Title: Main content technology background
+  Goal: Add the user's supplied light technology background to the main app window without breaking native macOS split-view layout.
+  What to do: Add the background image as an asset, render it behind all page content through the shared page container, and keep the sidebar on native macOS material.
+  Files: `CleanMac/Assets.xcassets/**`, `CleanMac/Views/CleanMacComponents.swift`, `CleanMac/Views/MainWindowView.swift`, Loop docs
+  Definition of done: Dashboard and Settings pages show the supplied background in the main content area, controls remain readable, and the sidebar does not show detail content underneath.
+  Verification: Asset JSON/dimension checks; `./script/build_and_run.sh --verify`; `swift test --package-path CleanMacCore`; visual screenshot checks.
+  Priority: medium
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small
