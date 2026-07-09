@@ -7,6 +7,11 @@
 "section.permissions" = "Доступы";
 "section.settings" = "Настройки";
 
+"sidebar.language" = "Язык";
+"sidebar.appearance" = "Тема";
+"sidebar.appearance.light" = "Светлая";
+"sidebar.appearance.dark" = "Тёмная";
+
 "menu.open" = "Открыть CleanMac";
 "menu.quit" = "Выйти";
 

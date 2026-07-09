@@ -130,3 +130,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Decide whether to package or release the visual refresh.
 - Bottleneck: none
 - Handoff: The first root `ZStack` approach caused sidebar bleed and was replaced with the safer `PageContainer` background approach.
+
+## 2026-07-09 - TASK-019 - Sidebar language and appearance controls
+
+- What changed: Added compact sidebar footer controls for RU/EN language and light/dark appearance, stored preferences with `@AppStorage`, routed localized strings through the selected language bundle, and applied the selected color scheme to the main window and menu bar popover.
+- Files touched: `CleanMac/CleanMacApp.swift`, `CleanMac/Support/Localizer.swift`, `CleanMac/Views/SidebarView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `./script/build_and_run.sh --verify`; screenshots `/tmp/cleanmac-sidebar-controls-en-dark.png` and `/tmp/cleanmac-sidebar-controls-final.png`; `swift test --package-path CleanMacCore`.
+- Result: Passed. EN/dark and RU/light states both render correctly, and the controls stay visible at the bottom of the sidebar.
+- Next step: Decide whether to package/release the sidebar preference controls or continue with cleanup functionality.
+- Bottleneck: none
+- Handoff: The local app preference state was returned to RU/light after verification.

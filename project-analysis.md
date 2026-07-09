@@ -39,6 +39,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Local `dist/` packaging exists and is ignored by git.
 - Main Dashboard/Scan/Results/Permissions/Settings window builds and launches.
 - Main content pages use the supplied light technology background while preserving the native macOS sidebar.
+- Sidebar footer now has persistent RU/EN language and light/dark appearance controls; language still defaults from system preferences when no override exists.
 - Menu bar Open focuses the existing main window before creating a new one.
 - `CleanMacCore` has a read-only scanner for user caches, logs, temporary files, Trash, Downloads review, Xcode Derived Data, browser caches, Node/npm/Yarn/pnpm caches, SwiftPM cache, and downloaded installers.
 - Results UI is backed by real scanner output, safe results are selected by default, and cleanup requires explicit confirmation.
@@ -51,6 +52,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Downloads, logs, and temporary files use conservative smart rules to reduce noisy candidates from recent small downloads and likely active files.
 - Permissions UI checks live Full Disk Access status by probing protected metadata/readability and can refresh the result.
 - English and Russian app localizations are included; macOS selects the language from system preferences.
+- The selected language override applies through the app's localizer, and the selected appearance applies to both the main window and menu bar popover.
 - Private GitHub Release `v0.1.0` exists with unsigned zip and sha256 assets.
 - Release packaging can optionally sign with Developer ID, enable hardened runtime, submit to Apple notary service, staple, and re-zip when credentials are configured.
 

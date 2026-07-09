@@ -2,23 +2,25 @@
 
 ## Task
 
-- ID: TASK-018
-- Title: Main content technology background
+- ID: TASK-019
+- Title: Sidebar language and appearance controls
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user asked to make the main window background match the supplied light technology example.
-- Expected value: make the main app pages feel less plain while keeping controls readable.
-- Main risk: custom backgrounds can interfere with `NavigationSplitView` sidebar behavior or reduce contrast.
-- UX constraint: keep the native macOS sidebar; apply the image only behind main page content.
+- Why this task now: the user asked to place RU/EN language switching and light/dark theme switching at the bottom of the sidebar.
+- Expected value: make language and theme changes quick without opening Settings, while preserving native macOS sidebar behavior.
+- Main risk: manual localization overrides can fail to refresh visible strings, and custom sidebar footer controls can crowd the navigation list.
+- UX constraint: keep the sidebar native and compact; controls must remain visible at the bottom of the sidebar.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMac/Assets.xcassets/**`
-  - `CleanMac/Views/CleanMacComponents.swift`
+  - `CleanMac/CleanMacApp.swift`
+  - `CleanMac/Support/Localizer.swift`
+  - `CleanMac/Views/SidebarView.swift`
   - `CleanMac/Views/MainWindowView.swift`
+  - `CleanMac/*/Localizable.strings`
   - `project-analysis.md`
   - `roadmap.md`
   - `contract.md`
@@ -27,7 +29,9 @@
 - Allowed commands:
   - `./script/build_and_run.sh --verify`
   - `swift test --package-path CleanMacCore`
-  - image dimension/JSON validation commands
+  - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
+  - `git diff --check`
+  - visual screenshot commands
   - read-only inspection commands
 - Out of scope:
   - changing cleanup behavior;
@@ -39,33 +43,34 @@
 ## Evaluator Checklist
 
 - Done criteria:
-  - `MainWindowBackground` asset exists and is valid.
-  - Dashboard and Settings pages show the supplied background in the main content area.
-  - Sidebar remains native and does not show detail content underneath.
-  - Controls, cards, and text remain readable.
-  - App builds and launches with the new asset catalog.
+  - Sidebar footer contains a RU/EN segmented language switcher.
+  - Sidebar footer contains a light/dark appearance switcher.
+  - App defaults language from the system when no override exists.
+  - Selected language applies to visible app strings and formatting.
+  - Selected appearance applies to the main window and menu bar popover.
+  - Main window still builds, launches, and keeps the controls visible at the bottom of the sidebar.
 - Required verification:
+  - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
+  - `git diff --check`
   - `./script/build_and_run.sh --verify`
   - `swift test --package-path CleanMacCore`
-  - PNG dimension check for the background asset
-  - JSON validation for the background asset catalog
 - Manual checks:
-  - Visual screenshots confirm the Dashboard and Settings page background and sidebar behavior.
+  - Visual screenshots confirm RU/light and EN/dark states with sidebar controls visible.
 - Evidence to collect:
-  - Build/run command exit status.
+  - Build/test command exit status.
   - Visual screenshot path.
   - File list touched.
 
 ## Restart Signals
 
 Restart or shrink the task if:
-- asset catalog compilation fails;
-- the background causes sidebar/detail overlap;
-- cards or text become hard to read;
+- sidebar controls are clipped or hidden at the bottom;
+- changing language does not refresh visible strings;
+- changing appearance only affects one surface;
 - the update requires new dependencies.
 
 ## Result
 
 - Status: complete
-- Verification result: Passed. The background asset JSON and dimensions are valid, `./script/build_and_run.sh --verify` passes, `swift test --package-path CleanMacCore` passes, and screenshots `/tmp/cleanmac-background-check-3.png` plus `/tmp/cleanmac-background-settings.png` confirm the background on Dashboard and Settings without sidebar bleed.
-- Notes: The first ZStack approach was rejected during visual QA because it let detail content show under the sidebar; the final approach applies the background inside `PageContainer`.
+- Verification result: Passed. `plutil`, `git diff --check`, `./script/build_and_run.sh --verify`, and `swift test --package-path CleanMacCore` pass; screenshots `/tmp/cleanmac-sidebar-controls-en-dark.png` and `/tmp/cleanmac-sidebar-controls-final.png` confirm EN/dark and RU/light states.
+- Notes: Language and appearance are stored through `@AppStorage`; localization lookup now uses the selected bundle while the first default language follows system preferences.

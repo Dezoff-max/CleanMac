@@ -251,3 +251,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-019
+  Title: Sidebar language and appearance controls
+  Goal: Let the user switch RU/EN and light/dark directly from the bottom of the sidebar.
+  What to do: Add persistent sidebar footer controls, route localization through the selected language bundle, and apply the selected color scheme to the main window and menu bar popover.
+  Files: `CleanMac/CleanMacApp.swift`, `CleanMac/Support/Localizer.swift`, `CleanMac/Views/SidebarView.swift`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: RU/EN and light/dark controls are visible at the bottom of the sidebar; language defaults from the system when unset; selected language/theme apply to the app UI.
+  Verification: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `./script/build_and_run.sh --verify`; `swift test --package-path CleanMacCore`; visual screenshot checks.
+  Priority: medium
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small

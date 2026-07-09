@@ -7,6 +7,11 @@
 "section.permissions" = "Permissions";
 "section.settings" = "Settings";
 
+"sidebar.language" = "Language";
+"sidebar.appearance" = "Appearance";
+"sidebar.appearance.light" = "Light";
+"sidebar.appearance.dark" = "Dark";
+
 "menu.open" = "Open CleanMac";
 "menu.quit" = "Quit";
 
