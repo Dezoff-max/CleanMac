@@ -223,3 +223,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-017
+  Title: Supplied broom icon restore
+  Goal: Replace the failed thin minimal icon with the user's supplied detailed broom artwork everywhere, including Dock and menu bar.
+  What to do: Regenerate AppIcon, BrandIcon, MenuBarIcon, design, and docs assets from the supplied PNG; remove menu bar template rendering so the color icon is not reduced to a thin monochrome stroke; refresh LaunchServices/Dock registration.
+  Files: `CleanMac/Assets.xcassets/**`, `Design/**`, `docs/assets/**`, Loop docs
+  Definition of done: Window brand, menu bar, Dock app icon, design assets, and docs asset all use the supplied broom icon; Debug app builds and launches; Dock shows the new icon after cache refresh.
+  Verification: PNG dimension checks; asset JSON validation; `./script/build_and_run.sh --verify`; visual screenshot check; LaunchServices/Dock refresh.
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small

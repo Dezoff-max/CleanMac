@@ -110,3 +110,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Decide whether to publish a new release for the icon refresh.
 - Bottleneck: release decision
 - Handoff: Pillow was not needed; icons were generated with system AppKit/CoreGraphics.
+
+## 2026-07-09 - TASK-017 - Supplied broom icon restore
+
+- What changed: Replaced the rejected thin minimal icon with the user's supplied detailed broom artwork everywhere: AppIcon, BrandIcon, MenuBarIcon, design assets, and docs asset. Removed menu bar template rendering so the color icon is preserved, added `Design/source-icon.png` as the canonical source, rebuilt the app, and refreshed LaunchServices/Dock registration.
+- Files touched: `CleanMac/Assets.xcassets/AppIcon.appiconset/*`, `CleanMac/Assets.xcassets/BrandIcon.imageset/*`, `CleanMac/Assets.xcassets/MenuBarIcon.imageset/*`, `Design/app-icon.png`, `Design/toolbar-icon.png`, `Design/source-icon.png`, `docs/assets/icon-256.png`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`, `trace.md`.
+- Checks run: PNG dimension checks with `sips`; asset JSON validation with `python3 -m json.tool`; visual preview `/tmp/cleanmac-supplied-icon-preview.png`; `./script/build_and_run.sh --verify`; LaunchServices registration refresh; `killall Dock`; visual screenshot `/tmp/cleanmac-icon-runtime-after-refresh.png`.
+- Result: Passed. The window brand icon, real menu bar icon, and Dock icon all show the supplied broom artwork after rebuild and cache refresh.
+- Next step: Decide whether to publish a new GitHub Release with the restored icon.
+- Bottleneck: none
+- Handoff: The previous thin icon failure is documented in `trace.md`. Pillow was not needed.
