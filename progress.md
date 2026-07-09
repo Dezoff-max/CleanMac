@@ -190,3 +190,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Add click-through behavior from notifications to Results or launch-at-login support.
 - Bottleneck: product decision.
 - Handoff: This was UI-only; scan, scheduling, cleanup, and packaging behavior were not changed.
+
+## 2026-07-09 - TASK-025 - Settings notification test button
+
+- What changed: Added `CleanMacNotificationService.sendTestNotification`, a Settings "Test Notification" button under the auto-scan notification toggle, localized test notification copy, and inline delivery statuses for sent, disabled, denied, and failed states.
+- Files touched: `CleanMac/Support/CleanMacNotificationService.swift`, `CleanMac/Views/SettingsView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`; `./script/build_and_run.sh --verify`; `swift test --package-path CleanMacCore`; visual screenshot `/tmp/cleanmac-settings-test-notification.png`.
+- Result: Passed. Settings shows the test button in Russian without clipping, and notification delivery now reports whether macOS blocked the banner.
+- Next step: Add notification click-through behavior or launch-at-login support.
+- Bottleneck: product decision.
+- Handoff: The test button may trigger the macOS notification permission prompt on first use. No scan, cleanup, or scheduling behavior changed.

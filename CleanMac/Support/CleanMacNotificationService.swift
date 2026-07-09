@@ -2,6 +2,13 @@ import CleanMacCore
 import Foundation
 import UserNotifications
 
+enum CleanMacNotificationDeliveryResult {
+    case sent
+    case disabled
+    case denied
+    case failed
+}
+
 enum CleanMacNotificationService {
     private static let center = UNUserNotificationCenter.current()
 
@@ -57,6 +64,33 @@ enum CleanMacNotificationService {
         await add(request)
     }
 
+    static func sendTestNotification(defaults: UserDefaults = .standard) async -> CleanMacNotificationDeliveryResult {
+        guard notificationsEnabled(defaults: defaults) else {
+            return .disabled
+        }
+
+        let settings = await notificationSettings()
+        switch settings.authorizationStatus {
+        case .authorized, .provisional:
+            break
+        case .notDetermined:
+            guard await requestAuthorization() else {
+                return .denied
+            }
+        default:
+            return .denied
+        }
+
+        let content = UNMutableNotificationContent()
+        content.title = L.t("notification.test.title")
+        content.body = L.t("notification.test.body")
+        content.sound = .default
+
+        let identifier = "CleanMac.testNotification.\(Int(Date().timeIntervalSince1970))"
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
+        return await add(request) ? .sent : .failed
+    }
+
     private static func notificationSettings() async -> UNNotificationSettings {
         await withCheckedContinuation { continuation in
             center.getNotificationSettings { settings in
@@ -73,10 +107,11 @@ enum CleanMacNotificationService {
         }
     }
 
-    private static func add(_ request: UNNotificationRequest) async {
+    @discardableResult
+    private static func add(_ request: UNNotificationRequest) async -> Bool {
         await withCheckedContinuation { continuation in
-            center.add(request) { _ in
-                continuation.resume()
+            center.add(request) { error in
+                continuation.resume(returning: error == nil)
             }
         }
     }

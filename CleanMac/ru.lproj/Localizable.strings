@@ -31,6 +31,8 @@
 "status.autoScan.next" = "Следующий автоскан: %@";
 "notification.autoScan.title" = "Автосканирование завершено";
 "notification.autoScan.body" = "Найдено: %d, объём: %@. Очистка не выполнялась.";
+"notification.test.title" = "CleanMac уведомления работают";
+"notification.test.body" = "Это тестовое уведомление. Автоскан сможет показывать такой баннер после завершения.";
 
 "button.scan" = "Сканировать";
 "button.scanning" = "Сканирование";
@@ -229,6 +231,11 @@
 "settings.autoScanStartTime" = "Начинать с";
 "settings.autoScanAreas" = "Выбранные области: %d";
 "settings.autoScanNotifications" = "Уведомлять после автоскана";
+"settings.testNotification" = "Тест уведомления";
+"settings.testNotification.sent" = "Отправлено";
+"settings.testNotification.disabled" = "Включи уведомления";
+"settings.testNotification.denied" = "Запрещено macOS";
+"settings.testNotification.failed" = "Не отправлено";
 
 "area.userCaches.title" = "Кэши пользователя";
 "area.userCaches.detail" = "Папки кэша приложений в пользовательской Library.";

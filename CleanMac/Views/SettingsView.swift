@@ -10,6 +10,8 @@ struct SettingsView: View {
     @AppStorage(CleanMacPreferenceKeys.autoScanMinute) private var autoScanMinute = CleanMacScanSchedule.defaultMinute
     @AppStorage(CleanMacPreferenceKeys.autoScanNotificationsEnabled) private var autoScanNotificationsEnabled = true
     @AppStorage(CleanMacPreferenceKeys.selectedAreaIDs) private var selectedAreaIDsRaw = CleanMacScanPreferences.defaultSelectedAreaIDsRaw
+    @State private var isSendingTestNotification = false
+    @State private var notificationTestResult: CleanMacNotificationDeliveryResult?
 
     private var selectedAreaCount: Int {
         guard !selectedAreaIDsRaw.isEmpty else {
@@ -116,22 +118,108 @@ struct SettingsView: View {
 
                             Divider()
 
-                            Toggle(isOn: $autoScanNotificationsEnabled) {
-                                Label(L.t("settings.autoScanNotifications"), systemImage: "bell.badge")
-                            }
-                            .onChange(of: autoScanNotificationsEnabled) { _, isEnabled in
-                                guard isEnabled else {
-                                    return
+                            VStack(alignment: .leading, spacing: 8) {
+                                Toggle(isOn: $autoScanNotificationsEnabled) {
+                                    Label(L.t("settings.autoScanNotifications"), systemImage: "bell.badge")
+                                }
+                                .onChange(of: autoScanNotificationsEnabled) { _, isEnabled in
+                                    notificationTestResult = nil
+
+                                    guard isEnabled else {
+                                        return
+                                    }
+
+                                    Task {
+                                        _ = await CleanMacNotificationService.requestAuthorizationIfNeeded()
+                                    }
                                 }
 
-                                Task {
-                                    _ = await CleanMacNotificationService.requestAuthorizationIfNeeded()
+                                HStack(spacing: 10) {
+                                    Button {
+                                        sendTestNotification()
+                                    } label: {
+                                        Label(L.t("settings.testNotification"), systemImage: "bell")
+                                    }
+                                    .disabled(isSendingTestNotification)
+
+                                    if isSendingTestNotification {
+                                        ProgressView()
+                                            .controlSize(.small)
+                                    }
+
+                                    if let notificationTestResult {
+                                        notificationStatusLabel(for: notificationTestResult)
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+
+    private func sendTestNotification() {
+        guard !isSendingTestNotification else {
+            return
+        }
+
+        notificationTestResult = nil
+        isSendingTestNotification = true
+
+        Task {
+            let result = await CleanMacNotificationService.sendTestNotification()
+            await MainActor.run {
+                notificationTestResult = result
+                isSendingTestNotification = false
+            }
+        }
+    }
+
+    private func notificationStatusLabel(for result: CleanMacNotificationDeliveryResult) -> some View {
+        Label {
+            Text(notificationStatusText(for: result))
+        } icon: {
+            Image(systemName: notificationStatusIcon(for: result))
+        }
+        .font(.caption)
+        .foregroundStyle(notificationStatusColor(for: result))
+    }
+
+    private func notificationStatusText(for result: CleanMacNotificationDeliveryResult) -> String {
+        switch result {
+        case .sent:
+            return L.t("settings.testNotification.sent")
+        case .disabled:
+            return L.t("settings.testNotification.disabled")
+        case .denied:
+            return L.t("settings.testNotification.denied")
+        case .failed:
+            return L.t("settings.testNotification.failed")
+        }
+    }
+
+    private func notificationStatusIcon(for result: CleanMacNotificationDeliveryResult) -> String {
+        switch result {
+        case .sent:
+            return "checkmark.circle"
+        case .disabled:
+            return "bell.slash"
+        case .denied:
+            return "exclamationmark.triangle"
+        case .failed:
+            return "xmark.circle"
+        }
+    }
+
+    private func notificationStatusColor(for result: CleanMacNotificationDeliveryResult) -> Color {
+        switch result {
+        case .sent:
+            return .green
+        case .disabled:
+            return .secondary
+        case .denied, .failed:
+            return .orange
         }
     }
 }

@@ -31,6 +31,8 @@
 "status.autoScan.next" = "Next auto scan: %@";
 "notification.autoScan.title" = "Auto scan finished";
 "notification.autoScan.body" = "%d items, %@ found. No cleanup was performed.";
+"notification.test.title" = "CleanMac notifications work";
+"notification.test.body" = "This is a test notification. Auto scan can show this kind of banner after finishing.";
 
 "button.scan" = "Scan";
 "button.scanning" = "Scanning";
@@ -229,6 +231,11 @@
 "settings.autoScanStartTime" = "Start from";
 "settings.autoScanAreas" = "Selected areas: %d";
 "settings.autoScanNotifications" = "Notify after auto scan";
+"settings.testNotification" = "Test Notification";
+"settings.testNotification.sent" = "Sent";
+"settings.testNotification.disabled" = "Enable notifications";
+"settings.testNotification.denied" = "Blocked by macOS";
+"settings.testNotification.failed" = "Not sent";
 
 "area.userCaches.title" = "User Caches";
 "area.userCaches.detail" = "Application cache folders in the current user Library.";

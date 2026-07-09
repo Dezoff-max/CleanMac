@@ -335,3 +335,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-025
+  Title: Settings notification test button
+  Goal: Let the user diagnose why scheduled scan notifications may not appear.
+  What to do: Add a Settings test button near the auto-scan notification toggle, request macOS notification permission when needed, send a localized test notification, and show inline delivery status.
+  Files: `CleanMac/Support/CleanMacNotificationService.swift`, `CleanMac/Views/SettingsView.swift`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: Settings shows a localized test notification button, successful tests post a macOS notification, denied/disabled states show inline status, and no scan or cleanup behavior changes.
+  Verification: `swift test --package-path CleanMacCore`; Debug Xcode build; localization lint; `git diff --check`; `./script/build_and_run.sh --verify`; visual screenshot check.
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small
