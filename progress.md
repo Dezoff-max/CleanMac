@@ -150,3 +150,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Add persistent cleanup history or deeper preview metadata for large downloads.
 - Bottleneck: product decision
 - Handoff: The UI smoke used a read-only scan only; no cleanup action was triggered.
+
+## 2026-07-09 - TASK-021 - Scheduled scan status menu
+
+- What changed: Added persisted scan preferences, a read-only auto-scan scheduler, Settings controls for enable/time, menu bar disk usage, last scan source/time/result summary, and guards so manual and scheduled scans do not overlap.
+- Files touched: `CleanMac/CleanMacApp.swift`, `CleanMac/Support/CleanMacAutoScanScheduler.swift`, `CleanMac/Support/CleanMacPreferences.swift`, `CleanMac/Support/CleanMacFormatters.swift`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/SettingsView.swift`, `CleanMac/Views/StatusMenuView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `swift test --package-path CleanMacCore`; `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`; `./script/build_and_run.sh --verify`; defaults-based scheduled scan smoke test (`source=scheduled`, `scanInProgress=0`); visual screenshot `/tmp/cleanmac-status-menu.png`.
+- Result: Passed. The menu bar shows readable disk and scan status, and the scheduler updates last scan data from a safe read-only scan.
+- Next step: Add launch-at-login support or notifications after scheduled scans.
+- Bottleneck: product decision
+- Handoff: Auto scan runs only while CleanMac is running; it never performs cleanup or deletion.

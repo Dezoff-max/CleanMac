@@ -279,3 +279,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-021
+  Title: Scheduled scan status menu
+  Goal: Let CleanMac scan selected areas automatically at a chosen time while keeping current disk and scan status visible in the menu bar.
+  What to do: Add persistent scan preferences, a read-only scheduler, Settings controls, menu bar disk/last-scan status, and overlap guards for manual scans.
+  Files: `CleanMac/CleanMacApp.swift`, `CleanMac/Support/**`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/SettingsView.swift`, `CleanMac/Views/StatusMenuView.swift`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: Settings configures auto scan time, scheduled scans store last scan status without cleanup, menu bar shows disk usage and current scan info, and manual/scheduled scans do not overlap.
+  Verification: `swift test --package-path CleanMacCore`; `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`; `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `./script/build_and_run.sh --verify`; defaults-based scheduled scan smoke test; visual screenshot check.
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: high impact / medium risk / medium

@@ -3,11 +3,7 @@ import SwiftUI
 
 struct MainWindowView: View {
     @SceneStorage("CleanMac.selectedSection") private var selectedSectionID: String?
-    @State private var selectedAreaIDs = Set(
-        CleanMacCatalog.cleanupAreas
-            .filter(\.isDefaultSelected)
-            .map(\.id)
-    )
+    @State private var selectedAreaIDs = CleanMacScanPreferences.selectedAreaIDs()
     @State private var scanItems: [CleanupScanItem] = []
     @State private var scanResults: [ScanResult] = []
     @State private var scanReport: CleanupScanReport?
@@ -26,11 +22,16 @@ struct MainWindowView: View {
     @AppStorage("CleanMac.safeModeEnabled") private var safeModeEnabled = true
     @AppStorage("CleanMac.confirmBeforeCleanup") private var confirmBeforeCleanup = true
     @AppStorage("CleanMac.showMenuBarStatus") private var showMenuBarStatus = true
+    @AppStorage(CleanMacPreferenceKeys.scanInProgress) private var scanInProgress = false
 
     private let minimumScanAnimationDuration: TimeInterval = 1.15
 
     private var selectedSection: CleanMacSection {
         CleanMacSection(rawValue: selectedSectionID ?? CleanMacSection.dashboard.rawValue) ?? .dashboard
+    }
+
+    private var isAnyScanInProgress: Bool {
+        isScanning || scanInProgress
     }
 
     var body: some View {
@@ -44,10 +45,10 @@ struct MainWindowView: View {
                         Button {
                             runScan()
                         } label: {
-                            Label(isScanning ? L.t("button.scanning") : L.t("button.scan"), systemImage: "magnifyingglass")
+                            Label(isAnyScanInProgress ? L.t("button.scanning") : L.t("button.scan"), systemImage: "magnifyingglass")
                         }
-                        .accessibilityLabel(isScanning ? L.t("button.scanning") : L.t("button.scan"))
-                        .disabled(isScanning || selectedAreaIDs.isEmpty)
+                        .accessibilityLabel(isAnyScanInProgress ? L.t("button.scanning") : L.t("button.scan"))
+                        .disabled(isAnyScanInProgress || selectedAreaIDs.isEmpty)
 
                         Button {
                             selectedSectionID = CleanMacSection.settings.rawValue
@@ -61,6 +62,9 @@ struct MainWindowView: View {
                     MainWindowController.configure(window)
                 })
         }
+        .onChange(of: selectedAreaIDs) { _, newValue in
+            CleanMacScanPreferences.storeSelectedAreaIDs(newValue)
+        }
     }
 
     @ViewBuilder
@@ -72,7 +76,7 @@ struct MainWindowView: View {
                 resultCount: scanResults.count,
                 selectedAreaCount: selectedAreaIDs.count,
                 selectedAreas: selectedAreas,
-                isScanning: isScanning,
+                isScanning: isAnyScanInProgress,
                 scanError: scanError,
                 onStartScan: runScan,
                 onChooseAreas: {
@@ -82,7 +86,7 @@ struct MainWindowView: View {
         case .scan:
             ScanView(
                 selectedAreaIDs: $selectedAreaIDs,
-                isScanning: isScanning,
+                isScanning: isAnyScanInProgress,
                 scanProgress: scanProgress,
                 onStartScan: runScan
             )
@@ -124,7 +128,7 @@ struct MainWindowView: View {
     }
 
     private func runScan() {
-        guard !isScanning else {
+        guard !isAnyScanInProgress else {
             return
         }
 
@@ -134,6 +138,7 @@ struct MainWindowView: View {
         }
 
         isScanning = true
+        scanInProgress = true
         scanProgress = CleanupScanProgress(
             phase: .preparing,
             currentCategory: nil,
@@ -178,9 +183,11 @@ struct MainWindowView: View {
             scanReport = report
             scanItems = report.items
             scanResults = report.items.map(ScanResult.init)
+            CleanMacScanPreferences.storeLastScan(report, source: .manual)
             selectedResultIDs = Set(report.items.filter { $0.risk == .safe }.map(\.id))
             selectedSectionID = CleanMacSection.results.rawValue
             isScanning = false
+            scanInProgress = false
             scanProgress = nil
 
             if report.issues.isEmpty {

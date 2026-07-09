@@ -54,6 +54,8 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Permissions UI checks live Full Disk Access status by probing protected metadata/readability and can refresh the result.
 - English and Russian app localizations are included; macOS selects the language from system preferences.
 - The selected language override applies through the app's localizer, and the selected appearance applies to both the main window and menu bar popover.
+- The menu bar popover shows current disk usage, scan-in-progress state, last scan source/time, and last scan result summary.
+- Settings can enable a read-only daily auto scan at a selected time while the app is running; it uses the currently selected scan areas and updates menu bar status.
 - Private GitHub Release `v0.1.0` exists with unsigned zip and sha256 assets.
 - Release packaging can optionally sign with Developer ID, enable hardened runtime, submit to Apple notary service, staple, and re-zip when credentials are configured.
 
@@ -64,6 +66,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - The scanner is intentionally conservative and capped; deeper stale-file heuristics and persistent cleanup previews are future work.
 - Cleanup is intentionally Trash-based; permanent deletion is still out of scope.
 - Cleanup history is current-session only; persistent history across app launches is still future work.
+- Scheduled auto scan currently runs only while the CleanMac app process is running; launch-at-login or a privileged background agent is still future work.
 - Local Xcode emits a CoreSimulator warning; it does not currently block macOS builds.
 
 ## Strengths
@@ -83,5 +86,6 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 
 1. Configure Apple Developer signing secrets and cut a signed/notarized release.
 2. Persist cleanup history safely across app launches.
-3. Add deeper cleanup previews for large downloads and developer caches.
-4. Add more permission-specific scanner hints when protected roots are unavailable.
+3. Add launch-at-login support so scheduled scans can happen after reboot/login without manually opening CleanMac.
+4. Add deeper cleanup previews for large downloads and developer caches.
+5. Add more permission-specific scanner hints when protected roots are unavailable.

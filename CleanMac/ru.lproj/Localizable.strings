@@ -14,6 +14,18 @@
 
 "menu.open" = "Открыть CleanMac";
 "menu.quit" = "Выйти";
+"status.disk.defaultName" = "Macintosh HD";
+"status.disk.percent" = "занято %d%%";
+"status.disk.usedOfTotal" = "Занято %@ из %@";
+"status.disk.free" = "Свободно %@";
+"status.lastScan.title" = "Последний скан";
+"status.lastScan.summary" = "%d элементов, %@";
+"status.lastScan.empty" = "Запусти сканирование, чтобы увидеть потенциал очистки.";
+"status.lastScan.manual" = "Вручную";
+"status.lastScan.scheduled" = "По расписанию";
+"status.scanning" = "Сканирование";
+"status.autoScan.running" = "Сканирую выбранные области";
+"status.autoScan.next" = "Следующий автоскан: %@";
 
 "button.scan" = "Сканировать";
 "button.scanning" = "Сканирование";
@@ -203,6 +215,9 @@
 "settings.safeMode" = "Безопасный режим";
 "settings.confirmBeforeCleanup" = "Подтверждать перед очисткой";
 "settings.showMenuBarStatus" = "Показывать статус в меню";
+"settings.autoScan" = "Автосканирование по расписанию";
+"settings.autoScanTime" = "Время сканирования";
+"settings.autoScanAreas" = "Выбранные области: %d";
 
 "area.userCaches.title" = "Кэши пользователя";
 "area.userCaches.detail" = "Папки кэша приложений в пользовательской Library.";

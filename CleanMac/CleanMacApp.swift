@@ -34,12 +34,19 @@ struct CleanMacApp: App {
 }
 
 final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
+    private let autoScanScheduler = CleanMacAutoScanScheduler()
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+        autoScanScheduler.start()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        autoScanScheduler.stop()
     }
 }

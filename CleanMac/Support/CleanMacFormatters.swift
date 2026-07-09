@@ -15,6 +15,13 @@ enum CleanMacFormatters {
         return formatter
     }()
 
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        formatter.dateStyle = .none
+        return formatter
+    }()
+
     static func bytes(_ value: Int64) -> String {
         guard value > 0 else {
             return L.t("size.zero")
@@ -27,5 +34,9 @@ enum CleanMacFormatters {
             return L.t("date.unknown")
         }
         return relativeFormatter.localizedString(for: date, relativeTo: Date())
+    }
+
+    static func time(_ date: Date) -> String {
+        timeFormatter.string(from: date)
     }
 }

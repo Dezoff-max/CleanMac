@@ -14,6 +14,18 @@
 
 "menu.open" = "Open CleanMac";
 "menu.quit" = "Quit";
+"status.disk.defaultName" = "Macintosh HD";
+"status.disk.percent" = "%d%% used";
+"status.disk.usedOfTotal" = "%@ of %@ used";
+"status.disk.free" = "%@ free";
+"status.lastScan.title" = "Last scan";
+"status.lastScan.summary" = "%d items, %@";
+"status.lastScan.empty" = "Run a scan to show cleanup potential.";
+"status.lastScan.manual" = "Manual";
+"status.lastScan.scheduled" = "Scheduled";
+"status.scanning" = "Scanning";
+"status.autoScan.running" = "Scanning selected areas";
+"status.autoScan.next" = "Next auto scan: %@";
 
 "button.scan" = "Scan";
 "button.scanning" = "Scanning";
@@ -203,6 +215,9 @@
 "settings.safeMode" = "Safe Mode";
 "settings.confirmBeforeCleanup" = "Confirm Before Cleanup";
 "settings.showMenuBarStatus" = "Show Menu Bar Status";
+"settings.autoScan" = "Scheduled auto scan";
+"settings.autoScanTime" = "Scan time";
+"settings.autoScanAreas" = "Selected areas: %d";
 
 "area.userCaches.title" = "User Caches";
 "area.userCaches.detail" = "Application cache folders in the current user Library.";
