@@ -83,4 +83,4 @@ Restart or shrink the task if:
 
 - Status: complete
 - Verification result: Passed. SwiftPM tests, Debug Xcode build, localization lint, diff check, `./script/build_and_run.sh --verify`, defaults-based scheduled scan smoke test, visual Settings screenshot `/tmp/cleanmac-autoscan-notifications-settings-2.png`, `./script/package_release.sh`, checksum validation, and strict code-sign validation after zip extraction all pass.
-- Notes: Scheduled scan notifications are localized and permission-aware; manual scans do not notify. The local unsigned/ad-hoc package is `dist/CleanMac-2f6c16d-unsigned.zip`.
+- Notes: Scheduled scan notifications are localized and permission-aware; manual scans do not notify. The local unsigned/ad-hoc package is written as `dist/CleanMac-<commit>-unsigned.zip`.
