@@ -2,16 +2,16 @@
 
 ## Task
 
-- ID: TASK-009/TASK-010/TASK-011/TASK-012
-- Title: Signed distribution readiness, deeper scanner, real permissions, and icon refresh
+- ID: TASK-013
+- Title: Cleaner-style review UX and Trash restore guidance
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user selected signing/notarization, deeper scanner heuristics, Full Disk Access status, and replacing the icon everywhere.
-- Expected value: make CleanMac more complete as a real cleanup utility and ready for signed distribution once Apple credentials are available.
-- Main risk: unsafe cleanup expansion. New categories must stay inside explicit allowlisted roots, default to review when broad, and keep Trash-only cleanup.
-- Signing constraint: this Mac currently has no valid Developer ID signing identity, so notarization can only be implemented as a ready-to-run pipeline and verified in unsigned fallback mode.
+- Why this task now: the user selected the option to make the cleanup UI feel more like a complete cleaner with categories, risks, details, and restore support.
+- Expected value: make scan results easier to review before cleanup and make post-cleanup recovery from Trash visible and safer.
+- Main risk: turning a UI polish request into unsafe cleanup behavior. Keep cleanup Trash-only, require existing allowlist planning, and only restore recorded moved items when the destination is safe.
+- UX constraint: avoid decorative marketing surfaces; this is an operational review workspace.
 
 ## Builder Scope
 
@@ -44,33 +44,32 @@
   - changing deployment target;
   - adding third-party dependencies;
   - uploading a new public release without explicit tag/version selection.
+  - background cleanup scheduling;
+  - persistent cleanup history across app restarts.
 - Dependencies allowed: no
 - Destructive actions allowed: no
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - The supplied broom/code icon is used for the app icon, menu bar icon, and visible in-app brand icon.
-  - Scanner includes additional developer/browser/download cleanup categories with explicit roots and risk labels.
-  - Core tests cover at least one newly added category and keep cleanup path allowlisting intact.
-  - Permissions UI shows a live Full Disk Access status derived from protected path readability and has a refresh action.
-  - Packaging supports optional Developer ID signing, hardened runtime verification, and optional notarization when credentials are configured.
-  - CI/release docs explain required private secrets without exposing any secrets.
+  - Results show category groups with counts, sizes, selected totals, and risk mix.
+  - Results let the user inspect a selected item with path, category, size, modified time, risk, and cleanup behavior.
+  - Cleanup history lists moved-to-Trash items from the current session.
+  - A safe restore action can restore a recorded trashed item when the Trash path exists and the original destination is not occupied.
+  - Restore failures are reported without deleting or overwriting anything.
+  - Existing cleanup still uses allowlisted planning and Trash movement only.
 - Required verification:
   - `./script/build_and_run.sh --verify`
   - `swift test --package-path CleanMacCore`
   - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
   - `git diff --check`
-  - `./script/package_release.sh`
-  - `codesign -dvvv dist/CleanMac.app` and `spctl -a -vv dist/CleanMac.app` inspection, accepting unsigned/ad hoc status when no Developer ID exists
 - Manual checks:
-  - Visually confirm the refreshed icon appears in the app and menu bar.
-  - Confirm signing/notarization is documented as blocked by missing local certificate unless credentials are later provided.
+  - Visually confirm Results shows category review, detail panel, and cleanup history without cramped or clipped content.
+  - Confirm restore controls are disabled or informative when no cleanup history exists.
 - Evidence to collect:
   - Build/run command exit status.
   - Core test exit status.
   - File list touched.
-  - Signing identity check result.
 
 ## Restart Signals
 
@@ -78,11 +77,11 @@ Restart or shrink the task if:
 - verification fails twice for the same reason;
 - work requires out-of-scope files;
 - the done criteria cannot be proven;
-- cleanup cannot remain Trash-only and allowlisted;
+- cleanup cannot remain Trash-only, restore-only, and allowlisted;
 - user-facing behavior diverges from this contract.
 
 ## Result
 
 - Status: complete
-- Verification result: Passed local implementation checks. `./script/package_release.sh` creates `dist/CleanMac-5f4ae88-unsigned.zip`; the zip checksum verifies and the app extracted from the zip passes `codesign --verify --deep --strict --verbose=2`. `spctl` rejects it as expected because this Mac has no Developer ID identity.
-- Notes: TASK-009/TASK-010/TASK-011/TASK-012 are implemented. Actual Developer ID signing/notarization remains blocked until Apple Developer credentials and CI secrets are configured.
+- Verification result: Passed. `swift test --package-path CleanMacCore` now runs 9 tests including restore/no-overwrite coverage; `plutil -lint` passes for English/Russian strings; `git diff --check` passes; `./script/build_and_run.sh --verify` builds and launches the app. Visual screenshot confirmed Results shows compact category groups, item list, and detail panel in the standard window.
+- Notes: TASK-013 is implemented. Cleanup remains Trash-only; restore is current-session only and refuses to overwrite existing original paths.

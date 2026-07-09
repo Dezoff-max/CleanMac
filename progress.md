@@ -70,3 +70,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Configure Apple Developer certificate/notary secrets and create a signed/notarized release tag.
 - Bottleneck: Apple Developer credentials
 - Handoff: `security find-identity -p codesigning -v` reports `0 valid identities found`, so actual Developer ID signing/notarization was not possible on this Mac. The workflow and docs are ready for credentials.
+
+## 2026-07-09 - TASK-013 - Cleaner-style review UX and Trash restore guidance
+
+- What changed: Reworked Results into a cleaner-style review workspace with top summary metrics, compact category groups, visible item list, selected-item detail panel, risk explanations, and current-session Trash history. Added `CleanupRestorer` to restore recorded moved items from Trash without overwriting existing original paths.
+- Files touched: `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/ResultsView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `CleanMacCore/Sources/CleanMacCore/CleanupPlanModels.swift`, `CleanMacCore/Sources/CleanMacCore/CleanupRestorer.swift`, `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `swift test --package-path CleanMacCore`; `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`; `./script/build_and_run.sh --verify`; `rg -n "removeItem|trashItem|moveItem|unlink\\(|rmdir\\(" CleanMac CleanMacCore script .github`; `git diff --check`; visual screenshots `/tmp/cleanmac-task13-results.png` and `/tmp/cleanmac-task13-results-v2.png`.
+- Result: Passed. Results now shows category groups, list, and detail panel in the standard window; restore behavior is covered by tests and refuses overwrites.
+- Next step: Add persistent cleanup history or deeper stale-file heuristics.
+- Bottleneck: product decision
+- Handoff: Current-session restore is implemented. No real user cleanup was triggered during manual UI checks.

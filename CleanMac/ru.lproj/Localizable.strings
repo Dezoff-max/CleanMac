@@ -17,14 +17,19 @@
 "button.chooseAreas" = "Выбрать области";
 "button.selectAll" = "Выбрать всё";
 "button.selectSafe" = "Выбрать безопасные";
+"button.selectVisible" = "Выбрать видимые";
 "button.reviewOnly" = "Только проверить";
 "button.clearSelection" = "Снять выбор";
+"button.clearVisible" = "Снять видимые";
 "button.cleanSelected" = "Очистить выбранное";
 "button.moveToTrash" = "В Корзину";
 "button.cleaning" = "Очищаю";
 "button.cancel" = "Отмена";
 "button.openSystemSettings" = "Открыть настройки системы";
 "button.refreshAccess" = "Обновить доступы";
+"button.reveal" = "Показать";
+"button.restore" = "Восстановить";
+"button.restoring" = "Восстановление";
 
 "dashboard.title" = "CleanMac";
 "dashboard.subtitle" = "Рабочее пространство очистки macOS";
@@ -75,6 +80,30 @@
 "results.summary.items" = "Элементов: %d";
 "results.summary.unavailable" = "Недоступно";
 "results.estimated" = "оценка";
+"results.metric.total" = "Элементы";
+"results.metric.space" = "Потенциально";
+"results.metric.selected" = "Выбрано";
+"results.metric.risk" = "Безопасно / Проверить";
+"results.metric.risk.detail" = "%d безопасно, %d проверить";
+"results.categories.title" = "Категории";
+"results.categories.all" = "Все результаты";
+"results.category.summary" = "%d элементов, %@";
+"results.items.title" = "Список проверки";
+"results.items.count" = "Видно: %d";
+"results.category.empty.title" = "В этой категории пусто";
+"results.category.empty.description" = "Выбери другую категорию или запусти новое сканирование.";
+"results.detail.empty.title" = "Элемент не выбран";
+"results.detail.empty.description" = "Выбери результат, чтобы посмотреть путь, риск и поведение очистки.";
+"results.detail.size" = "Размер";
+"results.detail.modified" = "Изменён";
+"results.detail.type" = "Тип";
+"results.detail.folder" = "Папка";
+"results.detail.file" = "Файл";
+"results.detail.cleanup" = "Очистка";
+"results.detail.cleanup.trash" = "Перемещение в Корзину, без удаления навсегда";
+"results.detail.path" = "Путь";
+"results.risk.safe.detail" = "Безопасные элементы ограничены разрешёнными областями очистки и выбираются по умолчанию.";
+"results.risk.review.detail" = "Элементы проверки могут содержать личные или проектные файлы. Проверь их перед очисткой.";
 
 "cleanup.confirm.title" = "Переместить выбранное в Корзину?";
 "cleanup.confirm.message" = "CleanMac переместит выбранные элементы: %d, общий объём: %@, в Корзину. При необходимости их можно восстановить.";
@@ -85,6 +114,26 @@
 "cleanup.problem.title" = "Нужно проверить очистку";
 "cleanup.complete.title" = "Все видимые результаты очищены";
 "cleanup.complete.message" = "Запусти сканирование снова, чтобы обновить оценку очистки.";
+
+"restore.status.title" = "Восстановление завершено";
+"restore.problem.title" = "Нужно проверить восстановление";
+"restore.success" = "Восстановлено в исходное место: %@.";
+"restore.missingHistory" = "Этого элемента больше нет в истории очистки.";
+"restore.alreadyRestored" = "Этот элемент уже восстановлен.";
+"restore.failure.missingTrashPath" = "CleanMac не знает, где этот элемент находится в Корзине.";
+"restore.failure.missingTrashItem" = "Этого элемента больше нет в Корзине.";
+"restore.failure.destinationExists" = "Исходное место уже занято, поэтому CleanMac ничего не перезаписал.";
+"restore.failure.missingOriginalParent" = "Исходная родительская папка недоступна.";
+
+"history.title" = "История Корзины";
+"history.subtitle" = "Элементы, перемещённые в этой сессии, можно восстановить, пока их путь в Корзине доступен.";
+"history.count" = "Элементов: %d";
+"history.empty" = "После очистки перемещённые элементы появятся здесь.";
+"history.status.inTrash" = "В Корзине";
+"history.status.restored" = "Восстановлено";
+"history.status.restoreFailed" = "Нужно проверить";
+"history.trashPath.unknown" = "Путь в Корзине неизвестен";
+"history.item.detail" = "%@ перемещено %@";
 
 "permissions.title" = "Доступы";
 "permissions.subtitle" = "Управление тем, что CleanMac может проверять";

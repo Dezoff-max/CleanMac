@@ -107,3 +107,61 @@ public struct CleanupExecutionReport: Equatable, Sendable {
         !failedItems.isEmpty || !rejectedItems.isEmpty
     }
 }
+
+public enum CleanupRestoreFailureReason: String, Sendable {
+    case missingTrashPath
+    case missingTrashItem
+    case destinationExists
+    case missingOriginalParent
+    case moveFailed
+}
+
+public struct CleanupRestoredItem: Identifiable, Equatable, Sendable {
+    public let id: String
+    public let movedItem: CleanupMovedItem
+    public let restoredPath: String
+
+    public init(movedItem: CleanupMovedItem, restoredPath: String) {
+        self.id = movedItem.id
+        self.movedItem = movedItem
+        self.restoredPath = restoredPath
+    }
+}
+
+public struct CleanupRestoreFailedItem: Identifiable, Equatable, Sendable {
+    public let id: String
+    public let movedItem: CleanupMovedItem
+    public let reason: CleanupRestoreFailureReason
+    public let message: String
+
+    public init(
+        movedItem: CleanupMovedItem,
+        reason: CleanupRestoreFailureReason,
+        message: String
+    ) {
+        self.id = movedItem.id
+        self.movedItem = movedItem
+        self.reason = reason
+        self.message = message
+    }
+}
+
+public struct CleanupRestoreReport: Equatable, Sendable {
+    public let completedAt: Date
+    public let restoredItems: [CleanupRestoredItem]
+    public let failedItems: [CleanupRestoreFailedItem]
+
+    public init(
+        completedAt: Date,
+        restoredItems: [CleanupRestoredItem],
+        failedItems: [CleanupRestoreFailedItem]
+    ) {
+        self.completedAt = completedAt
+        self.restoredItems = restoredItems
+        self.failedItems = failedItems
+    }
+
+    public var hasProblems: Bool {
+        !failedItems.isEmpty
+    }
+}

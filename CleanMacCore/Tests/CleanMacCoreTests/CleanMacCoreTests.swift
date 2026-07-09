@@ -179,6 +179,63 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: trash.appending(path: "TestApp").path))
     }
 
+    func testCleanupRestorerMovesTrashItemBackToOriginalPath() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let originalParent = home.appending(path: "Library/Caches", directoryHint: .isDirectory)
+        let trash = root.appending(path: "LocalTrash", directoryHint: .isDirectory)
+        let trashedFolder = trash.appending(path: "TestApp", directoryHint: .isDirectory)
+        let originalFolder = originalParent.appending(path: "TestApp", directoryHint: .isDirectory)
+
+        try FileManager.default.createDirectory(at: originalParent, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: trashedFolder, withIntermediateDirectories: true)
+        try writeBytes(count: 16, to: trashedFolder.appending(path: "cache.bin"))
+
+        let movedItem = makeMovedItem(
+            category: .userCaches,
+            originalPath: originalFolder.path,
+            trashedPath: trashedFolder.path,
+            isDirectory: true
+        )
+
+        let report = CleanupRestorer().restore(movedItems: [movedItem])
+
+        XCTAssertEqual(report.restoredItems.map(\.restoredPath), [originalFolder.path])
+        XCTAssertEqual(report.failedItems.count, 0)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: originalFolder.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: trashedFolder.path))
+    }
+
+    func testCleanupRestorerDoesNotOverwriteExistingOriginalPath() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let originalParent = home.appending(path: "Library/Caches", directoryHint: .isDirectory)
+        let trash = root.appending(path: "LocalTrash", directoryHint: .isDirectory)
+        let trashedFolder = trash.appending(path: "TestApp", directoryHint: .isDirectory)
+        let originalFolder = originalParent.appending(path: "TestApp", directoryHint: .isDirectory)
+
+        try FileManager.default.createDirectory(at: trashedFolder, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: originalFolder, withIntermediateDirectories: true)
+
+        let movedItem = makeMovedItem(
+            category: .userCaches,
+            originalPath: originalFolder.path,
+            trashedPath: trashedFolder.path,
+            isDirectory: true
+        )
+
+        let report = CleanupRestorer().restore(movedItems: [movedItem])
+
+        XCTAssertEqual(report.restoredItems.count, 0)
+        XCTAssertEqual(report.failedItems.first?.reason, .destinationExists)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: originalFolder.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: trashedFolder.path))
+    }
+
     private func makeTemporaryRoot() throws -> URL {
         let root = FileManager.default.temporaryDirectory
             .appending(path: "CleanMacCoreTests-\(UUID().uuidString)", directoryHint: .isDirectory)
@@ -210,6 +267,24 @@ final class CleanMacCoreTests: XCTestCase {
             isSizeEstimate: false,
             modifiedAt: nil,
             risk: reviewCategories.contains(category) ? .review : .safe
+        )
+    }
+
+    private func makeMovedItem(
+        category: CleanupCategory,
+        originalPath: String,
+        trashedPath: String,
+        isDirectory: Bool = false
+    ) -> CleanupMovedItem {
+        let scanItem = makeScanItem(
+            category: category,
+            path: originalPath,
+            sizeBytes: 1,
+            isDirectory: isDirectory
+        )
+        return CleanupMovedItem(
+            item: CleanupPlanItem(scanItem: scanItem, originalPath: originalPath),
+            trashedPath: trashedPath
         )
     }
 

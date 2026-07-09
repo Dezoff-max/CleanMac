@@ -42,6 +42,8 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - `CleanMacCore` has a read-only scanner for user caches, logs, temporary files, Trash, Downloads review, Xcode Derived Data, browser caches, Node/npm/Yarn/pnpm caches, SwiftPM cache, and downloaded installers.
 - Results UI is backed by real scanner output, safe results are selected by default, and cleanup requires explicit confirmation.
 - Cleanup planning validates paths against category roots and moves accepted items to Trash instead of permanently deleting them.
+- Results UI now has compact category groups, risk-aware item review, a selected-item detail panel, and current-session Trash history with restore actions.
+- Restore logic refuses to overwrite existing original paths and reports missing Trash/original locations without deleting anything.
 - Scan UI has all/safe/review filters plus safe/review/clear selection presets.
 - Permissions UI checks live Full Disk Access status by probing protected metadata/readability and can refresh the result.
 - English and Russian app localizations are included; macOS selects the language from system preferences.
@@ -54,6 +56,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Permissions are live for Full Disk Access status, but the app still relies on System Settings for granting access.
 - The scanner is intentionally conservative and capped; stale-file heuristics and richer cleanup previews are future work.
 - Cleanup is intentionally Trash-based; permanent deletion is still out of scope.
+- Cleanup history is current-session only; persistent history across app launches is still future work.
 - Local Xcode emits a CoreSimulator warning; it does not currently block macOS builds.
 
 ## Strengths
@@ -73,5 +76,5 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 
 1. Configure Apple Developer signing secrets and cut a signed/notarized release.
 2. Add stale-file heuristics and richer cleanup previews for large downloads and developer caches.
-3. Add restore guidance for Trash-moved items.
+3. Persist cleanup history safely across app launches.
 4. Add more permission-specific scanner hints when protected roots are unavailable.

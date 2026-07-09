@@ -96,6 +96,68 @@ struct ScanResult: Identifiable {
     }
 }
 
+enum CleanupHistoryStatus {
+    case inTrash
+    case restored
+    case restoreFailed
+
+    var title: String {
+        switch self {
+        case .inTrash: L.t("history.status.inTrash")
+        case .restored: L.t("history.status.restored")
+        case .restoreFailed: L.t("history.status.restoreFailed")
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .inTrash: "trash"
+        case .restored: "arrow.uturn.backward.circle"
+        case .restoreFailed: "exclamationmark.triangle"
+        }
+    }
+}
+
+struct CleanupHistoryItem: Identifiable {
+    let id: String
+    let movedItem: CleanupMovedItem
+    let movedAt: Date
+    var status: CleanupHistoryStatus
+    var restoredAt: Date?
+    var restoredPath: String?
+    var message: String?
+
+    init(movedItem: CleanupMovedItem, movedAt: Date) {
+        self.id = movedItem.id
+        self.movedItem = movedItem
+        self.movedAt = movedAt
+        self.status = .inTrash
+        self.restoredAt = nil
+        self.restoredPath = nil
+        self.message = nil
+    }
+
+    var title: String {
+        movedItem.item.scanItem.displayName
+    }
+
+    var category: CleanupCategory {
+        movedItem.item.scanItem.category
+    }
+
+    var originalPath: String {
+        movedItem.item.originalPath
+    }
+
+    var trashedPath: String {
+        movedItem.trashedPath ?? L.t("history.trashPath.unknown")
+    }
+
+    var size: String {
+        CleanMacFormatters.bytes(movedItem.item.scanItem.sizeBytes)
+    }
+}
+
 enum PermissionState {
     case granted
     case limited

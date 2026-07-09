@@ -13,10 +13,14 @@ struct MainWindowView: View {
     @State private var scanReport: CleanupScanReport?
     @State private var scanError: String?
     @State private var selectedResultIDs = Set<String>()
+    @State private var cleanupHistory: [CleanupHistoryItem] = []
     @State private var cleanupStatusMessage: String?
     @State private var cleanupProblemMessage: String?
+    @State private var restoreStatusMessage: String?
+    @State private var restoreProblemMessage: String?
     @State private var isScanning = false
     @State private var isCleaning = false
+    @State private var isRestoring = false
 
     @AppStorage("CleanMac.safeModeEnabled") private var safeModeEnabled = true
     @AppStorage("CleanMac.confirmBeforeCleanup") private var confirmBeforeCleanup = true
@@ -85,9 +89,14 @@ struct MainWindowView: View {
                 scanError: scanError,
                 selectedResultIDs: $selectedResultIDs,
                 isCleaning: isCleaning,
+                isRestoring: isRestoring,
                 cleanupStatusMessage: cleanupStatusMessage,
                 cleanupProblemMessage: cleanupProblemMessage,
-                onConfirmCleanup: cleanupSelectedItems
+                restoreStatusMessage: restoreStatusMessage,
+                restoreProblemMessage: restoreProblemMessage,
+                cleanupHistory: cleanupHistory,
+                onConfirmCleanup: cleanupSelectedItems,
+                onRestoreHistoryItem: restoreHistoryItem
             )
         case .permissions:
             PermissionsView()
@@ -122,6 +131,8 @@ struct MainWindowView: View {
         scanError = nil
         cleanupStatusMessage = nil
         cleanupProblemMessage = nil
+        restoreStatusMessage = nil
+        restoreProblemMessage = nil
         selectedSectionID = CleanMacSection.scan.rawValue
 
         Task {
@@ -158,6 +169,8 @@ struct MainWindowView: View {
         isCleaning = true
         cleanupStatusMessage = nil
         cleanupProblemMessage = nil
+        restoreStatusMessage = nil
+        restoreProblemMessage = nil
 
         Task {
             let report = await Task.detached(priority: .userInitiated) {
@@ -172,6 +185,10 @@ struct MainWindowView: View {
             isCleaning = false
 
             if !report.movedItems.isEmpty {
+                let historyItems = report.movedItems.map {
+                    CleanupHistoryItem(movedItem: $0, movedAt: report.completedAt)
+                }
+                cleanupHistory.insert(contentsOf: historyItems, at: 0)
                 cleanupStatusMessage = L.f(
                     "cleanup.success",
                     report.movedItems.count,
@@ -186,6 +203,64 @@ struct MainWindowView: View {
                     report.rejectedItems.count
                 )
             }
+        }
+    }
+
+    private func restoreHistoryItem(_ historyID: String) {
+        guard !isRestoring else {
+            return
+        }
+        guard let historyIndex = cleanupHistory.firstIndex(where: { $0.id == historyID }) else {
+            restoreProblemMessage = L.t("restore.missingHistory")
+            return
+        }
+        guard cleanupHistory[historyIndex].status != .restored else {
+            restoreProblemMessage = L.t("restore.alreadyRestored")
+            return
+        }
+
+        isRestoring = true
+        restoreStatusMessage = nil
+        restoreProblemMessage = nil
+        let movedItem = cleanupHistory[historyIndex].movedItem
+
+        Task {
+            let report = await Task.detached(priority: .userInitiated) {
+                CleanupRestorer().restore(movedItems: [movedItem])
+            }.value
+
+            isRestoring = false
+
+            if let restoredItem = report.restoredItems.first,
+               let updatedIndex = cleanupHistory.firstIndex(where: { $0.id == historyID }) {
+                cleanupHistory[updatedIndex].status = .restored
+                cleanupHistory[updatedIndex].restoredAt = report.completedAt
+                cleanupHistory[updatedIndex].restoredPath = restoredItem.restoredPath
+                cleanupHistory[updatedIndex].message = nil
+                restoreStatusMessage = L.f("restore.success", restoredItem.movedItem.item.scanItem.displayName)
+            }
+
+            if let failedItem = report.failedItems.first,
+               let updatedIndex = cleanupHistory.firstIndex(where: { $0.id == historyID }) {
+                cleanupHistory[updatedIndex].status = .restoreFailed
+                cleanupHistory[updatedIndex].message = restoreMessage(for: failedItem)
+                restoreProblemMessage = cleanupHistory[updatedIndex].message
+            }
+        }
+    }
+
+    private func restoreMessage(for failedItem: CleanupRestoreFailedItem) -> String {
+        switch failedItem.reason {
+        case .missingTrashPath:
+            L.t("restore.failure.missingTrashPath")
+        case .missingTrashItem:
+            L.t("restore.failure.missingTrashItem")
+        case .destinationExists:
+            L.t("restore.failure.destinationExists")
+        case .missingOriginalParent:
+            L.t("restore.failure.missingOriginalParent")
+        case .moveFailed:
+            failedItem.message
         }
     }
 }

@@ -17,14 +17,19 @@
 "button.chooseAreas" = "Choose Areas";
 "button.selectAll" = "Select All";
 "button.selectSafe" = "Select Safe";
+"button.selectVisible" = "Select Visible";
 "button.reviewOnly" = "Review Only";
 "button.clearSelection" = "Clear";
+"button.clearVisible" = "Clear Visible";
 "button.cleanSelected" = "Clean Selected";
 "button.moveToTrash" = "Move to Trash";
 "button.cleaning" = "Cleaning";
 "button.cancel" = "Cancel";
 "button.openSystemSettings" = "Open System Settings";
 "button.refreshAccess" = "Refresh Access";
+"button.reveal" = "Reveal";
+"button.restore" = "Restore";
+"button.restoring" = "Restoring";
 
 "dashboard.title" = "CleanMac";
 "dashboard.subtitle" = "System cleanup workspace";
@@ -75,6 +80,30 @@
 "results.summary.items" = "%d items";
 "results.summary.unavailable" = "Not available";
 "results.estimated" = "estimated";
+"results.metric.total" = "Items";
+"results.metric.space" = "Potential";
+"results.metric.selected" = "Selected";
+"results.metric.risk" = "Safe / Review";
+"results.metric.risk.detail" = "%d safe, %d review";
+"results.categories.title" = "Categories";
+"results.categories.all" = "All results";
+"results.category.summary" = "%d items, %@";
+"results.items.title" = "Review list";
+"results.items.count" = "%d visible";
+"results.category.empty.title" = "No items in this category";
+"results.category.empty.description" = "Choose another category or run a new scan.";
+"results.detail.empty.title" = "No item selected";
+"results.detail.empty.description" = "Select a result to inspect path, risk, and cleanup behavior.";
+"results.detail.size" = "Size";
+"results.detail.modified" = "Modified";
+"results.detail.type" = "Type";
+"results.detail.folder" = "Folder";
+"results.detail.file" = "File";
+"results.detail.cleanup" = "Cleanup";
+"results.detail.cleanup.trash" = "Move to Trash, never permanent delete";
+"results.detail.path" = "Path";
+"results.risk.safe.detail" = "Safe items are limited to allowlisted cleanup roots and selected by default.";
+"results.risk.review.detail" = "Review items can contain personal or project files. Inspect them before cleanup.";
 
 "cleanup.confirm.title" = "Move selected items to Trash?";
 "cleanup.confirm.message" = "CleanMac will move %d selected item(s), %@ total, to Trash. You can restore them from Trash if needed.";
@@ -85,6 +114,26 @@
 "cleanup.problem.title" = "Cleanup needs review";
 "cleanup.complete.title" = "All visible results are cleaned";
 "cleanup.complete.message" = "Run another scan to refresh the cleanup estimate.";
+
+"restore.status.title" = "Restore complete";
+"restore.problem.title" = "Restore needs review";
+"restore.success" = "Restored %@ to its original location.";
+"restore.missingHistory" = "This cleanup history item is no longer available.";
+"restore.alreadyRestored" = "This item is already restored.";
+"restore.failure.missingTrashPath" = "CleanMac does not know where this item is in Trash.";
+"restore.failure.missingTrashItem" = "This item is no longer available in Trash.";
+"restore.failure.destinationExists" = "The original location is already occupied, so CleanMac did not overwrite it.";
+"restore.failure.missingOriginalParent" = "The original parent folder is not available.";
+
+"history.title" = "Trash history";
+"history.subtitle" = "Items moved during this session can be restored while their Trash location is still available.";
+"history.count" = "%d item(s)";
+"history.empty" = "Moved items will appear here after cleanup.";
+"history.status.inTrash" = "In Trash";
+"history.status.restored" = "Restored";
+"history.status.restoreFailed" = "Needs review";
+"history.trashPath.unknown" = "Unknown Trash location";
+"history.item.detail" = "%@ moved %@";
 
 "permissions.title" = "Permissions";
 "permissions.subtitle" = "Control what CleanMac can inspect";

@@ -167,3 +167,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-013
+  Title: Cleaner-style review UX and Trash restore guidance
+  Goal: Make Results feel like a complete cleanup review workspace with category groups, risk clarity, item details, and recovery from Trash.
+  What to do: Add category summaries, selected item details, safer risk copy, current-session cleanup history, and restore action for moved-to-Trash items.
+  Files: `CleanMac/**`, `CleanMacCore/**`, Loop docs
+  Definition of done: Results shows grouped cleanup categories, a detail panel for selected items, current-session moved-to-Trash history, and a restore flow that never overwrites existing files.
+  Verification: `swift test --package-path CleanMacCore`; `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `./script/build_and_run.sh --verify`; visual screenshot check
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: medium
+  Score: high impact / medium risk / medium
