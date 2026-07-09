@@ -80,3 +80,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Add persistent cleanup history or deeper stale-file heuristics.
 - Bottleneck: product decision
 - Handoff: Current-session restore is implemented. No real user cleanup was triggered during manual UI checks.
+
+## 2026-07-09 - TASK-014 - Modern scan activity animation
+
+- What changed: Added a modern animated scan activity surface with orbital radar motion, pulsing rings, signal bars, localized scan phases, selected-area chips, Reduce Motion support, and a short minimum visible scan duration so fast scans do not skip the animation.
+- Files touched: `CleanMac/Views/ScanActivityView.swift`, `CleanMac/Views/ScanView.swift`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`; `./script/build_and_run.sh --verify`; visual screenshot `/tmp/cleanmac-task14-scanning.png`; `swift test --package-path CleanMacCore`; `git diff --check`.
+- Result: Passed. The scan screen displays the animated module during scanning and remains readable in the standard window.
+- Next step: Add deeper scanner heuristics or persistent cleanup history.
+- Bottleneck: product decision
+- Handoff: This is UI-only. Scanner and cleanup safety behavior were not changed.

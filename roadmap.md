@@ -181,3 +181,17 @@
   Effort: medium
   Confidence: medium
   Score: high impact / medium risk / medium
+
+- [x] ID: TASK-014
+  Title: Modern scan activity animation
+  Goal: Make the active scanning state feel modern, responsive, and clearly alive.
+  What to do: Add an animated scan activity component with a radar/pulse treatment, live status phases, selected-area chips, and Reduce Motion support; keep fast scans visible long enough to perceive.
+  Files: `CleanMac/Views/**`, `CleanMac/*/Localizable.strings`, `CleanMac/Views/MainWindowView.swift`, Loop docs
+  Definition of done: Scan screen shows a polished animated activity surface while scanning, localized in English/Russian, without changing scanner or cleanup safety behavior.
+  Verification: `swift test --package-path CleanMacCore`; `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `./script/build_and_run.sh --verify`; visual screenshot check
+  Priority: medium
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small

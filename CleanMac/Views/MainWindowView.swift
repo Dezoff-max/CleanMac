@@ -26,6 +26,8 @@ struct MainWindowView: View {
     @AppStorage("CleanMac.confirmBeforeCleanup") private var confirmBeforeCleanup = true
     @AppStorage("CleanMac.showMenuBarStatus") private var showMenuBarStatus = true
 
+    private let minimumScanAnimationDuration: TimeInterval = 1.15
+
     private var selectedSection: CleanMacSection {
         CleanMacSection(rawValue: selectedSectionID ?? CleanMacSection.dashboard.rawValue) ?? .dashboard
     }
@@ -134,11 +136,18 @@ struct MainWindowView: View {
         restoreStatusMessage = nil
         restoreProblemMessage = nil
         selectedSectionID = CleanMacSection.scan.rawValue
+        let scanStartedAt = Date()
 
         Task {
             let report = await Task.detached(priority: .userInitiated) {
                 CleanupScanner().scan(categories: categories)
             }.value
+
+            let elapsed = Date().timeIntervalSince(scanStartedAt)
+            if elapsed < minimumScanAnimationDuration {
+                let remaining = minimumScanAnimationDuration - elapsed
+                try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
+            }
 
             scanReport = report
             scanItems = report.items

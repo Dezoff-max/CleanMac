@@ -45,6 +45,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Results UI now has compact category groups, risk-aware item review, a selected-item detail panel, and current-session Trash history with restore actions.
 - Restore logic refuses to overwrite existing original paths and reports missing Trash/original locations without deleting anything.
 - Scan UI has all/safe/review filters plus safe/review/clear selection presets.
+- Scan UI shows a modern animated activity surface during active scans, with Reduce Motion support and selected-area chips.
 - Permissions UI checks live Full Disk Access status by probing protected metadata/readability and can refresh the result.
 - English and Russian app localizations are included; macOS selects the language from system preferences.
 - Private GitHub Release `v0.1.0` exists with unsigned zip and sha256 assets.

@@ -69,6 +69,12 @@
 "scan.filter.all" = "All";
 "scan.filter.safe" = "Safe";
 "scan.filter.review" = "Review";
+"scan.animation.title" = "Live scan in progress";
+"scan.animation.phase.metadata" = "Reading folder metadata without changing files.";
+"scan.animation.phase.sizes" = "Estimating space with safe size checks.";
+"scan.animation.phase.risks" = "Separating safe cleanup from review items.";
+"scan.animation.phase.summary" = "Preparing results for review.";
+"scan.animation.moreAreas" = "+%d more";
 
 "results.title" = "Results";
 "results.subtitle" = "Review items before cleanup";

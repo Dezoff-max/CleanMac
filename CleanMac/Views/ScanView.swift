@@ -20,6 +20,10 @@ struct ScanView: View {
         }
     }
 
+    private var selectedAreas: [CleanupArea] {
+        CleanMacCatalog.cleanupAreas.filter { selectedAreaIDs.contains($0.id) }
+    }
+
     var body: some View {
         PageContainer {
             VStack(alignment: .leading, spacing: 16) {
@@ -30,12 +34,7 @@ struct ScanView: View {
                 )
 
                 if isScanning {
-                    StatusBanner(
-                        title: L.t("scan.running.title"),
-                        message: L.t("scan.running.message"),
-                        systemImage: "clock.arrow.circlepath",
-                        tint: .blue
-                    )
+                    ScanActivityView(selectedAreas: selectedAreas)
                 }
 
                 InfoPanel {

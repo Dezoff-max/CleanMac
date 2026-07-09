@@ -2,16 +2,16 @@
 
 ## Task
 
-- ID: TASK-013
-- Title: Cleaner-style review UX and Trash restore guidance
+- ID: TASK-014
+- Title: Modern scan activity animation
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user selected the option to make the cleanup UI feel more like a complete cleaner with categories, risks, details, and restore support.
-- Expected value: make scan results easier to review before cleanup and make post-cleanup recovery from Trash visible and safer.
-- Main risk: turning a UI polish request into unsafe cleanup behavior. Keep cleanup Trash-only, require existing allowlist planning, and only restore recorded moved items when the destination is safe.
-- UX constraint: avoid decorative marketing surfaces; this is an operational review workspace.
+- Why this task now: the user asked for a modern scanning animation.
+- Expected value: make active scans feel responsive and polished without changing cleanup behavior.
+- Main risk: adding animation that is too flashy, inaccessible, or invisible because scans finish quickly.
+- UX constraint: keep it native macOS, respect Reduce Motion, and keep operational status copy visible.
 
 ## Builder Scope
 
@@ -52,20 +52,18 @@
 ## Evaluator Checklist
 
 - Done criteria:
-  - Results show category groups with counts, sizes, selected totals, and risk mix.
-  - Results let the user inspect a selected item with path, category, size, modified time, risk, and cleanup behavior.
-  - Cleanup history lists moved-to-Trash items from the current session.
-  - A safe restore action can restore a recorded trashed item when the Trash path exists and the original destination is not occupied.
-  - Restore failures are reported without deleting or overwriting anything.
-  - Existing cleanup still uses allowlisted planning and Trash movement only.
+  - Scan screen shows a modern animated scan activity surface while `isScanning` is true.
+  - The animation includes motion and status phases, but still works as a static status surface when Reduce Motion is enabled.
+  - Fast scans keep the scan state visible long enough for the animation to be perceivable.
+  - English and Russian strings are complete.
+  - No cleanup/scanner safety behavior changes.
 - Required verification:
   - `./script/build_and_run.sh --verify`
   - `swift test --package-path CleanMacCore`
   - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
   - `git diff --check`
 - Manual checks:
-  - Visually confirm Results shows category review, detail panel, and cleanup history without cramped or clipped content.
-  - Confirm restore controls are disabled or informative when no cleanup history exists.
+  - Visually confirm the Scan screen shows the animated module during scanning and remains readable in the default window size.
 - Evidence to collect:
   - Build/run command exit status.
   - Core test exit status.
@@ -77,11 +75,11 @@ Restart or shrink the task if:
 - verification fails twice for the same reason;
 - work requires out-of-scope files;
 - the done criteria cannot be proven;
-- cleanup cannot remain Trash-only, restore-only, and allowlisted;
+- cleanup/scanning behavior changes unexpectedly;
 - user-facing behavior diverges from this contract.
 
 ## Result
 
 - Status: complete
-- Verification result: Passed. `swift test --package-path CleanMacCore` now runs 9 tests including restore/no-overwrite coverage; `plutil -lint` passes for English/Russian strings; `git diff --check` passes; `./script/build_and_run.sh --verify` builds and launches the app. Visual screenshot confirmed Results shows compact category groups, item list, and detail panel in the standard window.
-- Notes: TASK-013 is implemented. Cleanup remains Trash-only; restore is current-session only and refuses to overwrite existing original paths.
+- Verification result: Passed. `swift test --package-path CleanMacCore`, `plutil -lint`, `git diff --check`, `xcodebuild`, and `./script/build_and_run.sh --verify` pass. Visual screenshot `/tmp/cleanmac-task14-scanning.png` confirms the animated scan activity surface appears during scanning in the default window.
+- Notes: TASK-014 is implemented. Scanner and cleanup safety behavior were not changed; only the active scan UI state and minimum visible scan animation duration were updated.

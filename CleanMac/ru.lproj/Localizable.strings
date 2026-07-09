@@ -69,6 +69,12 @@
 "scan.filter.all" = "Все";
 "scan.filter.safe" = "Безопасные";
 "scan.filter.review" = "Проверить";
+"scan.animation.title" = "Идёт живое сканирование";
+"scan.animation.phase.metadata" = "Читаю метаданные папок без изменения файлов.";
+"scan.animation.phase.sizes" = "Оцениваю объём безопасными проверками размера.";
+"scan.animation.phase.risks" = "Разделяю безопасную очистку и элементы для проверки.";
+"scan.animation.phase.summary" = "Готовлю результаты для просмотра.";
+"scan.animation.moreAreas" = "+%d ещё";
 
 "results.title" = "Результаты";
 "results.subtitle" = "Проверь элементы перед очисткой";
