@@ -100,3 +100,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Add richer result explanations for why each item was suggested, or add persistent cleanup history.
 - Bottleneck: product decision
 - Handoff: Cleanup remains confirmation-gated and Trash-based. No permanent deletion path or destructive background action was added.
+
+## 2026-07-09 - TASK-016 - Unified minimal broom icon
+
+- What changed: Regenerated AppIcon, BrandIcon, MenuBarIcon, design, and docs icon assets from one minimal broom shape. MenuBarIcon now uses template rendering so macOS tints the Retina menu bar silhouette correctly.
+- Files touched: `CleanMac/Assets.xcassets/AppIcon.appiconset/*`, `CleanMac/Assets.xcassets/BrandIcon.imageset/*`, `CleanMac/Assets.xcassets/MenuBarIcon.imageset/*`, `Design/app-icon.png`, `Design/toolbar-icon.png`, `docs/assets/icon-256.png`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: PNG dimension checks with `sips`; asset JSON validation with `python3 -m json.tool`; `./script/build_and_run.sh --verify`; visual screenshot `/tmp/cleanmac-menubar-icon-check.png`.
+- Result: Passed. The app builds with the updated asset catalog, the in-app brand icon uses the same minimal broom, and the menu bar icon is visible as a system-tinted silhouette.
+- Next step: Decide whether to publish a new release for the icon refresh.
+- Bottleneck: release decision
+- Handoff: Pillow was not needed; icons were generated with system AppKit/CoreGraphics.

@@ -2,77 +2,66 @@
 
 ## Task
 
-- ID: TASK-015
-- Title: Real scan progress and smart cleanup rules
+- ID: TASK-016
+- Title: Unified minimal broom icon
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user selected all three follow-up options after TASK-014: real per-area progress, a more premium scan animation, and smarter cleanup rules.
-- Expected value: make scanning feel truthful and alive while reducing noisy cleanup candidates from active temporary files and recent small downloads.
-- Main risk: progress reporting could make scanner/UI coupling fragile, or smart filters could hide useful candidates unexpectedly.
-- UX constraint: keep the scanner read-only, keep cleanup confirmation unchanged, and present progress in Russian/English without adding dependencies.
+- Why this task now: the user asked for a minimal Retina-readable broom icon in the menu bar, then clarified that the same icon must be used everywhere.
+- Expected value: make CleanMac visually consistent across Dock, menu bar, in-app brand surfaces, design assets, and docs.
+- Main risk: menu bar icons need template/tint behavior, while app/brand icons need color and readability.
+- UX constraint: keep one shared broom silhouette; use template rendering for menu bar so macOS tints it correctly in light/dark menu bars.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMac/**`
-  - `CleanMacCore/Sources/CleanMacCore/**`
-  - `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`
+  - `CleanMac/Assets.xcassets/**`
+  - `Design/**`
+  - `docs/assets/**`
   - `project-analysis.md`
   - `roadmap.md`
   - `contract.md`
   - `progress.md`
   - `trace.md`
-  - `verification.md`
 - Allowed commands:
   - `./script/build_and_run.sh --verify`
-  - `swift test --package-path CleanMacCore`
-  - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
-  - `git diff --check`
+  - image dimension/JSON validation commands
   - read-only inspection commands
 - Out of scope:
-  - permanent deletion with `removeItem` for user cleanup;
-  - changing deployment target;
-  - adding third-party dependencies;
-  - changing signing/notarization or release flows;
-  - background cleanup scheduling;
-  - persistent cleanup history across app restarts.
+  - changing app behavior;
+  - changing bundle identifier/signing/release workflows;
+  - adding third-party dependencies.
 - Dependencies allowed: no
 - Destructive actions allowed: no
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - `CleanMacCore` emits real scan progress events while preserving the existing scan API.
-  - Scan UI shows progress percentage, current area, found count, size, and area chips while scanning.
-  - Animation remains modern and readable at the default window size.
-  - Downloads, logs, and temporary-file scans use more conservative smart candidate rules.
-  - English and Russian strings are complete.
-  - Cleanup remains Trash-based and confirmation-gated.
+  - Menu bar icon is a minimal broom silhouette at 18/36/54 px and uses template rendering.
+  - AppIcon, BrandIcon, `Design/`, and `docs/assets` use the same broom shape.
+  - Retina sizes are present and valid.
+  - App builds and launches with the new asset catalog.
 - Required verification:
-  - `swift test --package-path CleanMacCore`
-  - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
-  - `git diff --check`
   - `./script/build_and_run.sh --verify`
+  - PNG dimension checks for updated assets
+  - JSON validation for updated asset catalogs
 - Manual checks:
-  - Visually confirm the Scan screen shows real progress data during scanning and remains readable in the default window size.
+  - Visual screenshot confirms the menu bar icon is visible in the real menu bar.
 - Evidence to collect:
   - Build/run command exit status.
-  - Core test exit status.
   - Visual screenshot path.
   - File list touched.
 
 ## Restart Signals
 
 Restart or shrink the task if:
-- verification fails twice for the same reason;
-- progress updates require invasive scanner rewrites;
-- smart rules require destructive cleanup behavior;
-- user-facing behavior diverges from this contract.
+- asset catalog compilation fails;
+- the menu bar icon remains unreadable after template rendering;
+- the update requires new dependencies.
 
 ## Result
 
 - Status: complete
-- Verification result: Passed. `swift test --package-path CleanMacCore`, `plutil -lint`, `git diff --check`, and `./script/build_and_run.sh --verify` pass. Visual screenshot `/tmp/cleanmac-task15-scanning-final.png` confirms live progress, current area, found count, size, and modern scan animation in the default window.
-- Notes: TASK-015 keeps scan/cleanup safe by default. Cleanup still requires confirmation and moves accepted items to Trash; no permanent deletion path was added.
+- Verification result: Passed. Asset PNG dimensions and JSON are valid, `./script/build_and_run.sh --verify` passes, and `/tmp/cleanmac-menubar-icon-check.png` confirms the new menu bar icon is visible while the in-app brand icon uses the same broom shape.
+- Notes: Pillow was not needed; icons were generated deterministically with AppKit/CoreGraphics.

@@ -34,7 +34,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 ## Completed Parts
 
 - Repository was cleaned and renamed to CleanMac.
-- App icon, menu bar icon, Dashboard brand icon, and status menu brand icon use the supplied broom/code image.
+- App icon, menu bar icon, Dashboard brand icon, status menu brand icon, design assets, and docs icon use one minimal broom shape.
 - Private GitHub repository and CI were configured.
 - Local `dist/` packaging exists and is ignored by git.
 - Main Dashboard/Scan/Results/Permissions/Settings window builds and launches.

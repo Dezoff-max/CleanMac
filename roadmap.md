@@ -209,3 +209,17 @@
   Effort: medium
   Confidence: high
   Score: high impact / medium risk / medium
+
+- [x] ID: TASK-016
+  Title: Unified minimal broom icon
+  Goal: Replace the detailed broom/code artwork with one minimal broom shape everywhere, including a Retina-readable menu bar template icon.
+  What to do: Regenerate AppIcon, BrandIcon, MenuBarIcon, design, and docs assets from the same broom shape; mark MenuBarIcon as template-rendered.
+  Files: `CleanMac/Assets.xcassets/**`, `Design/**`, `docs/assets/**`, Loop docs
+  Definition of done: Menu bar icon is visible as a system-tinted template silhouette, all app/project icon assets use the same broom shape, and the app builds with the updated asset catalog.
+  Verification: `./script/build_and_run.sh --verify`; PNG dimension checks; JSON validation; visual screenshot check
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small
