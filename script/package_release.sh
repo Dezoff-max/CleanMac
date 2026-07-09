@@ -38,6 +38,13 @@ fi
 ZIP_PATH="$DIST_DIR/$APP_NAME-$BUILD_ID-$ZIP_KIND.zip"
 NOTARY_ARGS=()
 
+sanitize_app_bundle() {
+  local app_path="$1"
+  xattr -cr "$app_path"
+  xattr -dr com.apple.FinderInfo "$app_path" 2>/dev/null || true
+  xattr -dr com.apple.ResourceFork "$app_path" 2>/dev/null || true
+}
+
 create_zip() {
   local zip_path="$1"
   local zip_root="$DIST_DIR/.ziproot"
@@ -46,7 +53,7 @@ create_zip() {
   rm -rf "$zip_root"
   mkdir -p "$zip_root"
   COPYFILE_DISABLE=1 ditto --norsrc --noextattr "$DIST_APP" "$zip_app"
-  xattr -cr "$zip_app"
+  sanitize_app_bundle "$zip_app"
   COPYFILE_DISABLE=1 ditto -c -k --norsrc --noextattr --keepParent "$zip_app" "$zip_path"
   rm -rf "$zip_root"
 }
@@ -90,15 +97,17 @@ if [[ ! -d "$BUILT_APP" ]]; then
 fi
 
 COPYFILE_DISABLE=1 ditto --norsrc --noextattr "$BUILT_APP" "$DIST_APP"
-xattr -cr "$DIST_APP"
+sanitize_app_bundle "$DIST_APP"
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
   echo "Signing $DIST_APP with: $SIGN_IDENTITY"
   codesign --force --deep --options runtime --timestamp --sign "$SIGN_IDENTITY" "$DIST_APP"
+  sanitize_app_bundle "$DIST_APP"
   codesign --verify --deep --strict --verbose=2 "$DIST_APP"
 else
   echo "No CLEANMAC_SIGN_IDENTITY configured; applying ad-hoc signature for local validation."
   codesign --force --deep --sign - "$DIST_APP"
+  sanitize_app_bundle "$DIST_APP"
   codesign --verify --deep --strict --verbose=2 "$DIST_APP"
 fi
 
@@ -119,6 +128,7 @@ if [[ "$NOTARIZE" == "1" || "$NOTARIZE" == "true" ]]; then
   xcrun notarytool submit "$ZIP_PATH" --wait "${NOTARY_ARGS[@]}"
   xcrun stapler staple "$DIST_APP"
   xcrun stapler validate "$DIST_APP"
+  sanitize_app_bundle "$DIST_APP"
   create_zip "$ZIP_PATH"
 fi
 

@@ -307,3 +307,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / medium risk / small
+
+- [x] ID: TASK-023
+  Title: Auto scan completion notifications and local release package
+  Goal: Notify the user when a scheduled read-only scan finishes and provide a fresh local release zip.
+  What to do: Add a notification service, Settings toggle, permission-aware scheduling hook, localized notification copy, and package a clean unsigned/ad-hoc Release build.
+  Files: `CleanMac/CleanMacApp.swift`, `CleanMac/Support/CleanMacAutoScanScheduler.swift`, `CleanMac/Support/CleanMacNotificationService.swift`, `CleanMac/Support/CleanMacPreferences.swift`, `CleanMac/Views/SettingsView.swift`, `CleanMac/*/Localizable.strings`, `script/package_release.sh`, Loop docs
+  Definition of done: Scheduled scans can show localized completion notifications when enabled and permitted, manual scans do not notify, and `dist/` contains a verified zip plus sha256 for the current app commit.
+  Verification: `swift test --package-path CleanMacCore`; Debug Xcode build; localization lint; `git diff --check`; `./script/build_and_run.sh --verify`; defaults-based scheduled scan smoke test; Settings screenshot; `./script/package_release.sh`; checksum and strict code-sign validation after zip extraction.
+  Priority: high
+  Impact: medium
+  Risk: medium
+  Effort: small
+  Confidence: high
+  Score: medium impact / medium risk / small

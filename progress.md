@@ -170,3 +170,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Add launch-at-login support so auto scan can work after reboot/login without opening CleanMac manually.
 - Bottleneck: product decision
 - Handoff: Local test state was returned to daily 10:00 after visual QA so every-two-hours scanning is not accidentally left enabled.
+
+## 2026-07-09 - TASK-023 - Auto scan completion notifications and local release package
+
+- What changed: Added a localized `CleanMacNotificationService`, wired scheduled scan completion notifications through `CleanMacAutoScanScheduler`, added a Settings toggle for auto-scan notifications, requested system notification permission when useful, and hardened local packaging against Finder/resource-fork metadata before zip creation.
+- Files touched: `CleanMac/CleanMacApp.swift`, `CleanMac/Support/CleanMacAutoScanScheduler.swift`, `CleanMac/Support/CleanMacNotificationService.swift`, `CleanMac/Support/CleanMacPreferences.swift`, `CleanMac/Views/SettingsView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `script/package_release.sh`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`; `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; defaults-based scheduled scan smoke test (`source=scheduled`, `runKey=2026-07-09-15-13`, `scanInProgress=0`); visual screenshot `/tmp/cleanmac-autoscan-notifications-settings-2.png`; `./script/package_release.sh`; `shasum -a 256 -c dist/CleanMac-2f6c16d-unsigned.zip.sha256`; zip extraction followed by `codesign --verify --deep --strict --verbose=2`; local `dist/CleanMac.app` strict code-sign validation after clearing FinderInfo added by Finder.
+- Result: Passed. Scheduled scans can notify with item count and size when the toggle and macOS permission allow it; manual scans remain silent; the fresh local unsigned/ad-hoc package is `dist/CleanMac-2f6c16d-unsigned.zip`.
+- Next step: Add launch-at-login support or create a new GitHub Release tag for this package.
+- Bottleneck: Apple Developer signing identity for trusted distribution.
+- Handoff: Notification permission was not forced during smoke testing; the app requests it only when auto scan and notification settings are enabled. Xcode still emits the known CoreSimulator warning, but macOS builds complete.

@@ -56,8 +56,9 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - The selected language override applies through the app's localizer, and the selected appearance applies to both the main window and menu bar popover.
 - The menu bar popover shows current disk usage, scan-in-progress state, last scan source/time, and last scan result summary.
 - Settings can enable read-only auto scan while the app is running; it supports daily, hourly, and every-two-hours frequencies, uses the currently selected scan areas, and updates menu bar status.
+- Scheduled auto scan can show localized macOS completion notifications when the notification toggle is enabled and system permission allows it; manual scans remain silent.
 - Private GitHub Release `v0.1.0` exists with unsigned zip and sha256 assets.
-- Release packaging can optionally sign with Developer ID, enable hardened runtime, submit to Apple notary service, staple, and re-zip when credentials are configured.
+- Release packaging creates a clean unsigned/ad-hoc local zip plus sha256, strips Finder/resource-fork metadata before archiving, and can optionally sign with Developer ID, enable hardened runtime, submit to Apple notary service, staple, and re-zip when credentials are configured.
 
 ## Unfinished Or Risky Parts
 
@@ -67,6 +68,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Cleanup is intentionally Trash-based; permanent deletion is still out of scope.
 - Cleanup history is current-session only; persistent history across app launches is still future work.
 - Scheduled auto scan currently runs only while the CleanMac app process is running; launch-at-login or a privileged background agent is still future work.
+- Notification delivery depends on the macOS notification permission for CleanMac; if permission is denied, scheduled scans still complete silently.
 - Local Xcode emits a CoreSimulator warning; it does not currently block macOS builds.
 
 ## Strengths
