@@ -210,3 +210,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Decide whether to add keyboard focus styling or click sound/haptic-style microfeedback.
 - Bottleneck: product decision.
 - Handoff: This is UI-only. Scan, cleanup, scheduling, notification, and language/theme behavior were not changed.
+
+## 2026-07-09 - TASK-027 - Sidebar click and keyboard focus polish
+
+- What changed: Added a reusable sidebar press `ButtonStyle` for subtle click feedback, made sidebar rows keyboard-focusable, and added a visible focus outline/glow that works alongside the selected accent state.
+- Files touched: `CleanMac/Views/SidebarView.swift`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`; `./script/build_and_run.sh --verify`; `swift test --package-path CleanMacCore`; `git diff --check`; visual screenshot `/tmp/cleanmac-sidebar-keyboard-focus.png`; `./script/package_release.sh`.
+- Result: Passed. Keyboard focus is visible on the Scan row, click feedback compiles into the sidebar button style, labels remain unclipped, and selection behavior is unchanged.
+- Next step: Decide whether to add a broader glass sidebar style or leave the sidebar interaction polish restrained.
+- Bottleneck: product decision.
+- Handoff: This is UI-only. Scan, cleanup, scheduling, notification, language, and theme behavior were not changed.

@@ -45,6 +45,7 @@ private struct SidebarSectionButton: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme
+    @FocusState private var isKeyboardFocused: Bool
     @State private var isHovered = false
 
     var body: some View {
@@ -74,8 +75,11 @@ private struct SidebarSectionButton: View {
             .scaleEffect(rowScale, anchor: .leading)
             .shadow(color: shadowColor, radius: shadowRadius, y: 2)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SidebarPressButtonStyle())
+        .focusable(true)
+        .focused($isKeyboardFocused)
         .help(section.title)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .onHover { hovering in
             withAnimation(rowAnimation) {
                 isHovered = hovering
@@ -83,6 +87,7 @@ private struct SidebarSectionButton: View {
         }
         .animation(rowAnimation, value: isSelected)
         .animation(rowAnimation, value: isHovered)
+        .animation(rowAnimation, value: isKeyboardFocused)
     }
 
     private var rowBackground: some View {
@@ -98,12 +103,16 @@ private struct SidebarSectionButton: View {
 
     private var rowBorder: some View {
         RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .strokeBorder(borderColor, lineWidth: isHovered && !isSelected ? 1 : 0)
+            .strokeBorder(borderColor, lineWidth: borderWidth)
     }
 
     private var backgroundColor: Color {
         if isSelected {
             return .accentColor
+        }
+
+        if isKeyboardFocused {
+            return Color.accentColor.opacity(colorScheme == .dark ? 0.22 : 0.12)
         }
 
         if isHovered {
@@ -114,7 +123,19 @@ private struct SidebarSectionButton: View {
     }
 
     private var borderColor: Color {
-        isHovered && !isSelected ? Color.primary.opacity(colorScheme == .dark ? 0.13 : 0.08) : .clear
+        if isKeyboardFocused {
+            return isSelected ? Color.white.opacity(0.78) : .accentColor
+        }
+
+        return isHovered && !isSelected ? Color.primary.opacity(colorScheme == .dark ? 0.13 : 0.08) : .clear
+    }
+
+    private var borderWidth: CGFloat {
+        if isKeyboardFocused {
+            return isSelected ? 1 : 1.4
+        }
+
+        return isHovered && !isSelected ? 1 : 0
     }
 
     private var iconColor: Color {
@@ -122,7 +143,7 @@ private struct SidebarSectionButton: View {
             return .white
         }
 
-        return isHovered ? .accentColor : .primary
+        return isHovered || isKeyboardFocused ? .accentColor : .primary
     }
 
     private var titleColor: Color {
@@ -138,19 +159,41 @@ private struct SidebarSectionButton: View {
     }
 
     private var iconScale: CGFloat {
-        isHovered && !reduceMotion ? 1.08 : 1
+        (isHovered || isKeyboardFocused) && !reduceMotion ? 1.08 : 1
     }
 
     private var shadowColor: Color {
-        isHovered && !isSelected ? Color.black.opacity(colorScheme == .dark ? 0.18 : 0.08) : .clear
+        if isKeyboardFocused {
+            return Color.accentColor.opacity(colorScheme == .dark ? 0.32 : 0.22)
+        }
+
+        return isHovered && !isSelected ? Color.black.opacity(colorScheme == .dark ? 0.18 : 0.08) : .clear
     }
 
     private var shadowRadius: CGFloat {
-        isHovered && !isSelected ? 6 : 0
+        if isKeyboardFocused {
+            return 8
+        }
+
+        return isHovered && !isSelected ? 6 : 0
     }
 
     private var rowAnimation: Animation? {
         reduceMotion ? nil : .easeOut(duration: 0.16)
+    }
+}
+
+private struct SidebarPressButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.972 : 1)
+            .brightness(configuration.isPressed && !reduceMotion ? -0.025 : 0)
+            .animation(
+                reduceMotion ? nil : .spring(response: 0.22, dampingFraction: 0.72),
+                value: configuration.isPressed
+            )
     }
 }
 

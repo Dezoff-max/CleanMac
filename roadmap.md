@@ -363,3 +363,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-027
+  Title: Sidebar click and keyboard focus polish
+  Goal: Finish the sidebar interaction polish with press feedback and keyboard-visible focus.
+  What to do: Add a small press animation to sidebar buttons and a clear focus outline/glow for keyboard navigation while preserving selected state and Reduce Motion behavior.
+  Files: `CleanMac/Views/SidebarView.swift`, Loop docs
+  Definition of done: Clicking a sidebar row has subtle press feedback, keyboard focus is visible, selected state remains readable, Russian labels fit, and navigation behavior is unchanged.
+  Verification: `swift test --package-path CleanMacCore`; Debug Xcode build; `git diff --check`; `./script/build_and_run.sh --verify`; visual screenshot check; local package rebuild.
+  Priority: medium
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small

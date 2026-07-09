@@ -2,16 +2,16 @@
 
 ## Task
 
-- ID: TASK-026
-- Title: Animated sidebar hover rows
+- ID: TASK-027
+- Title: Sidebar click and keyboard focus polish
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user asked for a modern hover animation on the left sidebar menu sections.
-- Expected value: the sidebar feels more responsive and polished without changing navigation behavior.
-- Main risk: custom sidebar rows can fight native macOS sidebar density or clip Russian labels.
-- UX constraint: keep the effect subtle, fast, and respectful of Reduce Motion.
+- Why this task now: the user selected adding click animation and keyboard focus styling after the sidebar hover polish.
+- Expected value: the sidebar feels responsive for mouse users and remains clear for keyboard navigation.
+- Main risk: focus styling can compete with the selected accent state or click animation can feel jumpy.
+- UX constraint: keep motion subtle, preserve readability, and respect Reduce Motion.
 
 ## Builder Scope
 
@@ -39,10 +39,11 @@
 ## Evaluator Checklist
 
 - Done criteria:
-  - Sidebar rows show a visible but subtle hover response.
-  - Selected section remains clear and uses the existing accent style.
-  - Russian labels fit at the current sidebar width.
-  - Reduce Motion avoids animated movement.
+  - Sidebar rows show a subtle press/click animation.
+  - Keyboard-focused sidebar rows show a visible focus outline or glow.
+  - Selected section remains clear and does not lose focus readability.
+  - Russian labels still fit at the current sidebar width.
+  - Reduce Motion avoids animated movement and press scaling.
   - Navigation selection behavior is unchanged.
 - Required verification:
   - `swift test --package-path CleanMacCore`
@@ -50,7 +51,7 @@
   - `git diff --check`
   - `./script/build_and_run.sh --verify`
 - Manual checks:
-  - Sidebar renders without clipping and hover feedback is visible.
+  - Sidebar renders without clipping, click feedback is visible, and keyboard focus styling is visible.
 - Evidence to collect:
   - Build/test command exit status.
   - Visual screenshot path if captured.
@@ -60,11 +61,11 @@
 
 Restart or shrink the task if:
 - the custom row breaks sidebar selection;
-- hover states cause layout jumps;
+- press/focus states cause layout jumps;
 - the fix requires unrelated navigation or window restructuring.
 
 ## Result
 
 - Status: complete
-- Verification result: Passed. Debug Xcode build, `./script/build_and_run.sh --verify`, SwiftPM tests, `git diff --check`, visual screenshot `/tmp/cleanmac-sidebar-hover.png`, and local release packaging all pass.
-- Notes: Sidebar rows now use subtle hover background, icon emphasis, and motion while preserving selected state. Reduce Motion disables the movement. Scan, cleanup, scheduling, notification, language, and theme behavior were not changed.
+- Verification result: Passed. Debug Xcode build, `./script/build_and_run.sh --verify`, SwiftPM tests, `git diff --check`, visual screenshot `/tmp/cleanmac-sidebar-keyboard-focus.png`, and local release packaging all pass.
+- Notes: Sidebar rows now have subtle click press feedback and visible keyboard focus styling. Reduce Motion disables press scaling and movement. Scan, cleanup, scheduling, notification, language, and theme behavior were not changed.
