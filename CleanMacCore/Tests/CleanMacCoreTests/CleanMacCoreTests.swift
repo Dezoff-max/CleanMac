@@ -43,6 +43,10 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertTrue(scannedPaths.contains(canonicalPath(tempFile.path)), scannedPathList)
         XCTAssertGreaterThan(report.totalSizeBytes, 0)
 
+        XCTAssertEqual(report.items.first { $0.displayName == "TestApp" }?.reasons, [.applicationCache])
+        XCTAssertEqual(report.items.first { $0.displayName == "cleanmac.log" }?.reasons, [.staleLog])
+        XCTAssertEqual(report.items.first { $0.displayName == "scratch.tmp" }?.reasons, [.staleTemporary])
+
         XCTAssertTrue(FileManager.default.fileExists(atPath: cacheFile.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: logFile.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: tempFile.path))
@@ -100,6 +104,11 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertEqual(itemsByCategory[.swiftPackageBuilds]?.map(\.displayName), ["repositories"])
         XCTAssertEqual(itemsByCategory[.downloadedInstallers]?.map(\.displayName), ["Tool.pkg"])
         XCTAssertFalse(report.items.contains { $0.displayName == "Notes.txt" })
+
+        XCTAssertEqual(itemsByCategory[.browserCaches]?.first?.reasons, [.browserCache])
+        XCTAssertEqual(itemsByCategory[.nodePackageCaches]?.first?.reasons, [.nodePackageCache])
+        XCTAssertEqual(itemsByCategory[.swiftPackageBuilds]?.first?.reasons, [.swiftPackageCache])
+        XCTAssertEqual(itemsByCategory[.downloadedInstallers]?.first?.reasons, [.installerArchive])
     }
 
     func testScannerReportsCategoryProgress() throws {
@@ -167,6 +176,11 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertEqual(names, ["OldExport.mov", "Tool.pkg", "Video.mov"])
         XCTAssertFalse(names.contains("Notes.txt"))
         XCTAssertTrue(report.items.allSatisfy { $0.risk == .review })
+
+        let itemsByName = Dictionary(uniqueKeysWithValues: report.items.map { ($0.displayName, $0) })
+        XCTAssertEqual(itemsByName["OldExport.mov"]?.reasons, [.oldDownload])
+        XCTAssertEqual(itemsByName["Tool.pkg"]?.reasons, [.installerArchive])
+        XCTAssertEqual(itemsByName["Video.mov"]?.reasons, [.largeDownload])
     }
 
     func testCleanupPlannerAcceptsOnlyAllowlistedChildPaths() throws {

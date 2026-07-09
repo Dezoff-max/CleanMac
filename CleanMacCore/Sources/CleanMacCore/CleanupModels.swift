@@ -20,6 +20,21 @@ public enum CleanupRiskLevel: String, Sendable {
     case review
 }
 
+public enum CleanupScanReason: String, Equatable, Sendable {
+    case applicationCache
+    case browserCache
+    case nodePackageCache
+    case swiftPackageCache
+    case staleLog
+    case rotatedLog
+    case staleTemporary
+    case trashItem
+    case largeDownload
+    case oldDownload
+    case installerArchive
+    case xcodeBuildData
+}
+
 public struct CleanupScanOptions: Equatable, Sendable {
     public var maxItemsPerCategory: Int
     public var maxDescendantsPerItem: Int
@@ -123,6 +138,7 @@ public struct CleanupScanItem: Identifiable, Equatable, Sendable {
     public let isSizeEstimate: Bool
     public let modifiedAt: Date?
     public let risk: CleanupRiskLevel
+    public let reasons: [CleanupScanReason]
 
     public init(
         id: String,
@@ -133,7 +149,8 @@ public struct CleanupScanItem: Identifiable, Equatable, Sendable {
         isDirectory: Bool,
         isSizeEstimate: Bool,
         modifiedAt: Date?,
-        risk: CleanupRiskLevel
+        risk: CleanupRiskLevel,
+        reasons: [CleanupScanReason] = []
     ) {
         self.id = id
         self.category = category
@@ -144,6 +161,7 @@ public struct CleanupScanItem: Identifiable, Equatable, Sendable {
         self.isSizeEstimate = isSizeEstimate
         self.modifiedAt = modifiedAt
         self.risk = risk
+        self.reasons = reasons
     }
 }
 

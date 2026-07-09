@@ -140,3 +140,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Decide whether to package/release the sidebar preference controls or continue with cleanup functionality.
 - Bottleneck: none
 - Handoff: The local app preference state was returned to RU/light after verification.
+
+## 2026-07-09 - TASK-020 - Result cleanup explanations
+
+- What changed: Added structured scanner reasons to `CleanupScanItem`, assigned reasons from the same rules that include each cleanup candidate, localized reason titles/details, and displayed compact reasons in Results rows with fuller "Почему предложено" explanations in the detail panel.
+- Files touched: `CleanMacCore/Sources/CleanMacCore/CleanupModels.swift`, `CleanMacCore/Sources/CleanMacCore/CleanupScanner.swift`, `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`, `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Views/ResultsView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `swift test --package-path CleanMacCore`; `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `./script/build_and_run.sh --verify`; visual screenshot `/tmp/cleanmac-task20-results-4.png`.
+- Result: Passed. Results now shows why each item was suggested without changing cleanup execution, confirmation, or Trash behavior.
+- Next step: Add persistent cleanup history or deeper preview metadata for large downloads.
+- Bottleneck: product decision
+- Handoff: The UI smoke used a read-only scan only; no cleanup action was triggered.

@@ -265,13 +265,14 @@ public struct CleanupScanner {
             isDirectory: isDirectory,
             options: options
         )
-        guard isSmartCandidate(
+        let reasons = scanReasons(
             url,
             category: category,
             resourceValues: values,
             measuredSizeBytes: measuredSize.bytes,
             options: options
-        ) else {
+        )
+        guard !reasons.isEmpty else {
             return nil
         }
 
@@ -286,7 +287,8 @@ public struct CleanupScanner {
             isDirectory: isDirectory,
             isSizeEstimate: measuredSize.isEstimate,
             modifiedAt: values?.contentModificationDate,
-            risk: risk(for: category)
+            risk: risk(for: category),
+            reasons: reasons
         )
     }
 
@@ -364,24 +366,51 @@ public struct CleanupScanner {
         }
     }
 
-    private func isSmartCandidate(
+    private func scanReasons(
         _ url: URL,
         category: CleanupCategory,
         resourceValues: URLResourceValues?,
         measuredSizeBytes: Int64,
         options: CleanupScanOptions
-    ) -> Bool {
+    ) -> [CleanupScanReason] {
         switch category {
+        case .userCaches:
+            return [.applicationCache]
+        case .browserCaches:
+            return [.browserCache]
+        case .nodePackageCaches:
+            return [.nodePackageCache]
+        case .swiftPackageBuilds:
+            return [.swiftPackageCache]
         case .downloads:
-            isDownloadedInstallerOrArchive(url)
-                || measuredSizeBytes >= options.largeDownloadThresholdBytes
-                || isOlderThan(resourceValues?.contentModificationDate, options.staleDownloadAge)
+            var reasons: [CleanupScanReason] = []
+            if isDownloadedInstallerOrArchive(url) {
+                reasons.append(.installerArchive)
+            }
+            if measuredSizeBytes >= options.largeDownloadThresholdBytes {
+                reasons.append(.largeDownload)
+            }
+            if isOlderThan(resourceValues?.contentModificationDate, options.staleDownloadAge) {
+                reasons.append(.oldDownload)
+            }
+            return reasons
         case .logs:
-            isRotatedLog(url) || isOlderThan(resourceValues?.contentModificationDate, options.staleLogAge)
+            var reasons: [CleanupScanReason] = []
+            if isRotatedLog(url) {
+                reasons.append(.rotatedLog)
+            }
+            if isOlderThan(resourceValues?.contentModificationDate, options.staleLogAge) {
+                reasons.append(.staleLog)
+            }
+            return reasons
         case .temporaryFiles:
-            isOlderThan(resourceValues?.contentModificationDate, options.staleTemporaryAge)
-        default:
-            true
+            return isOlderThan(resourceValues?.contentModificationDate, options.staleTemporaryAge) ? [.staleTemporary] : []
+        case .trash:
+            return [.trashItem]
+        case .downloadedInstallers:
+            return isDownloadedInstallerOrArchive(url) ? [.installerArchive] : []
+        case .xcodeDerivedData:
+            return [.xcodeBuildData]
         }
     }
 

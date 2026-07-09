@@ -558,6 +558,9 @@ private struct ResultRow: View {
                         if result.isSizeEstimate {
                             Label(L.t("results.estimated"), systemImage: "sum")
                         }
+                        if let primaryReason = result.primaryReason {
+                            Label(primaryReason.title, systemImage: primaryReason.systemImage)
+                        }
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -618,6 +621,22 @@ private struct ResultDetailPanel: View {
 
             Divider()
 
+            if !result.reasons.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label(L.t("results.detail.suggested"), systemImage: "lightbulb")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(result.reasons, id: \.rawValue) { reason in
+                            ReasonRow(reason: reason)
+                        }
+                    }
+                }
+
+                Divider()
+            }
+
             DetailRow(title: L.t("results.detail.size"), value: result.size, systemImage: "externaldrive")
             DetailRow(title: L.t("results.detail.modified"), value: result.modified, systemImage: "clock")
             DetailRow(title: L.t("results.detail.type"), value: result.isDirectory ? L.t("results.detail.folder") : L.t("results.detail.file"), systemImage: result.isDirectory ? "folder" : "doc")
@@ -644,6 +663,27 @@ private struct ResultDetailPanel: View {
             L.t("results.risk.safe.detail")
         case .review:
             L.t("results.risk.review.detail")
+        }
+    }
+}
+
+private struct ReasonRow: View {
+    let reason: CleanupScanReason
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: reason.systemImage)
+                .frame(width: 16)
+                .foregroundStyle(.tint)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(reason.title)
+                    .font(.caption.weight(.semibold))
+                Text(reason.detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }

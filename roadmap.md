@@ -265,3 +265,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-020
+  Title: Result cleanup explanations
+  Goal: Make scan results more trustworthy by explaining why each item was suggested.
+  What to do: Add structured scan reasons in `CleanMacCore`, cover them with tests, localize reason titles/details, and show compact reasons in rows plus fuller explanations in the detail panel.
+  Files: `CleanMacCore/**`, `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Views/ResultsView.swift`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: Results list shows a concise reason, the detail panel explains "why suggested", scanner tests cover reason assignment, and cleanup behavior remains unchanged.
+  Verification: `swift test --package-path CleanMacCore`; `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `./script/build_and_run.sh --verify`; visual screenshot check.
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small

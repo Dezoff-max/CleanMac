@@ -43,6 +43,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Menu bar Open focuses the existing main window before creating a new one.
 - `CleanMacCore` has a read-only scanner for user caches, logs, temporary files, Trash, Downloads review, Xcode Derived Data, browser caches, Node/npm/Yarn/pnpm caches, SwiftPM cache, and downloaded installers.
 - Results UI is backed by real scanner output, safe results are selected by default, and cleanup requires explicit confirmation.
+- Results now explain why each item was suggested, using structured reasons produced by the scanner rules.
 - Cleanup planning validates paths against category roots and moves accepted items to Trash instead of permanently deleting them.
 - Results UI now has compact category groups, risk-aware item review, a selected-item detail panel, and current-session Trash history with restore actions.
 - Restore logic refuses to overwrite existing original paths and reports missing Trash/original locations without deleting anything.
@@ -60,7 +61,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 
 - This Mac has `0 valid identities found`, so actual Developer ID signing/notarization cannot be performed locally yet; macOS Gatekeeper rejects the current ad-hoc zip as expected.
 - Permissions are live for Full Disk Access status, but the app still relies on System Settings for granting access.
-- The scanner is intentionally conservative and capped; deeper stale-file heuristics and richer cleanup previews are future work.
+- The scanner is intentionally conservative and capped; deeper stale-file heuristics and persistent cleanup previews are future work.
 - Cleanup is intentionally Trash-based; permanent deletion is still out of scope.
 - Cleanup history is current-session only; persistent history across app launches is still future work.
 - Local Xcode emits a CoreSimulator warning; it does not currently block macOS builds.
@@ -81,6 +82,6 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 ## Recommended Next Work
 
 1. Configure Apple Developer signing secrets and cut a signed/notarized release.
-2. Add richer cleanup previews for large downloads and developer caches.
-3. Persist cleanup history safely across app launches.
+2. Persist cleanup history safely across app launches.
+3. Add deeper cleanup previews for large downloads and developer caches.
 4. Add more permission-specific scanner hints when protected roots are unavailable.

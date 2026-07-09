@@ -81,6 +81,7 @@ struct ScanResult: Identifiable {
     let isDirectory: Bool
     let isSizeEstimate: Bool
     let modified: String
+    let reasons: [CleanupScanReason]
 
     init(item: CleanupScanItem) {
         id = item.id
@@ -93,6 +94,64 @@ struct ScanResult: Identifiable {
         isDirectory = item.isDirectory
         isSizeEstimate = item.isSizeEstimate
         modified = CleanMacFormatters.relativeDate(item.modifiedAt)
+        reasons = item.reasons
+    }
+
+    var primaryReason: CleanupScanReason? {
+        reasons.first
+    }
+}
+
+extension CleanupScanReason {
+    var title: String {
+        switch self {
+        case .applicationCache: L.t("results.reason.applicationCache.title")
+        case .browserCache: L.t("results.reason.browserCache.title")
+        case .nodePackageCache: L.t("results.reason.nodePackageCache.title")
+        case .swiftPackageCache: L.t("results.reason.swiftPackageCache.title")
+        case .staleLog: L.t("results.reason.staleLog.title")
+        case .rotatedLog: L.t("results.reason.rotatedLog.title")
+        case .staleTemporary: L.t("results.reason.staleTemporary.title")
+        case .trashItem: L.t("results.reason.trashItem.title")
+        case .largeDownload: L.t("results.reason.largeDownload.title")
+        case .oldDownload: L.t("results.reason.oldDownload.title")
+        case .installerArchive: L.t("results.reason.installerArchive.title")
+        case .xcodeBuildData: L.t("results.reason.xcodeBuildData.title")
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .applicationCache: L.t("results.reason.applicationCache.detail")
+        case .browserCache: L.t("results.reason.browserCache.detail")
+        case .nodePackageCache: L.t("results.reason.nodePackageCache.detail")
+        case .swiftPackageCache: L.t("results.reason.swiftPackageCache.detail")
+        case .staleLog: L.t("results.reason.staleLog.detail")
+        case .rotatedLog: L.t("results.reason.rotatedLog.detail")
+        case .staleTemporary: L.t("results.reason.staleTemporary.detail")
+        case .trashItem: L.t("results.reason.trashItem.detail")
+        case .largeDownload: L.t("results.reason.largeDownload.detail")
+        case .oldDownload: L.t("results.reason.oldDownload.detail")
+        case .installerArchive: L.t("results.reason.installerArchive.detail")
+        case .xcodeBuildData: L.t("results.reason.xcodeBuildData.detail")
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .applicationCache: "shippingbox"
+        case .browserCache: "safari"
+        case .nodePackageCache: "curlybraces.square"
+        case .swiftPackageCache: "swift"
+        case .staleLog: "doc.text.magnifyingglass"
+        case .rotatedLog: "arrow.triangle.2.circlepath"
+        case .staleTemporary: "clock.arrow.circlepath"
+        case .trashItem: "trash"
+        case .largeDownload: "externaldrive"
+        case .oldDownload: "calendar.badge.clock"
+        case .installerArchive: "opticaldiscdrive"
+        case .xcodeBuildData: "hammer"
+        }
     }
 }
 
