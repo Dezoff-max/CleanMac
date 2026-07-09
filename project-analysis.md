@@ -54,7 +54,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Permissions UI checks live Full Disk Access status by probing protected metadata/readability and can refresh the result.
 - English and Russian app localizations are included; macOS selects the language from system preferences.
 - The selected language override applies through the app's localizer, and the selected appearance applies to both the main window and menu bar popover.
-- The menu bar popover shows current disk usage, scan-in-progress state, last scan source/time, and last scan result summary.
+- The menu bar popover shows current disk usage, scan-in-progress state, last scan source/time, and last scan result summary with larger readable typography and rounded compact panels.
 - Settings can enable read-only auto scan while the app is running; it supports daily, hourly, and every-two-hours frequencies, uses the currently selected scan areas, and updates menu bar status.
 - Scheduled auto scan can show localized macOS completion notifications when the notification toggle is enabled and system permission allows it; manual scans remain silent.
 - Private GitHub Release `v0.1.0` exists with unsigned zip and sha256 assets.

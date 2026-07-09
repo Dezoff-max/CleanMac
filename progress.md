@@ -180,3 +180,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Add launch-at-login support or create a new GitHub Release tag for this package.
 - Bottleneck: Apple Developer signing identity for trusted distribution.
 - Handoff: Notification permission was not forced during smoke testing; the app requests it only when auto scan and notification settings are enabled. Xcode still emits the known CoreSimulator warning, but macOS builds complete.
+
+## 2026-07-09 - TASK-024 - Modern status menu popover polish
+
+- What changed: Reworked the menu bar popover visual hierarchy with larger disk percentage typography, rounded lightweight status panels, a cleaner header without duplicate status chip, a custom progress bar, and a shorter localized primary action label that fits the two-button footer.
+- Files touched: `CleanMac/Views/StatusMenuView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`; `./script/build_and_run.sh --verify`; `swift test --package-path CleanMacCore`; visual screenshot `/tmp/cleanmac-status-menu-polished.png`.
+- Result: Passed. The open popover is readable in Russian, the primary action no longer truncates, and the disk/last-scan sections render as rounded modern panels.
+- Next step: Add click-through behavior from notifications to Results or launch-at-login support.
+- Bottleneck: product decision.
+- Handoff: This was UI-only; scan, scheduling, cleanup, and packaging behavior were not changed.

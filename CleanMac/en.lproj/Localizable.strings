@@ -13,11 +13,14 @@
 "sidebar.appearance.dark" = "Dark";
 
 "menu.open" = "Open CleanMac";
+"menu.open.short" = "Open";
 "menu.quit" = "Quit";
 "status.disk.defaultName" = "Macintosh HD";
 "status.disk.percent" = "%d%% used";
 "status.disk.usedOfTotal" = "%@ of %@ used";
 "status.disk.free" = "%@ free";
+"status.disk.usedLabel" = "Used";
+"status.disk.freeLabel" = "Free";
 "status.lastScan.title" = "Last scan";
 "status.lastScan.summary" = "%d items, %@";
 "status.lastScan.empty" = "Run a scan to show cleanup potential.";

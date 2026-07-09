@@ -321,3 +321,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / medium risk / small
+
+- [x] ID: TASK-024
+  Title: Modern status menu popover polish
+  Goal: Make the menu bar popover easier to read and visually cleaner.
+  What to do: Increase key metric typography, remove duplicated status chrome, use rounded lightweight panels, and shorten the primary action label for the compact two-button layout.
+  Files: `CleanMac/Views/StatusMenuView.swift`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: Disk percentage and scan summary are readable, Russian action labels do not clip, panels are rounded instead of flat gray rectangles, and status data behavior is unchanged.
+  Verification: `swift test --package-path CleanMacCore`; Debug Xcode build; localization lint; `git diff --check`; `./script/build_and_run.sh --verify`; visual screenshot check.
+  Priority: medium
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small

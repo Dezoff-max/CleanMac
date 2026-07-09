@@ -13,11 +13,14 @@
 "sidebar.appearance.dark" = "Тёмная";
 
 "menu.open" = "Открыть CleanMac";
+"menu.open.short" = "Открыть";
 "menu.quit" = "Выйти";
 "status.disk.defaultName" = "Macintosh HD";
 "status.disk.percent" = "занято %d%%";
 "status.disk.usedOfTotal" = "Занято %@ из %@";
 "status.disk.free" = "Свободно %@";
+"status.disk.usedLabel" = "Занято";
+"status.disk.freeLabel" = "Свободно";
 "status.lastScan.title" = "Последний скан";
 "status.lastScan.summary" = "%d элементов, %@";
 "status.lastScan.empty" = "Запусти сканирование, чтобы увидеть потенциал очистки.";
