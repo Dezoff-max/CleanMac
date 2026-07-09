@@ -293,3 +293,17 @@
   Effort: medium
   Confidence: high
   Score: high impact / medium risk / medium
+
+- [x] ID: TASK-022
+  Title: Auto scan frequency options
+  Goal: Add useful scan frequency choices so the user can schedule daily, hourly, or every-two-hours read-only scans.
+  What to do: Add a persisted frequency preference, render it in Settings, compute interval run slots in the scheduler, and keep menu bar next-run status accurate.
+  Files: `CleanMac/Support/CleanMacPreferences.swift`, `CleanMac/Support/CleanMacAutoScanScheduler.swift`, `CleanMac/Views/SettingsView.swift`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: Settings shows daily/hourly/every-2-hours choices, interval modes run once per due slot, daily remains the default, and menu bar next-run calculation follows the selected frequency.
+  Verification: `swift test --package-path CleanMacCore`; `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`; `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `./script/build_and_run.sh --verify`; defaults-based interval smoke test; visual screenshot check.
+  Priority: high
+  Impact: medium
+  Risk: medium
+  Effort: small
+  Confidence: high
+  Score: medium impact / medium risk / small

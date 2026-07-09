@@ -38,13 +38,7 @@ final class CleanMacAutoScanScheduler {
             return
         }
 
-        let scheduledDate = CleanMacScanSchedule.scheduledDate(on: now, defaults: defaults, calendar: calendar)
-        guard now >= scheduledDate else {
-            return
-        }
-
-        let todayKey = CleanMacScanSchedule.dayKey(for: now, calendar: calendar)
-        guard defaults.string(forKey: CleanMacPreferenceKeys.autoScanLastRunDay) != todayKey else {
+        guard let dueRun = CleanMacScanSchedule.dueRun(defaults: defaults, now: now, calendar: calendar) else {
             return
         }
 
@@ -53,10 +47,10 @@ final class CleanMacAutoScanScheduler {
             return
         }
 
-        runScan(categories: categories, dayKey: todayKey)
+        runScan(categories: categories, runKey: dueRun.key)
     }
 
-    private func runScan(categories: [CleanupCategory], dayKey: String) {
+    private func runScan(categories: [CleanupCategory], runKey: String) {
         defaults.set(true, forKey: CleanMacPreferenceKeys.scanInProgress)
 
         scanTask = Task { [weak self] in
@@ -71,7 +65,7 @@ final class CleanMacAutoScanScheduler {
                 return
             }
 
-            self.defaults.set(dayKey, forKey: CleanMacPreferenceKeys.autoScanLastRunDay)
+            self.defaults.set(runKey, forKey: CleanMacPreferenceKeys.autoScanLastRunKey)
             CleanMacScanPreferences.storeLastScan(report, source: .scheduled, defaults: self.defaults)
             self.defaults.set(false, forKey: CleanMacPreferenceKeys.scanInProgress)
             self.scanTask = nil

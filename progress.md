@@ -160,3 +160,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Add launch-at-login support or notifications after scheduled scans.
 - Bottleneck: product decision
 - Handoff: Auto scan runs only while CleanMac is running; it never performs cleanup or deletion.
+
+## 2026-07-09 - TASK-022 - Auto scan frequency options
+
+- What changed: Added a persisted auto-scan frequency preference, Settings segmented choices for daily/hourly/every-two-hours, interval slot run keys, and next-run calculation for menu bar status.
+- Files touched: `CleanMac/Support/CleanMacPreferences.swift`, `CleanMac/Support/CleanMacAutoScanScheduler.swift`, `CleanMac/Views/SettingsView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`; `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; defaults-based interval smoke test (`hourly` and `everyTwoHours`); visual screenshot `/tmp/cleanmac-autoscan-frequency-settings-2.png`.
+- Result: Passed. Settings now shows the frequency control in Russian, and both interval modes trigger a single read-only scheduled scan for the due slot.
+- Next step: Add launch-at-login support so auto scan can work after reboot/login without opening CleanMac manually.
+- Bottleneck: product decision
+- Handoff: Local test state was returned to daily 10:00 after visual QA so every-two-hours scanning is not accidentally left enabled.

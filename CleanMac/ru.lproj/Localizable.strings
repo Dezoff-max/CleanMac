@@ -216,7 +216,12 @@
 "settings.confirmBeforeCleanup" = "Подтверждать перед очисткой";
 "settings.showMenuBarStatus" = "Показывать статус в меню";
 "settings.autoScan" = "Автосканирование по расписанию";
+"settings.autoScanFrequency" = "Периодичность";
+"settings.autoScanFrequency.daily" = "Каждый день";
+"settings.autoScanFrequency.hourly" = "Каждый час";
+"settings.autoScanFrequency.everyTwoHours" = "Каждые 2 часа";
 "settings.autoScanTime" = "Время сканирования";
+"settings.autoScanStartTime" = "Начинать с";
 "settings.autoScanAreas" = "Выбранные области: %d";
 
 "area.userCaches.title" = "Кэши пользователя";

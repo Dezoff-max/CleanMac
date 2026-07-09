@@ -2,27 +2,23 @@
 
 ## Task
 
-- ID: TASK-021
-- Title: Scheduled scan status menu
+- ID: TASK-022
+- Title: Auto scan frequency options
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user asked for automatic scanning at a selected time and current information in the menu bar.
-- Expected value: CleanMac can keep lightweight scan status fresh while the app lives in the menu bar after the main window is closed.
-- Main risk: background work must stay read-only and must not race a manual scan.
-- UX constraint: scheduled scanning is configured in Settings and uses the currently selected scan areas.
+- Why this task now: the user asked to add scan timing choices for every hour or every two hours.
+- Expected value: the schedule control is more useful than a single daily time and can keep menu bar scan status fresher.
+- Main risk: interval scans must run once per interval slot, not every timer tick.
+- UX constraint: preserve the existing daily time behavior and add frequency choices without crowding Settings.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMac/CleanMacApp.swift`
   - `CleanMac/Support/CleanMacAutoScanScheduler.swift`
   - `CleanMac/Support/CleanMacPreferences.swift`
-  - `CleanMac/Support/CleanMacFormatters.swift`
-  - `CleanMac/Views/MainWindowView.swift`
   - `CleanMac/Views/SettingsView.swift`
-  - `CleanMac/Views/StatusMenuView.swift`
   - `CleanMac/*/Localizable.strings`
   - `project-analysis.md`
   - `roadmap.md`
@@ -34,8 +30,7 @@
   - `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`
   - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
   - `git diff --check`
-  - read-only inspection commands
-  - defaults-based smoke test with restoration to default app state
+  - defaults-based smoke test with restoration to a non-surprising local state
   - visual screenshot commands
 - Out of scope:
   - automatic cleanup or deletion;
@@ -48,12 +43,12 @@
 ## Evaluator Checklist
 
 - Done criteria:
-  - Settings exposes an auto-scan toggle and time picker.
-  - Auto scan uses the currently selected scan areas and is read-only.
-  - Auto scan does not overlap manual scans.
-  - Menu bar popover shows disk usage, scan-in-progress state, last scan summary/source/time, and next auto scan time when enabled.
-  - Manual scans persist the last scan summary for menu bar display.
-  - Empty selected areas remain empty and do not silently revert to defaults for scheduling.
+  - Settings shows frequency choices: daily, every hour, every two hours.
+  - Existing daily behavior remains the default and uses the selected time.
+  - Hourly and two-hour modes use the selected time as the start anchor.
+  - Scheduler records a run key per interval slot so it does not repeat every minute.
+  - Menu bar next-run calculation follows the selected frequency.
+  - English and Russian strings cover the new controls.
 - Required verification:
   - `swift test --package-path CleanMacCore`
   - `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`
@@ -61,8 +56,8 @@
   - `git diff --check`
   - `./script/build_and_run.sh --verify`
 - Manual checks:
-  - defaults-based scheduled scan smoke test records `lastScanSource=scheduled` and clears `scanInProgress`.
-  - Visual screenshot confirms menu bar disk details are readable and not truncated.
+  - defaults-based smoke test records scheduled scans for `hourly` and `everyTwoHours`.
+  - Visual screenshot confirms the Settings frequency control is readable in Russian.
 - Evidence to collect:
   - Build/test command exit status.
   - Smoke test output.
@@ -72,13 +67,13 @@
 ## Restart Signals
 
 Restart or shrink the task if:
-- scheduling requires privileged background agents;
-- any path attempts cleanup without confirmation;
-- the menu bar layout clips disk/scan status text;
-- scheduled and manual scans can run at the same time.
+- interval logic starts scans every timer tick;
+- settings controls clip at the standard window size;
+- scheduled scans overlap manual scans;
+- the update requires background agents or destructive cleanup behavior.
 
 ## Result
 
 - Status: complete
-- Verification result: Passed. SwiftPM tests, Xcode Debug build, localization lint, diff check, `./script/build_and_run.sh --verify`, defaults-based scheduled scan smoke test, and visual screenshot `/tmp/cleanmac-status-menu.png` all pass.
-- Notes: Auto scan runs only while CleanMac is running and performs read-only scanning of selected areas. It does not clean, move, or delete files.
+- Verification result: Passed. SwiftPM tests, Xcode Debug build, localization lint, diff check, `./script/build_and_run.sh --verify`, hourly/every-two-hours defaults smoke test, and visual screenshot `/tmp/cleanmac-autoscan-frequency-settings-2.png` all pass.
+- Notes: Interval auto scan is still read-only and runs only while CleanMac is running.

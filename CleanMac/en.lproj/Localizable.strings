@@ -216,7 +216,12 @@
 "settings.confirmBeforeCleanup" = "Confirm Before Cleanup";
 "settings.showMenuBarStatus" = "Show Menu Bar Status";
 "settings.autoScan" = "Scheduled auto scan";
+"settings.autoScanFrequency" = "Frequency";
+"settings.autoScanFrequency.daily" = "Daily";
+"settings.autoScanFrequency.hourly" = "Every hour";
+"settings.autoScanFrequency.everyTwoHours" = "Every 2 hours";
 "settings.autoScanTime" = "Scan time";
+"settings.autoScanStartTime" = "Start from";
 "settings.autoScanAreas" = "Selected areas: %d";
 
 "area.userCaches.title" = "User Caches";

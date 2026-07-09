@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Binding var confirmBeforeCleanup: Bool
     @Binding var showMenuBarStatus: Bool
     @AppStorage(CleanMacPreferenceKeys.autoScanEnabled) private var autoScanEnabled = false
+    @AppStorage(CleanMacPreferenceKeys.autoScanFrequency) private var autoScanFrequency = CleanMacAutoScanFrequency.defaultFrequency.rawValue
     @AppStorage(CleanMacPreferenceKeys.autoScanHour) private var autoScanHour = CleanMacScanSchedule.defaultHour
     @AppStorage(CleanMacPreferenceKeys.autoScanMinute) private var autoScanMinute = CleanMacScanSchedule.defaultMinute
     @AppStorage(CleanMacPreferenceKeys.selectedAreaIDs) private var selectedAreaIDsRaw = CleanMacScanPreferences.defaultSelectedAreaIDsRaw
@@ -28,6 +29,18 @@ struct SettingsView: View {
             autoScanHour = components.hour ?? CleanMacScanSchedule.defaultHour
             autoScanMinute = components.minute ?? CleanMacScanSchedule.defaultMinute
         }
+    }
+
+    private var autoScanFrequencyBinding: Binding<CleanMacAutoScanFrequency> {
+        Binding {
+            CleanMacAutoScanFrequency(rawValue: autoScanFrequency) ?? CleanMacAutoScanFrequency.defaultFrequency
+        } set: { newValue in
+            autoScanFrequency = newValue.rawValue
+        }
+    }
+
+    private var selectedFrequency: CleanMacAutoScanFrequency {
+        CleanMacAutoScanFrequency(rawValue: autoScanFrequency) ?? CleanMacAutoScanFrequency.defaultFrequency
     }
 
     var body: some View {
@@ -66,8 +79,23 @@ struct SettingsView: View {
                         if autoScanEnabled {
                             Divider()
 
+                            VStack(alignment: .leading, spacing: 8) {
+                                Label(L.t("settings.autoScanFrequency"), systemImage: "repeat")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+
+                                Picker(L.t("settings.autoScanFrequency"), selection: autoScanFrequencyBinding) {
+                                    ForEach(CleanMacAutoScanFrequency.allCases) { frequency in
+                                        Text(frequency.title).tag(frequency)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
+                            }
+
+                            Divider()
+
                             DatePicker(
-                                L.t("settings.autoScanTime"),
+                                selectedFrequency == .daily ? L.t("settings.autoScanTime") : L.t("settings.autoScanStartTime"),
                                 selection: autoScanTime,
                                 displayedComponents: .hourAndMinute
                             )
