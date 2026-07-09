@@ -2,23 +2,21 @@
 
 ## Task
 
-- ID: TASK-025
-- Title: Settings notification test button
+- ID: TASK-026
+- Title: Animated sidebar hover rows
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user suspects the 16:00 auto scan ran but no notification appeared.
-- Expected value: the user can test macOS notification permission and delivery directly from Settings.
-- Main risk: the test must not trigger scanning or cleanup and must report denied permission clearly.
-- UX constraint: keep Settings compact and make the test status readable in Russian.
+- Why this task now: the user asked for a modern hover animation on the left sidebar menu sections.
+- Expected value: the sidebar feels more responsive and polished without changing navigation behavior.
+- Main risk: custom sidebar rows can fight native macOS sidebar density or clip Russian labels.
+- UX constraint: keep the effect subtle, fast, and respectful of Reduce Motion.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMac/Support/CleanMacNotificationService.swift`
-  - `CleanMac/Views/SettingsView.swift`
-  - `CleanMac/*/Localizable.strings`
+  - `CleanMac/Views/SidebarView.swift`
   - `project-analysis.md`
   - `roadmap.md`
   - `contract.md`
@@ -27,12 +25,12 @@
   - `./script/build_and_run.sh --verify`
   - `swift test --package-path CleanMacCore`
   - `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`
-  - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
   - `git diff --check`
   - visual screenshot commands if useful
 - Out of scope:
   - automatic cleanup or deletion;
-  - changing scheduled scan timing;
+  - scanner or cleanup behavior;
+  - settings, scheduling, or notification behavior;
   - release packaging changes;
   - main window redesign.
 - Dependencies allowed: no
@@ -41,19 +39,18 @@
 ## Evaluator Checklist
 
 - Done criteria:
-  - Settings exposes a localized test notification button near the auto-scan notification toggle.
-  - Pressing the button requests system notification permission when needed.
-  - A successful test posts a localized macOS notification.
-  - Denied or disabled notification states show a clear inline status.
-  - Test notification does not start a scan and does not change cleanup behavior.
+  - Sidebar rows show a visible but subtle hover response.
+  - Selected section remains clear and uses the existing accent style.
+  - Russian labels fit at the current sidebar width.
+  - Reduce Motion avoids animated movement.
+  - Navigation selection behavior is unchanged.
 - Required verification:
   - `swift test --package-path CleanMacCore`
   - `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`
-  - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
   - `git diff --check`
   - `./script/build_and_run.sh --verify`
 - Manual checks:
-  - Settings view shows the test notification control without clipping.
+  - Sidebar renders without clipping and hover feedback is visible.
 - Evidence to collect:
   - Build/test command exit status.
   - Visual screenshot path if captured.
@@ -62,12 +59,12 @@
 ## Restart Signals
 
 Restart or shrink the task if:
-- the test button triggers scanning or cleanup;
-- notification permission handling blocks the main thread;
-- the fix requires background agents or packaging changes.
+- the custom row breaks sidebar selection;
+- hover states cause layout jumps;
+- the fix requires unrelated navigation or window restructuring.
 
 ## Result
 
 - Status: complete
-- Verification result: Passed. Localization lint, diff check, Debug Xcode build, `./script/build_and_run.sh --verify`, SwiftPM tests, and visual screenshot `/tmp/cleanmac-settings-test-notification.png` all pass.
-- Notes: The Settings test button requests notification permission when needed and reports disabled, denied, failed, or sent status inline. Scan, cleanup, and schedule timing behavior were not changed.
+- Verification result: Passed. Debug Xcode build, `./script/build_and_run.sh --verify`, SwiftPM tests, `git diff --check`, visual screenshot `/tmp/cleanmac-sidebar-hover.png`, and local release packaging all pass.
+- Notes: Sidebar rows now use subtle hover background, icon emphasis, and motion while preserving selected state. Reduce Motion disables the movement. Scan, cleanup, scheduling, notification, language, and theme behavior were not changed.

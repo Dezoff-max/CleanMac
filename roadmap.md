@@ -349,3 +349,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-026
+  Title: Animated sidebar hover rows
+  Goal: Make the left sidebar feel more modern and responsive.
+  What to do: Replace static sidebar rows with custom SwiftUI rows that animate hover background, icon emphasis, and subtle movement while preserving selection behavior.
+  Files: `CleanMac/Views/SidebarView.swift`, Loop docs
+  Definition of done: Sidebar rows show a subtle hover response, selected state remains clear, Russian labels fit, Reduce Motion avoids animated movement, and navigation behavior is unchanged.
+  Verification: `swift test --package-path CleanMacCore`; Debug Xcode build; `git diff --check`; `./script/build_and_run.sh --verify`; visual screenshot check; local package rebuild.
+  Priority: medium
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small

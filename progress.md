@@ -200,3 +200,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Add notification click-through behavior or launch-at-login support.
 - Bottleneck: product decision.
 - Handoff: The test button may trigger the macOS notification permission prompt on first use. No scan, cleanup, or scheduling behavior changed.
+
+## 2026-07-09 - TASK-026 - Animated sidebar hover rows
+
+- What changed: Replaced the static sidebar list rows with custom SwiftUI sidebar buttons that add a subtle hover background, icon emphasis, shadow, and small movement while preserving the selected accent row and Reduce Motion behavior.
+- Files touched: `CleanMac/Views/SidebarView.swift`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`; `./script/build_and_run.sh --verify`; `swift test --package-path CleanMacCore`; `git diff --check`; visual screenshot `/tmp/cleanmac-sidebar-hover.png`; `./script/package_release.sh`.
+- Result: Passed. Sidebar hover is visible on the Scan row, Russian labels fit at the current sidebar width, and navigation selection remains unchanged.
+- Next step: Decide whether to add keyboard focus styling or click sound/haptic-style microfeedback.
+- Bottleneck: product decision.
+- Handoff: This is UI-only. Scan, cleanup, scheduling, notification, and language/theme behavior were not changed.
