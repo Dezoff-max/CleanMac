@@ -69,6 +69,7 @@ final class CleanMacAutoScanScheduler {
             CleanMacScanPreferences.storeLastScan(report, source: .scheduled, defaults: self.defaults)
             self.defaults.set(false, forKey: CleanMacPreferenceKeys.scanInProgress)
             self.scanTask = nil
+            await CleanMacNotificationService.notifyScheduledScanCompleted(report, defaults: self.defaults)
         }
     }
 }

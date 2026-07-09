@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage(CleanMacPreferenceKeys.autoScanFrequency) private var autoScanFrequency = CleanMacAutoScanFrequency.defaultFrequency.rawValue
     @AppStorage(CleanMacPreferenceKeys.autoScanHour) private var autoScanHour = CleanMacScanSchedule.defaultHour
     @AppStorage(CleanMacPreferenceKeys.autoScanMinute) private var autoScanMinute = CleanMacScanSchedule.defaultMinute
+    @AppStorage(CleanMacPreferenceKeys.autoScanNotificationsEnabled) private var autoScanNotificationsEnabled = true
     @AppStorage(CleanMacPreferenceKeys.selectedAreaIDs) private var selectedAreaIDsRaw = CleanMacScanPreferences.defaultSelectedAreaIDsRaw
 
     private var selectedAreaCount: Int {
@@ -75,6 +76,15 @@ struct SettingsView: View {
                         Toggle(isOn: $autoScanEnabled) {
                             Label(L.t("settings.autoScan"), systemImage: "clock.badge.checkmark")
                         }
+                        .onChange(of: autoScanEnabled) { _, isEnabled in
+                            guard isEnabled, autoScanNotificationsEnabled else {
+                                return
+                            }
+
+                            Task {
+                                _ = await CleanMacNotificationService.requestAuthorizationIfNeeded()
+                            }
+                        }
 
                         if autoScanEnabled {
                             Divider()
@@ -103,6 +113,21 @@ struct SettingsView: View {
                             Label(L.f("settings.autoScanAreas", selectedAreaCount), systemImage: "checklist")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+
+                            Divider()
+
+                            Toggle(isOn: $autoScanNotificationsEnabled) {
+                                Label(L.t("settings.autoScanNotifications"), systemImage: "bell.badge")
+                            }
+                            .onChange(of: autoScanNotificationsEnabled) { _, isEnabled in
+                                guard isEnabled else {
+                                    return
+                                }
+
+                                Task {
+                                    _ = await CleanMacNotificationService.requestAuthorizationIfNeeded()
+                                }
+                            }
                         }
                     }
                 }

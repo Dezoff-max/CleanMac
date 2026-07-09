@@ -12,6 +12,7 @@ enum CleanMacPreferenceKeys {
     static let autoScanHour = "CleanMac.autoScanHour"
     static let autoScanMinute = "CleanMac.autoScanMinute"
     static let autoScanLastRunKey = "CleanMac.autoScanLastRunKey"
+    static let autoScanNotificationsEnabled = "CleanMac.autoScanNotificationsEnabled"
     static let scanInProgress = "CleanMac.scanInProgress"
 }
 

@@ -26,6 +26,8 @@
 "status.scanning" = "Scanning";
 "status.autoScan.running" = "Scanning selected areas";
 "status.autoScan.next" = "Next auto scan: %@";
+"notification.autoScan.title" = "Auto scan finished";
+"notification.autoScan.body" = "%d items, %@ found. No cleanup was performed.";
 
 "button.scan" = "Scan";
 "button.scanning" = "Scanning";
@@ -223,6 +225,7 @@
 "settings.autoScanTime" = "Scan time";
 "settings.autoScanStartTime" = "Start from";
 "settings.autoScanAreas" = "Selected areas: %d";
+"settings.autoScanNotifications" = "Notify after auto scan";
 
 "area.userCaches.title" = "User Caches";
 "area.userCaches.detail" = "Application cache folders in the current user Library.";

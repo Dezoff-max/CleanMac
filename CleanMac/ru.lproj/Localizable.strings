@@ -26,6 +26,8 @@
 "status.scanning" = "Сканирование";
 "status.autoScan.running" = "Сканирую выбранные области";
 "status.autoScan.next" = "Следующий автоскан: %@";
+"notification.autoScan.title" = "Автосканирование завершено";
+"notification.autoScan.body" = "Найдено: %d, объём: %@. Очистка не выполнялась.";
 
 "button.scan" = "Сканировать";
 "button.scanning" = "Сканирование";
@@ -223,6 +225,7 @@
 "settings.autoScanTime" = "Время сканирования";
 "settings.autoScanStartTime" = "Начинать с";
 "settings.autoScanAreas" = "Выбранные области: %d";
+"settings.autoScanNotifications" = "Уведомлять после автоскана";
 
 "area.userCaches.title" = "Кэши пользователя";
 "area.userCaches.detail" = "Папки кэша приложений в пользовательской Library.";

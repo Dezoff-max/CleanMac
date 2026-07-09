@@ -39,6 +39,8 @@ final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+        CleanMacNotificationService.configure()
+        requestNotificationAuthorizationIfUseful()
         autoScanScheduler.start()
     }
 
@@ -48,5 +50,18 @@ final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         autoScanScheduler.stop()
+    }
+
+    private func requestNotificationAuthorizationIfUseful() {
+        let defaults = UserDefaults.standard
+        guard defaults.bool(forKey: CleanMacPreferenceKeys.autoScanEnabled),
+              CleanMacNotificationService.notificationsEnabled(defaults: defaults)
+        else {
+            return
+        }
+
+        Task {
+            _ = await CleanMacNotificationService.requestAuthorizationIfNeeded(defaults: defaults)
+        }
     }
 }
