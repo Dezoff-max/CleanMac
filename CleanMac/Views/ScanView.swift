@@ -1,8 +1,10 @@
+import CleanMacCore
 import SwiftUI
 
 struct ScanView: View {
     @Binding var selectedAreaIDs: Set<String>
     let isScanning: Bool
+    let scanProgress: CleanupScanProgress?
     let onStartScan: () -> Void
 
     @State private var filter: ScanAreaFilter = .all
@@ -34,7 +36,7 @@ struct ScanView: View {
                 )
 
                 if isScanning {
-                    ScanActivityView(selectedAreas: selectedAreas)
+                    ScanActivityView(selectedAreas: selectedAreas, progress: scanProgress)
                 }
 
                 InfoPanel {

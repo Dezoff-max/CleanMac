@@ -90,3 +90,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Add deeper scanner heuristics or persistent cleanup history.
 - Bottleneck: product decision
 - Handoff: This is UI-only. Scanner and cleanup safety behavior were not changed.
+
+## 2026-07-09 - TASK-015 - Real scan progress and smart cleanup rules
+
+- What changed: Added `CleanupScanProgress` events to the core scanner, connected Scan UI to real percentage/current area/found count/size, polished the scan animation with a progress track and area states, and added conservative smart rules for Downloads, logs, and temporary files.
+- Files touched: `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/ScanActivityView.swift`, `CleanMac/Views/ScanView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `CleanMacCore/Sources/CleanMacCore/CleanupModels.swift`, `CleanMacCore/Sources/CleanMacCore/CleanupScanner.swift`, `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `swift test --package-path CleanMacCore`; `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `./script/build_and_run.sh --verify`; visual screenshots `/tmp/cleanmac-task15-scanning.png`, `/tmp/cleanmac-task15-scanning-v2.png`, and `/tmp/cleanmac-task15-scanning-final.png`.
+- Result: Passed. Scan shows live progress data during scanning in the default window, and tests cover scanner progress plus smart Downloads filtering.
+- Next step: Add richer result explanations for why each item was suggested, or add persistent cleanup history.
+- Bottleneck: product decision
+- Handoff: Cleanup remains confirmation-gated and Trash-based. No permanent deletion path or destructive background action was added.

@@ -28,19 +28,60 @@ public struct CleanupScanner {
 
     public func scan(
         categories: [CleanupCategory] = CleanupCategory.allCases,
-        options: CleanupScanOptions = CleanupScanOptions()
+        options: CleanupScanOptions = CleanupScanOptions(),
+        progress: (@Sendable (CleanupScanProgress) -> Void)? = nil
     ) -> CleanupScanReport {
         let startedAt = Date()
         var allItems: [CleanupScanItem] = []
         var summaries: [CleanupCategorySummary] = []
         var issues: [CleanupScanIssue] = []
+        let categoryCount = categories.count
 
-        for category in categories {
-            let result = scanCategory(category, options: options)
+        progress?(CleanupScanProgress(
+            phase: .preparing,
+            currentCategory: nil,
+            currentPath: nil,
+            completedCategoryCount: 0,
+            totalCategoryCount: categoryCount,
+            currentCategoryItemCount: 0,
+            scannedItemCount: 0,
+            totalSizeBytes: 0,
+            currentCategoryProgress: 0
+        ))
+
+        for (index, category) in categories.enumerated() {
+            let previousItemCount = allItems.count
+            let previousSizeBytes = allItems.reduce(0) { $0 + $1.sizeBytes }
+
+            let result = scanCategory(category, options: options) { categoryItemCount, categorySizeBytes, currentPath, phase, categoryProgress in
+                progress?(CleanupScanProgress(
+                    phase: phase,
+                    currentCategory: category,
+                    currentPath: currentPath,
+                    completedCategoryCount: index,
+                    totalCategoryCount: categoryCount,
+                    currentCategoryItemCount: categoryItemCount,
+                    scannedItemCount: previousItemCount + categoryItemCount,
+                    totalSizeBytes: previousSizeBytes + categorySizeBytes,
+                    currentCategoryProgress: categoryProgress
+                ))
+            }
             allItems.append(contentsOf: result.items)
             summaries.append(result.summary)
             issues.append(contentsOf: result.issues)
         }
+
+        progress?(CleanupScanProgress(
+            phase: .summarizing,
+            currentCategory: nil,
+            currentPath: nil,
+            completedCategoryCount: categoryCount,
+            totalCategoryCount: categoryCount,
+            currentCategoryItemCount: 0,
+            scannedItemCount: allItems.count,
+            totalSizeBytes: allItems.reduce(0) { $0 + $1.sizeBytes },
+            currentCategoryProgress: 1
+        ))
 
         let deduplicatedItems = deduplicate(allItems)
         let sortedItems = deduplicatedItems.sorted {
@@ -49,6 +90,18 @@ public struct CleanupScanner {
             }
             return $0.sizeBytes > $1.sizeBytes
         }
+
+        progress?(CleanupScanProgress(
+            phase: .completed,
+            currentCategory: nil,
+            currentPath: nil,
+            completedCategoryCount: categoryCount,
+            totalCategoryCount: categoryCount,
+            currentCategoryItemCount: 0,
+            scannedItemCount: sortedItems.count,
+            totalSizeBytes: sortedItems.reduce(0) { $0 + $1.sizeBytes },
+            currentCategoryProgress: 1
+        ))
 
         return CleanupScanReport(
             scannedAt: startedAt,
@@ -61,21 +114,26 @@ public struct CleanupScanner {
 
     private func scanCategory(
         _ category: CleanupCategory,
-        options: CleanupScanOptions
+        options: CleanupScanOptions,
+        progress: ((Int, Int64, String?, CleanupScanProgressPhase, Double) -> Void)? = nil
     ) -> (items: [CleanupScanItem], summary: CleanupCategorySummary, issues: [CleanupScanIssue]) {
         var items: [CleanupScanItem] = []
         var issues: [CleanupScanIssue] = []
         var scannedPaths: [String] = []
         var availableRootCount = 0
         let rootURLs = rootResolver.rootURLs(for: category)
+        var categorySizeBytes: Int64 = 0
 
-        for rootURL in rootURLs {
+        progress?(0, 0, nil, .scanning, 0)
+
+        for (rootIndex, rootURL) in rootURLs.enumerated() {
             guard items.count < options.maxItemsPerCategory else {
                 break
             }
 
             let rootPath = rootURL.path
             scannedPaths.append(rootPath)
+            progress?(items.count, categorySizeBytes, rootPath, .scanning, rootProgress(rootIndex, totalRoots: rootURLs.count))
 
             guard fileManager.fileExists(atPath: rootPath) else {
                 continue
@@ -100,18 +158,30 @@ public struct CleanupScanner {
             }
 
             let remainingItemLimit = max(0, options.maxItemsPerCategory - items.count)
-            let rootItems = childURLs
+            let candidateURLs = childURLs
                 .filter { shouldInclude($0, in: category) }
                 .prefix(remainingItemLimit)
-                .compactMap { item(for: $0, category: category, options: options) }
-                .sorted {
-                    if $0.sizeBytes == $1.sizeBytes {
-                        return $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
-                    }
-                    return $0.sizeBytes > $1.sizeBytes
+
+            for (candidateIndex, candidateURL) in candidateURLs.enumerated() {
+                guard let scanItem = item(for: candidateURL, category: category, options: options) else {
+                    continue
                 }
 
-            items.append(contentsOf: rootItems)
+                items.append(scanItem)
+                categorySizeBytes += scanItem.sizeBytes
+                progress?(
+                    items.count,
+                    categorySizeBytes,
+                    scanItem.path,
+                    .measuring,
+                    rootProgress(
+                        rootIndex,
+                        totalRoots: rootURLs.count,
+                        itemIndex: candidateIndex + 1,
+                        totalItems: max(candidateURLs.count, 1)
+                    )
+                )
+            }
         }
 
         let sortedItems = items.sorted {
@@ -122,6 +192,7 @@ public struct CleanupScanner {
         }
 
         let totalSizeBytes = sortedItems.reduce(0) { $0 + $1.sizeBytes }
+        progress?(sortedItems.count, totalSizeBytes, nil, .summarizing, 1)
 
         return (
             sortedItems,
@@ -194,6 +265,16 @@ public struct CleanupScanner {
             isDirectory: isDirectory,
             options: options
         )
+        guard isSmartCandidate(
+            url,
+            category: category,
+            resourceValues: values,
+            measuredSizeBytes: measuredSize.bytes,
+            options: options
+        ) else {
+            return nil
+        }
+
         let name = url.lastPathComponent.isEmpty ? url.path : url.lastPathComponent
 
         return CleanupScanItem(
@@ -246,6 +327,21 @@ public struct CleanupScanner {
         return (bytes, isEstimate)
     }
 
+    private func rootProgress(
+        _ rootIndex: Int,
+        totalRoots: Int,
+        itemIndex: Int = 0,
+        totalItems: Int = 1
+    ) -> Double {
+        guard totalRoots > 0 else {
+            return 1
+        }
+
+        let rootWeight = 1 / Double(totalRoots)
+        let itemProgress = Double(itemIndex) / Double(max(totalItems, 1))
+        return min(max((Double(rootIndex) + itemProgress) * rootWeight, 0), 1)
+    }
+
     private func allocatedSize(from values: URLResourceValues?) -> Int64 {
         if let totalFileAllocatedSize = values?.totalFileAllocatedSize {
             return Int64(totalFileAllocatedSize)
@@ -266,5 +362,42 @@ public struct CleanupScanner {
         case .trash, .downloads, .downloadedInstallers, .xcodeDerivedData:
             .review
         }
+    }
+
+    private func isSmartCandidate(
+        _ url: URL,
+        category: CleanupCategory,
+        resourceValues: URLResourceValues?,
+        measuredSizeBytes: Int64,
+        options: CleanupScanOptions
+    ) -> Bool {
+        switch category {
+        case .downloads:
+            isDownloadedInstallerOrArchive(url)
+                || measuredSizeBytes >= options.largeDownloadThresholdBytes
+                || isOlderThan(resourceValues?.contentModificationDate, options.staleDownloadAge)
+        case .logs:
+            isRotatedLog(url) || isOlderThan(resourceValues?.contentModificationDate, options.staleLogAge)
+        case .temporaryFiles:
+            isOlderThan(resourceValues?.contentModificationDate, options.staleTemporaryAge)
+        default:
+            true
+        }
+    }
+
+    private func isOlderThan(_ date: Date?, _ age: TimeInterval) -> Bool {
+        guard let date else {
+            return false
+        }
+        return Date().timeIntervalSince(date) >= age
+    }
+
+    private func isRotatedLog(_ url: URL) -> Bool {
+        let lowercasedName = url.lastPathComponent.lowercased()
+        let rotatedExtensions: Set<String> = ["gz", "old", "zip", "logarchive"]
+
+        return rotatedExtensions.contains(url.pathExtension.lowercased())
+            || lowercasedName.contains(".log.")
+            || lowercasedName.hasSuffix(".crash")
     }
 }

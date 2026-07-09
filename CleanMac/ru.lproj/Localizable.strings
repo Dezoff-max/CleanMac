@@ -73,7 +73,17 @@
 "scan.animation.phase.metadata" = "Читаю метаданные папок без изменения файлов.";
 "scan.animation.phase.sizes" = "Оцениваю объём безопасными проверками размера.";
 "scan.animation.phase.risks" = "Разделяю безопасную очистку и элементы для проверки.";
+"scan.animation.phase.preparing" = "Готовлю выбранные области к безопасному сканированию.";
+"scan.animation.phase.scanningArea" = "Проверяю %@ через доступ только к метаданным.";
+"scan.animation.phase.measuringPath" = "Оцениваю %@ и применяю умные правила очистки.";
 "scan.animation.phase.summary" = "Готовлю результаты для просмотра.";
+"scan.animation.phase.completed" = "Сканирование завершено. Открываю результаты.";
+"scan.animation.percent" = "%d%%";
+"scan.animation.metric.area" = "Область";
+"scan.animation.metric.found" = "Найдено";
+"scan.animation.metric.size" = "Объём";
+"scan.animation.areaProgress" = "%d из %d";
+"scan.animation.itemsFound" = "%d элемент(ов)";
 "scan.animation.moreAreas" = "+%d ещё";
 
 "results.title" = "Результаты";
@@ -173,13 +183,13 @@
 "area.swiftpm.title" = "Кэш сборки SwiftPM";
 "area.swiftpm.detail" = "Кэши Swift Package Manager для Xcode и командной строки.";
 "area.logs.title" = "Логи";
-"area.logs.detail" = "Старые и ротированные диагностические логи.";
+"area.logs.detail" = "Старые и ротированные диагностические логи, без активных файлов.";
 "area.temporary.title" = "Временные файлы";
-"area.temporary.detail" = "Временные папки, которые нужно проверять перед удалением.";
+"area.temporary.detail" = "Устаревшие временные папки, которые нужно проверять перед удалением.";
 "area.trash.title" = "Корзина";
 "area.trash.detail" = "Элементы, уже перемещённые в корзину.";
 "area.downloads.title" = "Проверка загрузок";
-"area.downloads.detail" = "Крупные загрузки и установщики, требующие ручной проверки.";
+"area.downloads.detail" = "Крупные, старые и похожие на установщики загрузки для ручной проверки.";
 "area.installers.title" = "Скачанные установщики";
 "area.installers.detail" = "DMG, PKG, ZIP, XIP и .app в Загрузках, требующие ручной проверки.";
 "area.xcode.title" = "Derived Data Xcode";

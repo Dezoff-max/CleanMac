@@ -26,6 +26,8 @@ final class CleanMacCoreTests: XCTestCase {
         try writeBytes(count: 128, to: cacheFile)
         try writeBytes(count: 64, to: logFile)
         try writeBytes(count: 32, to: tempFile)
+        try setModificationDate(Date().addingTimeInterval(-8 * 24 * 60 * 60), for: logFile)
+        try setModificationDate(Date().addingTimeInterval(-2 * 24 * 60 * 60), for: tempFile)
 
         let scanner = CleanupScanner(homeDirectory: home, temporaryDirectory: temp)
         let report = scanner.scan(
@@ -98,6 +100,73 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertEqual(itemsByCategory[.swiftPackageBuilds]?.map(\.displayName), ["repositories"])
         XCTAssertEqual(itemsByCategory[.downloadedInstallers]?.map(\.displayName), ["Tool.pkg"])
         XCTAssertFalse(report.items.contains { $0.displayName == "Notes.txt" })
+    }
+
+    func testScannerReportsCategoryProgress() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let cacheFolder = home.appending(path: "Library/Caches/TestApp", directoryHint: .isDirectory)
+        let downloads = home.appending(path: "Downloads", directoryHint: .isDirectory)
+        let installer = downloads.appending(path: "Tool.pkg")
+
+        try FileManager.default.createDirectory(at: cacheFolder, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: downloads, withIntermediateDirectories: true)
+        try writeBytes(count: 16, to: cacheFolder.appending(path: "cache.bin"))
+        try writeBytes(count: 8, to: installer)
+
+        let recorder = ProgressRecorder()
+        let scanner = CleanupScanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+        let report = scanner.scan(
+            categories: [.userCaches, .downloadedInstallers],
+            options: CleanupScanOptions(maxItemsPerCategory: 10, maxDescendantsPerItem: 50),
+            progress: recorder.append
+        )
+        let events = recorder.events
+
+        XCTAssertEqual(events.first?.phase, .preparing)
+        XCTAssertEqual(events.last?.phase, .completed)
+        XCTAssertEqual(events.last?.fractionComplete, 1)
+        XCTAssertEqual(events.last?.scannedItemCount, report.items.count)
+        XCTAssertTrue(events.contains { $0.currentCategory == .userCaches && $0.phase == .measuring })
+        XCTAssertTrue(events.contains { $0.currentCategory == .downloadedInstallers && $0.phase == .measuring })
+    }
+
+    func testDownloadsReviewUsesSmartRules() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let downloads = home.appending(path: "Downloads", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: downloads, withIntermediateDirectories: true)
+
+        let recentSmall = downloads.appending(path: "Notes.txt")
+        let staleFile = downloads.appending(path: "OldExport.mov")
+        let largeFile = downloads.appending(path: "Video.mov")
+        let installer = downloads.appending(path: "Tool.pkg")
+
+        try writeBytes(count: 10, to: recentSmall)
+        try writeBytes(count: 10, to: staleFile)
+        try writeBytes(count: 8_192, to: largeFile)
+        try writeBytes(count: 10, to: installer)
+        try setModificationDate(Date().addingTimeInterval(-2 * 24 * 60 * 60), for: staleFile)
+
+        let scanner = CleanupScanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+        let report = scanner.scan(
+            categories: [.downloads],
+            options: CleanupScanOptions(
+                maxItemsPerCategory: 10,
+                maxDescendantsPerItem: 50,
+                largeDownloadThresholdBytes: 6_000,
+                staleDownloadAge: 24 * 60 * 60
+            )
+        )
+
+        let names = Set(report.items.map(\.displayName))
+        XCTAssertEqual(names, ["OldExport.mov", "Tool.pkg", "Video.mov"])
+        XCTAssertFalse(names.contains("Notes.txt"))
+        XCTAssertTrue(report.items.allSatisfy { $0.risk == .review })
     }
 
     func testCleanupPlannerAcceptsOnlyAllowlistedChildPaths() throws {
@@ -247,6 +316,10 @@ final class CleanMacCoreTests: XCTestCase {
         try Data(repeating: 1, count: count).write(to: url)
     }
 
+    private func setModificationDate(_ date: Date, for url: URL) throws {
+        try FileManager.default.setAttributes([.modificationDate: date], ofItemAtPath: url.path)
+    }
+
     private func canonicalPath(_ path: String) -> String {
         URL(fileURLWithPath: path).resolvingSymlinksInPath().path
     }
@@ -290,5 +363,23 @@ final class CleanMacCoreTests: XCTestCase {
 
     private var reviewCategories: Set<CleanupCategory> {
         [.downloads, .downloadedInstallers, .trash, .xcodeDerivedData]
+    }
+}
+
+private final class ProgressRecorder: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: [CleanupScanProgress] = []
+
+    func append(_ progress: CleanupScanProgress) {
+        lock.lock()
+        storage.append(progress)
+        lock.unlock()
+    }
+
+    var events: [CleanupScanProgress] {
+        lock.lock()
+        let copy = storage
+        lock.unlock()
+        return copy
     }
 }

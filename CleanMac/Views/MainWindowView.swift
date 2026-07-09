@@ -11,6 +11,7 @@ struct MainWindowView: View {
     @State private var scanItems: [CleanupScanItem] = []
     @State private var scanResults: [ScanResult] = []
     @State private var scanReport: CleanupScanReport?
+    @State private var scanProgress: CleanupScanProgress?
     @State private var scanError: String?
     @State private var selectedResultIDs = Set<String>()
     @State private var cleanupHistory: [CleanupHistoryItem] = []
@@ -82,6 +83,7 @@ struct MainWindowView: View {
             ScanView(
                 selectedAreaIDs: $selectedAreaIDs,
                 isScanning: isScanning,
+                scanProgress: scanProgress,
                 onStartScan: runScan
             )
         case .results:
@@ -112,7 +114,9 @@ struct MainWindowView: View {
     }
 
     private var selectedCategories: [CleanupCategory] {
-        selectedAreaIDs.compactMap { CleanupCategory(rawValue: $0) }
+        CleanMacCatalog.cleanupAreas
+            .filter { selectedAreaIDs.contains($0.id) }
+            .map(\.category)
     }
 
     private var selectedAreas: [CleanupArea] {
@@ -130,6 +134,17 @@ struct MainWindowView: View {
         }
 
         isScanning = true
+        scanProgress = CleanupScanProgress(
+            phase: .preparing,
+            currentCategory: nil,
+            currentPath: nil,
+            completedCategoryCount: 0,
+            totalCategoryCount: categories.count,
+            currentCategoryItemCount: 0,
+            scannedItemCount: 0,
+            totalSizeBytes: 0,
+            currentCategoryProgress: 0
+        )
         scanError = nil
         cleanupStatusMessage = nil
         cleanupProblemMessage = nil
@@ -139,9 +154,20 @@ struct MainWindowView: View {
         let scanStartedAt = Date()
 
         Task {
-            let report = await Task.detached(priority: .userInitiated) {
-                CleanupScanner().scan(categories: categories)
-            }.value
+            let progressChannel = AsyncStream.makeStream(of: CleanupScanProgress.self)
+            let scanTask = Task.detached(priority: .userInitiated) {
+                let report = CleanupScanner().scan(categories: categories) { progress in
+                    progressChannel.continuation.yield(progress)
+                }
+                progressChannel.continuation.finish()
+                return report
+            }
+
+            for await progress in progressChannel.stream {
+                scanProgress = progress
+            }
+
+            let report = await scanTask.value
 
             let elapsed = Date().timeIntervalSince(scanStartedAt)
             if elapsed < minimumScanAnimationDuration {
@@ -155,6 +181,7 @@ struct MainWindowView: View {
             selectedResultIDs = Set(report.items.filter { $0.risk == .safe }.map(\.id))
             selectedSectionID = CleanMacSection.results.rawValue
             isScanning = false
+            scanProgress = nil
 
             if report.issues.isEmpty {
                 scanError = nil

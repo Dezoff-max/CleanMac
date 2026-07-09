@@ -195,3 +195,17 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-015
+  Title: Real scan progress and smart cleanup rules
+  Goal: Make scanning show truthful per-area progress and reduce noisy cleanup candidates.
+  What to do: Add scan progress events in `CleanMacCore`, bind them to the animated Scan UI, and make Downloads/logs/temporary-file candidates smarter and safer by default.
+  Files: `CleanMacCore/**`, `CleanMac/Views/**`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: Scan UI shows percentage, current area, found count, size, and selected-area states from real scanner progress; smart rules skip likely active temporary/log files and recent small downloads; cleanup remains confirmation-gated and Trash-based.
+  Verification: `swift test --package-path CleanMacCore`; `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `./script/build_and_run.sh --verify`; visual screenshot check
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: high impact / medium risk / medium

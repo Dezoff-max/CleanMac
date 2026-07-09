@@ -46,6 +46,8 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Restore logic refuses to overwrite existing original paths and reports missing Trash/original locations without deleting anything.
 - Scan UI has all/safe/review filters plus safe/review/clear selection presets.
 - Scan UI shows a modern animated activity surface during active scans, with Reduce Motion support and selected-area chips.
+- Scan UI now binds to real scanner progress, including current area, percentage, found count, and measured size while scanning.
+- Downloads, logs, and temporary files use conservative smart rules to reduce noisy candidates from recent small downloads and likely active files.
 - Permissions UI checks live Full Disk Access status by probing protected metadata/readability and can refresh the result.
 - English and Russian app localizations are included; macOS selects the language from system preferences.
 - Private GitHub Release `v0.1.0` exists with unsigned zip and sha256 assets.
@@ -55,7 +57,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 
 - This Mac has `0 valid identities found`, so actual Developer ID signing/notarization cannot be performed locally yet; macOS Gatekeeper rejects the current ad-hoc zip as expected.
 - Permissions are live for Full Disk Access status, but the app still relies on System Settings for granting access.
-- The scanner is intentionally conservative and capped; stale-file heuristics and richer cleanup previews are future work.
+- The scanner is intentionally conservative and capped; deeper stale-file heuristics and richer cleanup previews are future work.
 - Cleanup is intentionally Trash-based; permanent deletion is still out of scope.
 - Cleanup history is current-session only; persistent history across app launches is still future work.
 - Local Xcode emits a CoreSimulator warning; it does not currently block macOS builds.
@@ -76,6 +78,6 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 ## Recommended Next Work
 
 1. Configure Apple Developer signing secrets and cut a signed/notarized release.
-2. Add stale-file heuristics and richer cleanup previews for large downloads and developer caches.
+2. Add richer cleanup previews for large downloads and developer caches.
 3. Persist cleanup history safely across app launches.
 4. Add more permission-specific scanner hints when protected roots are unavailable.

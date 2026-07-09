@@ -23,10 +23,81 @@ public enum CleanupRiskLevel: String, Sendable {
 public struct CleanupScanOptions: Equatable, Sendable {
     public var maxItemsPerCategory: Int
     public var maxDescendantsPerItem: Int
+    public var largeDownloadThresholdBytes: Int64
+    public var staleDownloadAge: TimeInterval
+    public var staleLogAge: TimeInterval
+    public var staleTemporaryAge: TimeInterval
 
-    public init(maxItemsPerCategory: Int = 80, maxDescendantsPerItem: Int = 2_000) {
+    public init(
+        maxItemsPerCategory: Int = 80,
+        maxDescendantsPerItem: Int = 2_000,
+        largeDownloadThresholdBytes: Int64 = 100 * 1024 * 1024,
+        staleDownloadAge: TimeInterval = 30 * 24 * 60 * 60,
+        staleLogAge: TimeInterval = 7 * 24 * 60 * 60,
+        staleTemporaryAge: TimeInterval = 24 * 60 * 60
+    ) {
         self.maxItemsPerCategory = max(1, maxItemsPerCategory)
         self.maxDescendantsPerItem = max(1, maxDescendantsPerItem)
+        self.largeDownloadThresholdBytes = max(1, largeDownloadThresholdBytes)
+        self.staleDownloadAge = max(0, staleDownloadAge)
+        self.staleLogAge = max(0, staleLogAge)
+        self.staleTemporaryAge = max(0, staleTemporaryAge)
+    }
+}
+
+public enum CleanupScanProgressPhase: String, Sendable {
+    case preparing
+    case scanning
+    case measuring
+    case summarizing
+    case completed
+}
+
+public struct CleanupScanProgress: Equatable, Sendable {
+    public let phase: CleanupScanProgressPhase
+    public let currentCategory: CleanupCategory?
+    public let currentPath: String?
+    public let completedCategoryCount: Int
+    public let totalCategoryCount: Int
+    public let currentCategoryItemCount: Int
+    public let scannedItemCount: Int
+    public let totalSizeBytes: Int64
+    public let currentCategoryProgress: Double
+
+    public init(
+        phase: CleanupScanProgressPhase,
+        currentCategory: CleanupCategory?,
+        currentPath: String?,
+        completedCategoryCount: Int,
+        totalCategoryCount: Int,
+        currentCategoryItemCount: Int,
+        scannedItemCount: Int,
+        totalSizeBytes: Int64,
+        currentCategoryProgress: Double
+    ) {
+        self.phase = phase
+        self.currentCategory = currentCategory
+        self.currentPath = currentPath
+        self.completedCategoryCount = max(0, completedCategoryCount)
+        self.totalCategoryCount = max(0, totalCategoryCount)
+        self.currentCategoryItemCount = max(0, currentCategoryItemCount)
+        self.scannedItemCount = max(0, scannedItemCount)
+        self.totalSizeBytes = max(0, totalSizeBytes)
+        self.currentCategoryProgress = min(max(currentCategoryProgress, 0), 1)
+    }
+
+    public var fractionComplete: Double {
+        guard totalCategoryCount > 0 else {
+            return phase == .completed ? 1 : 0
+        }
+
+        if phase == .completed {
+            return 1
+        }
+
+        let categoryUnits = Double(completedCategoryCount) + currentCategoryProgress
+        let rawProgress = categoryUnits / Double(totalCategoryCount)
+        return min(max(rawProgress, 0), 0.99)
     }
 }
 

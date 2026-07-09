@@ -73,7 +73,17 @@
 "scan.animation.phase.metadata" = "Reading folder metadata without changing files.";
 "scan.animation.phase.sizes" = "Estimating space with safe size checks.";
 "scan.animation.phase.risks" = "Separating safe cleanup from review items.";
+"scan.animation.phase.preparing" = "Preparing selected areas for a safe scan.";
+"scan.animation.phase.scanningArea" = "Checking %@ with read-only metadata access.";
+"scan.animation.phase.measuringPath" = "Measuring %@ and applying smart cleanup rules.";
 "scan.animation.phase.summary" = "Preparing results for review.";
+"scan.animation.phase.completed" = "Scan complete. Opening the review workspace.";
+"scan.animation.percent" = "%d%%";
+"scan.animation.metric.area" = "Area";
+"scan.animation.metric.found" = "Found";
+"scan.animation.metric.size" = "Size";
+"scan.animation.areaProgress" = "%d of %d";
+"scan.animation.itemsFound" = "%d item(s)";
 "scan.animation.moreAreas" = "+%d more";
 
 "results.title" = "Results";
@@ -173,13 +183,13 @@
 "area.swiftpm.title" = "SwiftPM Build Cache";
 "area.swiftpm.detail" = "Swift Package Manager cache folders used by Xcode and command-line builds.";
 "area.logs.title" = "Logs";
-"area.logs.detail" = "Rotated and older diagnostic logs.";
+"area.logs.detail" = "Rotated and older diagnostic logs, skipping likely active files.";
 "area.temporary.title" = "Temporary Files";
-"area.temporary.detail" = "Temporary folders that should be scanned before removal.";
+"area.temporary.detail" = "Stale temporary folders that should be scanned before removal.";
 "area.trash.title" = "Trash";
 "area.trash.detail" = "Items already moved to Trash.";
 "area.downloads.title" = "Downloads Review";
-"area.downloads.detail" = "Large downloads and installers that need manual review.";
+"area.downloads.detail" = "Large, old, and installer-like downloads that need manual review.";
 "area.installers.title" = "Downloaded Installers";
 "area.installers.detail" = "DMG, PKG, ZIP, XIP, and app bundles in Downloads that need manual review.";
 "area.xcode.title" = "Xcode Derived Data";
