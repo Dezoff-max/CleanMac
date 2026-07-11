@@ -260,3 +260,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Add a read-only large-files review or deeper developer-storage cleanup preview.
 - Bottleneck: Root-owned third-party apps can require administrator privileges; this version fails safely and does not install a privileged helper.
 - Handoff: No installed application or real leftover was moved during verification. The confirmation dialog was cancelled. The known stale CoreSimulator warning remains non-blocking for macOS builds.
+
+## 2026-07-11 - TASK-032 - Multi-select application removal
+
+- What changed: Added native checkbox controls beside every application, separated checkbox selection from detail-row navigation, stored exact leftover choices per application, added a selected app/size summary, and changed the destructive action and confirmation to cover the whole reviewed set. Batch execution sequentially reuses the existing single-app planner and executor, so each app is revalidated and moved before its own leftovers; successful apps leave the list while failures remain selected for review.
+- Files touched: `CleanMac/Views/ApplicationsView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`, `verification.md`.
+- Checks run: `swift test --package-path CleanMacCore` (15/15); `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; Debug `xcodebuild`; `./script/build_and_run.sh --verify`; live accessibility and visual review; screenshot `/tmp/cleanmac-task32-multiselect.jpg`.
+- Result: Passed. AdGuard Mini and Antigravity stayed checked simultaneously, switching details did not change either checkbox, Antigravity's selected Preferences leftover remained isolated when AdGuard details were open, and the confirmation reported 2 apps, 1 leftover, and 816.2 MB.
+- Next step: Add a compact Select visible/Clear selection action if bulk selection becomes frequent, or continue with large-file review.
+- Bottleneck: none.
+- Handoff: The confirmation was cancelled and no real app or leftover was moved. The known stale CoreSimulator warning remains non-blocking; a transient FinderInfo attribute on the built `.app` was cleared before the successful verification rerun.

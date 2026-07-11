@@ -47,7 +47,7 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - Results now explain why each item was suggested, using structured reasons produced by the scanner rules.
 - Results now lists unavailable scan areas with localized names and exact paths, distinguishes missing optional folders from read failures, and links permission-related failures to the in-app Permissions screen.
 - Cleanup planning validates paths against category roots and moves accepted items to Trash instead of permanently deleting them.
-- Applications has a separate safe uninstaller for direct third-party `.app` bundles in `/Applications` and `~/Applications`; it offers only exact bundle-ID Caches, Preferences, Saved Application State, and Logs leftovers, requires dedicated confirmation, and moves the app first so a failed app move cannot touch leftovers.
+- Applications has a separate safe uninstaller for direct third-party `.app` bundles in `/Applications` and `~/Applications`; native checkboxes support multi-selection, exact bundle-ID leftover choices remain isolated per app, one batch confirmation shows the reviewed count and size, and every app still moves first so its failed move cannot touch leftovers.
 - Results UI now has compact category groups, risk-aware item review, a selected-item detail panel, and current-session Trash history with restore actions.
 - Restore logic refuses to overwrite existing original paths and reports missing Trash/original locations without deleting anything.
 - Scan UI has all/safe/review filters plus safe/review/clear selection presets.

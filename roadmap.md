@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-032
+  Title: Multi-select application removal
+  Goal: Let the user check several applications and remove the reviewed set through one mandatory confirmation.
+  What to do: Add native row checkboxes, per-app leftover selections, a batch summary, and sequential use of the existing safe planner/executor.
+  Files: `CleanMac/Views/ApplicationsView.swift`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: Multiple checked apps remain selected; per-app leftovers stay isolated; batch confirmation shows counts and size; each app still moves before its leftovers; no real app is removed during verification.
+  Verification: `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; localization lint; non-destructive UI review
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: high impact / medium risk / medium
+
 - [x] ID: TASK-031
   Title: Safe application uninstaller
   Goal: Let the user review and move a third-party app plus exact bundle-ID leftovers to Trash.

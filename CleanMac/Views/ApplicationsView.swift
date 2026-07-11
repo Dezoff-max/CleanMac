@@ -5,7 +5,8 @@ import SwiftUI
 struct ApplicationsView: View {
     @State private var applications: [InstalledApplication] = []
     @State private var selectedApplicationID: String?
-    @State private var selectedLeftoverIDs = Set<String>()
+    @State private var selectedApplicationIDs = Set<String>()
+    @State private var selectedLeftoverIDsByApplication: [String: Set<String>] = [:]
     @State private var searchText = ""
     @State private var scanIssueCount = 0
     @State private var isScanning = false
@@ -28,15 +29,32 @@ struct ApplicationsView: View {
         }
     }
 
-    private var selectedLeftovers: [ApplicationLeftover] {
-        selectedApplication?.leftovers.filter { selectedLeftoverIDs.contains($0.id) } ?? []
+    private var selectedApplications: [InstalledApplication] {
+        applications.filter { selectedApplicationIDs.contains($0.id) }
+    }
+
+    private var selectedLeftoverCount: Int {
+        selectedApplications.reduce(0) { count, application in
+            count + application.leftovers.filter {
+                selectedLeftoverIDsByApplication[application.id, default: []].contains($0.id)
+            }.count
+        }
     }
 
     private var selectedRemovalSize: Int64 {
-        guard let selectedApplication else {
-            return 0
+        selectedApplications.reduce(0) { total, application in
+            let selectedLeftoverIDs = selectedLeftoverIDsByApplication[application.id] ?? []
+            let leftoverSize = application.leftovers
+                .filter { selectedLeftoverIDs.contains($0.id) }
+                .reduce(0) { $0 + $1.sizeBytes }
+            return total + application.sizeBytes + leftoverSize
         }
-        return selectedApplication.sizeBytes + selectedLeftovers.reduce(0) { $0 + $1.sizeBytes }
+    }
+
+    private var removalButtonTitle: String {
+        selectedApplications.count == 1
+            ? L.t("applications.remove.button")
+            : L.f("applications.remove.multiple", selectedApplications.count)
     }
 
     var body: some View {
@@ -85,20 +103,16 @@ struct ApplicationsView: View {
         .task {
             await refreshApplications()
         }
-        .alert(
-            L.t("applications.confirm.title"),
-            isPresented: $isShowingConfirmation,
-            presenting: selectedApplication
-        ) { application in
+        .alert(L.t("applications.confirm.title"), isPresented: $isShowingConfirmation) {
             Button(L.t("button.cancel"), role: .cancel) {}
-            Button(L.t("applications.remove.button"), role: .destructive) {
-                remove(application)
+            Button(removalButtonTitle, role: .destructive) {
+                removeSelectedApplications()
             }
-        } message: { application in
+        } message: {
             Text(L.f(
                 "applications.confirm.message",
-                application.name,
-                selectedLeftovers.count,
+                selectedApplications.count,
+                selectedLeftoverCount,
                 CleanMacFormatters.bytes(selectedRemovalSize)
             ))
         }
@@ -138,6 +152,19 @@ struct ApplicationsView: View {
                 .frame(height: 32)
                 .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 7))
 
+                if !selectedApplications.isEmpty {
+                    Label(
+                        L.f(
+                            "applications.selected.summary",
+                            selectedApplications.count,
+                            CleanMacFormatters.bytes(selectedRemovalSize)
+                        ),
+                        systemImage: "checkmark.square.fill"
+                    )
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.tint)
+                }
+
                 Divider()
 
                 if isScanning {
@@ -158,12 +185,7 @@ struct ApplicationsView: View {
                 } else {
                     LazyVStack(spacing: 6) {
                         ForEach(filteredApplications) { application in
-                            Button {
-                                select(application)
-                            } label: {
-                                applicationRow(application)
-                            }
-                            .buttonStyle(.plain)
+                            applicationRow(application)
                         }
                     }
                 }
@@ -183,28 +205,37 @@ struct ApplicationsView: View {
     private func applicationRow(_ application: InstalledApplication) -> some View {
         let isSelected = application.id == selectedApplicationID
         return HStack(spacing: 10) {
-            Image(systemName: "app.fill")
-                .font(.title2)
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(isSelected ? Color.white : Color.accentColor)
-                .frame(width: 30)
+            Toggle("", isOn: applicationSelectionBinding(for: application))
+                .labelsHidden()
+                .toggleStyle(.checkbox)
+                .tint(isSelected ? .white : .accentColor)
+                .help(L.t("applications.selection.help"))
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(application.name)
-                    .font(.subheadline.weight(.semibold))
-                    .lineLimit(1)
-                Text(CleanMacFormatters.bytes(application.sizeBytes))
-                    .font(.caption)
-                    .foregroundStyle(isSelected ? Color.white.opacity(0.8) : Color.secondary)
+            Button {
+                showDetails(for: application)
+            } label: {
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(application.name)
+                            .font(.subheadline.weight(.semibold))
+                            .lineLimit(1)
+                        Text(CleanMacFormatters.bytes(application.sizeBytes))
+                            .font(.caption)
+                            .foregroundStyle(isSelected ? Color.white.opacity(0.8) : Color.secondary)
+                    }
+
+                    Spacer(minLength: 4)
+
+                    if !application.leftovers.isEmpty {
+                        Text("+\(application.leftovers.count)")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(isSelected ? Color.white.opacity(0.9) : Color.secondary)
+                    }
+                }
+                .contentShape(Rectangle())
             }
-
-            Spacer(minLength: 4)
-
-            if !application.leftovers.isEmpty {
-                Text("+\(application.leftovers.count)")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(isSelected ? Color.white.opacity(0.9) : Color.secondary)
-            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .foregroundStyle(isSelected ? Color.white : Color.primary)
         .padding(.horizontal, 10)
@@ -214,6 +245,13 @@ struct ApplicationsView: View {
             in: RoundedRectangle(cornerRadius: 8, style: .continuous)
         )
         .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .disabled(isRemoving)
+    }
+
+    private func showDetails(for application: InstalledApplication) {
+        selectedApplicationID = application.id
+        statusMessage = nil
+        problemMessage = nil
     }
 
     @ViewBuilder
@@ -286,7 +324,10 @@ struct ApplicationsView: View {
                     } else {
                         VStack(spacing: 8) {
                             ForEach(application.leftovers) { leftover in
-                                Toggle(isOn: leftoverBinding(for: leftover.id)) {
+                                Toggle(isOn: leftoverBinding(
+                                    for: leftover.id,
+                                    applicationID: application.id
+                                )) {
                                     HStack(spacing: 10) {
                                         Image(systemName: leftover.kind.systemImage)
                                             .foregroundStyle(.tint)
@@ -319,7 +360,8 @@ struct ApplicationsView: View {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(L.f(
                                 "applications.removal.summary",
-                                selectedLeftovers.count,
+                                selectedApplications.count,
+                                selectedLeftoverCount,
                                 CleanMacFormatters.bytes(selectedRemovalSize)
                             ))
                             .font(.subheadline.weight(.medium))
@@ -337,12 +379,12 @@ struct ApplicationsView: View {
                                 ProgressView()
                                     .controlSize(.small)
                             } else {
-                                Label(L.t("applications.remove.button"), systemImage: "trash")
+                                Label(removalButtonTitle, systemImage: "trash")
                             }
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.red)
-                        .disabled(isRemoving || isScanning)
+                        .disabled(isRemoving || isScanning || selectedApplications.isEmpty)
                     }
                 }
             }
@@ -358,24 +400,36 @@ struct ApplicationsView: View {
         }
     }
 
-    private func leftoverBinding(for id: String) -> Binding<Bool> {
+    private func applicationSelectionBinding(for application: InstalledApplication) -> Binding<Bool> {
         Binding(
-            get: { selectedLeftoverIDs.contains(id) },
+            get: { selectedApplicationIDs.contains(application.id) },
             set: { isSelected in
+                selectedApplicationID = application.id
+                statusMessage = nil
+                problemMessage = nil
+
                 if isSelected {
-                    selectedLeftoverIDs.insert(id)
+                    selectedApplicationIDs.insert(application.id)
                 } else {
-                    selectedLeftoverIDs.remove(id)
+                    selectedApplicationIDs.remove(application.id)
+                    selectedLeftoverIDsByApplication.removeValue(forKey: application.id)
                 }
             }
         )
     }
 
-    private func select(_ application: InstalledApplication) {
-        selectedApplicationID = application.id
-        selectedLeftoverIDs = []
-        statusMessage = nil
-        problemMessage = nil
+    private func leftoverBinding(for id: String, applicationID: String) -> Binding<Bool> {
+        Binding(
+            get: { selectedLeftoverIDsByApplication[applicationID, default: []].contains(id) },
+            set: { isSelected in
+                if isSelected {
+                    selectedApplicationIDs.insert(applicationID)
+                    selectedLeftoverIDsByApplication[applicationID, default: []].insert(id)
+                } else {
+                    selectedLeftoverIDsByApplication[applicationID, default: []].remove(id)
+                }
+            }
+        )
     }
 
     @MainActor
@@ -397,53 +451,84 @@ struct ApplicationsView: View {
 
         applications = report.applications
         scanIssueCount = report.issues.count
+        let validApplicationIDs = Set(applications.map(\.id))
+        selectedApplicationIDs.formIntersection(validApplicationIDs)
+        selectedLeftoverIDsByApplication = selectedLeftoverIDsByApplication.reduce(into: [:]) {
+            result, entry in
+            guard let application = applications.first(where: { $0.id == entry.key }),
+                  selectedApplicationIDs.contains(entry.key) else {
+                return
+            }
+            let validLeftoverIDs = Set(application.leftovers.map(\.id))
+            result[entry.key] = entry.value.intersection(validLeftoverIDs)
+        }
         if let selectedApplicationID,
            !applications.contains(where: { $0.id == selectedApplicationID }) {
             self.selectedApplicationID = nil
-            selectedLeftoverIDs = []
         }
         isScanning = false
     }
 
-    private func remove(_ application: InstalledApplication) {
-        guard !isRemoving else {
+    private func removeSelectedApplications() {
+        let removalApplications = selectedApplications
+        guard !isRemoving, !removalApplications.isEmpty else {
             return
         }
         isRemoving = true
         statusMessage = nil
         problemMessage = nil
 
-        let selectedIDs = selectedLeftoverIDs
+        let selectedLeftoverIDs = selectedLeftoverIDsByApplication
         let excludedBundleIdentifiers = Set([Bundle.main.bundleIdentifier].compactMap { $0 })
         let excludedApplicationPaths = Set([Bundle.main.bundleURL.path])
 
         Task {
-            let report = await Task.detached(priority: .userInitiated) {
-                let plan = ApplicationRemovalPlanner(
-                    excludedBundleIdentifiers: excludedBundleIdentifiers,
-                    excludedApplicationPaths: excludedApplicationPaths
-                ).plan(for: application, selectedLeftoverIDs: selectedIDs)
-                return ApplicationRemovalExecutor().execute(plan: plan)
+            let reports = await Task.detached(priority: .userInitiated) {
+                removalApplications.map { application in
+                    let plan = ApplicationRemovalPlanner(
+                        excludedBundleIdentifiers: excludedBundleIdentifiers,
+                        excludedApplicationPaths: excludedApplicationPaths
+                    ).plan(
+                        for: application,
+                        selectedLeftoverIDs: selectedLeftoverIDs[application.id] ?? []
+                    )
+                    return (application.id, ApplicationRemovalExecutor().execute(plan: plan))
+                }
             }.value
 
             isRemoving = false
-            if report.applicationMoved {
+            let movedApplicationIDs = Set(reports.compactMap { applicationID, report in
+                report.applicationMoved ? applicationID : nil
+            })
+            let movedLeftoverCount = reports.reduce(0) { count, entry in
+                count + entry.1.movedItems.count - (entry.1.applicationMoved ? 1 : 0)
+            }
+            let totalMovedBytes = reports.reduce(0) { $0 + $1.1.totalMovedBytes }
+            let failedCount = reports.reduce(0) { $0 + $1.1.failedItems.count }
+            let rejectedCount = reports.reduce(0) { $0 + $1.1.rejectedItems.count }
+
+            if !movedApplicationIDs.isEmpty {
                 statusMessage = L.f(
                     "applications.removal.success",
-                    application.name,
-                    report.movedItems.count - 1,
-                    CleanMacFormatters.bytes(report.totalMovedBytes)
+                    movedApplicationIDs.count,
+                    movedLeftoverCount,
+                    CleanMacFormatters.bytes(totalMovedBytes)
                 )
-                selectedApplicationID = nil
-                selectedLeftoverIDs = []
-                applications.removeAll { $0.id == application.id }
+                applications.removeAll { movedApplicationIDs.contains($0.id) }
+                selectedApplicationIDs.subtract(movedApplicationIDs)
+                for applicationID in movedApplicationIDs {
+                    selectedLeftoverIDsByApplication.removeValue(forKey: applicationID)
+                }
+                if let selectedApplicationID, movedApplicationIDs.contains(selectedApplicationID) {
+                    self.selectedApplicationID = selectedApplications.first?.id
+                }
             }
 
-            if report.hasProblems {
+            if failedCount > 0 || rejectedCount > 0 {
                 problemMessage = L.f(
                     "applications.removal.problems",
-                    report.failedItems.count,
-                    report.rejectedItems.count
+                    failedCount,
+                    rejectedCount
                 )
             }
         }
