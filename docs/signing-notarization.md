@@ -43,7 +43,7 @@ CLEANMAC_NOTARY_ISSUER="ISSUER_UUID"
 
 ## GitHub Release Secrets
 
-For private GitHub Releases, add these repository secrets when signing is ready:
+For GitHub Releases, add these private repository secrets when signing is ready:
 
 - `CLEANMAC_SIGN_IDENTITY`: Developer ID Application identity name.
 - `CLEANMAC_CERTIFICATE_P12_BASE64`: base64-encoded `.p12` Developer ID certificate.

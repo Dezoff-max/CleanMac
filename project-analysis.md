@@ -10,7 +10,7 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - `CleanMacCore/`: SwiftPM library for reusable cleanup/scanning logic.
 - `script/build_and_run.sh`: local Debug build and launch entrypoint.
 - `script/package_release.sh`: local Release `.app`, `.zip`, and `.sha256` packaging.
-- `.github/workflows/ci.yml`: private GitHub CI for core tests, Debug app build, and unsigned Release artifact.
+- `.github/workflows/ci.yml`: GitHub CI for core tests, Debug app build, and unsigned Release artifact.
 - `.github/workflows/release.yml`: tag-driven GitHub Release workflow for unsigned/ad-hoc zip and sha256 assets, with optional Developer ID signing/notarization when private secrets are configured.
 - `docs/` and `Design/`: icon and project assets.
 
@@ -35,7 +35,7 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 
 - Repository was cleaned and renamed to CleanMac.
 - App icon, menu bar icon, Dashboard brand icon, status menu brand icon, design assets, and docs icon use the supplied detailed broom artwork from `Design/source-icon.png`.
-- Private GitHub repository and CI were configured.
+- Public GitHub repository and CI were configured.
 - Local `dist/` packaging exists and is ignored by git.
 - Main Dashboard/Scan/Results/Applications/Permissions/Settings window builds and launches.
 - Main content pages use the supplied light technology background while preserving the native macOS sidebar.
@@ -61,7 +61,7 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - The menu bar popover shows current disk usage, scan-in-progress state, last scan source/time, and last scan result summary with larger readable typography and rounded compact panels.
 - Settings can enable read-only auto scan while the app is running; it supports daily, hourly, and every-two-hours frequencies, uses the currently selected scan areas, and updates menu bar status.
 - Scheduled auto scan can show localized macOS completion notifications when the notification toggle is enabled and system permission allows it; Settings includes a test notification button to diagnose macOS permission/delivery state. Manual scans remain silent.
-- Private GitHub Release `v0.1.0` exists with unsigned zip and sha256 assets.
+- Public GitHub Release `v0.2.0` is the latest release and includes unsigned zip and sha256 assets.
 - Release packaging creates a clean unsigned/ad-hoc local zip plus sha256, strips Finder/resource-fork metadata before archiving, strictly verifies a fresh ZIP extraction, and can optionally sign with Developer ID, enable hardened runtime, submit to Apple notary service, staple, and re-zip when credentials are configured.
 
 ## Unfinished Or Risky Parts
