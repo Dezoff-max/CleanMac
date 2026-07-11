@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] ID: TASK-033
+- [x] ID: TASK-033
   Title: Custom About window and v0.2.1 release
   Goal: Replace the default About panel with a polished localized CleanMac window, then publish the verified v0.2.1 build.
   What to do: Add a singleton SwiftUI About scene, live bundle version/build data, project links, RU/EN copy, theme support, and complete the protected PR/release flow.
