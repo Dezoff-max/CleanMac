@@ -21,10 +21,6 @@
 "about.tagline" = "Safe, local-first cleanup for macOS";
 "about.version" = "Version %@ (%@)";
 "about.developer" = "Developer";
-"about.dataMode" = "Data";
-"about.dataMode.value" = "Local on this Mac";
-"about.cleanupMode" = "Cleanup";
-"about.cleanupMode.value" = "Trash only";
 "about.license" = "License";
 "about.github" = "GitHub";
 "about.releases" = "Releases";

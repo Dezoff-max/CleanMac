@@ -37,7 +37,7 @@ struct CleanMacApp: App {
                 .environment(\.locale, language.locale)
                 .preferredColorScheme(appearance.colorScheme)
         }
-        .defaultSize(width: 520, height: 500)
+        .defaultSize(width: 520, height: 440)
         .defaultPosition(.center)
         .windowResizability(.contentSize)
 

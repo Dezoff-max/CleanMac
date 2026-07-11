@@ -60,10 +60,6 @@ struct AboutView: View {
                 VStack(spacing: 0) {
                     AboutRow(title: L.t("about.developer"), value: "@rootoff")
                     Divider()
-                    AboutRow(title: L.t("about.dataMode"), value: L.t("about.dataMode.value"))
-                    Divider()
-                    AboutRow(title: L.t("about.cleanupMode"), value: L.t("about.cleanupMode.value"))
-                    Divider()
                     AboutRow(title: L.t("about.license"), value: "MIT")
                 }
                 .background(
@@ -107,7 +103,7 @@ struct AboutView: View {
             .padding(.horizontal, 36)
             .padding(.vertical, 20)
         }
-        .frame(width: 520, height: 500)
+        .frame(width: 520, height: 440)
         .navigationTitle(L.t("about.windowTitle"))
         .id(languageCode)
     }

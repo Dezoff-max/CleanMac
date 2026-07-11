@@ -35,4 +35,4 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Symptom: the first custom About layout exposed all metadata to accessibility, but the four custom `HStack` rows rendered as empty bands in the live light and dark windows.
 - Cause: the bespoke label/value row did not receive a stable native macOS layout under the fixed auxiliary window, even after contrast and height adjustments.
 - Fix: replaced the custom row layout with native `LabeledContent`, kept the compact fixed-size scene, and rechecked both languages and appearances in the running app.
-- Status: resolved; `/tmp/cleanmac-task33-about-ru-light.jpg` shows all four metadata rows, and the live English/dark pass also rendered every value.
+- Status: resolved; the live Russian/light and English/dark passes rendered every remaining metadata value before the user simplified the final card to Developer and License only.

@@ -21,10 +21,6 @@
 "about.tagline" = "Безопасная локальная очистка macOS";
 "about.version" = "Версия %@ (%@)";
 "about.developer" = "Разработчик";
-"about.dataMode" = "Данные";
-"about.dataMode.value" = "Только на этом Mac";
-"about.cleanupMode" = "Очистка";
-"about.cleanupMode.value" = "Только в Корзину";
 "about.license" = "Лицензия";
 "about.github" = "GitHub";
 "about.releases" = "Релизы";
