@@ -3,6 +3,8 @@ import SwiftUI
 
 struct PermissionsView: View {
     @State private var fullDiskAccess = FullDiskAccessChecker().check()
+    @State private var finderAutomationPermission: FinderAutomationPermission?
+    @State private var isRequestingFinderAutomation = false
 
     var body: some View {
         PageContainer {
@@ -14,8 +16,20 @@ struct PermissionsView: View {
                 )
 
                 VStack(spacing: 10) {
-                    ForEach(CleanMacCatalog.permissions(fullDiskAccess: fullDiskAccess)) { permission in
-                        PermissionRow(permission: permission)
+                    ForEach(CleanMacCatalog.permissions(
+                        fullDiskAccess: fullDiskAccess,
+                        finderAutomationPermission: finderAutomationPermission
+                    )) { permission in
+                        if permission.id == "automation" {
+                            PermissionRow(
+                                permission: permission,
+                                actionTitle: automationActionTitle,
+                                isActionInProgress: isRequestingFinderAutomation || finderAutomationPermission == nil,
+                                action: handleAutomationAction
+                            )
+                        } else {
+                            PermissionRow(permission: permission)
+                        }
                     }
                 }
 
@@ -23,7 +37,7 @@ struct PermissionsView: View {
                     Spacer()
 
                     Button {
-                        refreshFullDiskAccess()
+                        refreshAccess()
                     } label: {
                         Label(L.t("button.refreshAccess"), systemImage: "arrow.clockwise")
                     }
@@ -36,10 +50,61 @@ struct PermissionsView: View {
                 }
             }
         }
+        .task {
+            await refreshFinderAutomationPermission()
+        }
     }
 
-    private func refreshFullDiskAccess() {
+    private var automationActionTitle: String? {
+        switch finderAutomationPermission {
+        case .notDetermined:
+            L.t("button.requestAutomation")
+        case .denied:
+            L.t("button.openAutomationSettings")
+        default:
+            nil
+        }
+    }
+
+    private func refreshAccess() {
         fullDiskAccess = FullDiskAccessChecker().check()
+        Task {
+            await refreshFinderAutomationPermission()
+        }
+    }
+
+    private func refreshFinderAutomationPermission() async {
+        guard !isRequestingFinderAutomation else {
+            return
+        }
+
+        finderAutomationPermission = nil
+        finderAutomationPermission = await CleanMacAutomationService.checkFinderPermission()
+    }
+
+    private func handleAutomationAction() {
+        switch finderAutomationPermission {
+        case .notDetermined:
+            requestFinderAutomationPermission()
+        case .denied:
+            openAutomationSettings()
+        default:
+            break
+        }
+    }
+
+    private func requestFinderAutomationPermission() {
+        guard !isRequestingFinderAutomation else {
+            return
+        }
+
+        isRequestingFinderAutomation = true
+        finderAutomationPermission = nil
+
+        Task {
+            finderAutomationPermission = await CleanMacAutomationService.requestFinderPermission()
+            isRequestingFinderAutomation = false
+        }
     }
 
     private func openPrivacySettings() {
@@ -48,10 +113,20 @@ struct PermissionsView: View {
         }
         NSWorkspace.shared.open(url)
     }
+
+    private func openAutomationSettings() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") else {
+            return
+        }
+        NSWorkspace.shared.open(url)
+    }
 }
 
 private struct PermissionRow: View {
     let permission: PermissionItem
+    var actionTitle: String? = nil
+    var isActionInProgress = false
+    var action: (() -> Void)? = nil
 
     var body: some View {
         InfoPanel {
@@ -66,16 +141,27 @@ private struct PermissionRow: View {
                         .font(.headline)
                     Text(permission.detail)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer()
 
-                Text(permission.state.title)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(permission.state.foregroundStyle)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(permission.state.backgroundStyle, in: Capsule())
+                VStack(alignment: .trailing, spacing: 8) {
+                    Text(permission.state.title)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(permission.state.foregroundStyle)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(permission.state.backgroundStyle, in: Capsule())
+
+                    if isActionInProgress {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else if let actionTitle, let action {
+                        Button(actionTitle, action: action)
+                            .controlSize(.small)
+                    }
+                }
             }
         }
     }
@@ -88,7 +174,9 @@ private extension PermissionState {
         case .limited: .orange
         case .unknown: .secondary
         case .recommended: .blue
-        case .later: .secondary
+        case .notRequested: .blue
+        case .denied: .orange
+        case .unavailable, .checking: .secondary
         }
     }
 
@@ -98,7 +186,9 @@ private extension PermissionState {
         case .limited: .orange.opacity(0.14)
         case .unknown: .secondary.opacity(0.12)
         case .recommended: .blue.opacity(0.12)
-        case .later: .secondary.opacity(0.12)
+        case .notRequested: .blue.opacity(0.12)
+        case .denied: .orange.opacity(0.14)
+        case .unavailable, .checking: .secondary.opacity(0.12)
         }
     }
 }

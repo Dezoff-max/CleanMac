@@ -2,7 +2,7 @@
 
 ## Purpose
 
-CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cleanup tool. The project was intentionally reset from the original upstream code so new cleanup behavior can be built safely.
+CleanMac is a macOS menu bar and windowed system cleanup utility. The project was intentionally reset from the original upstream code so cleanup behavior can be built safely.
 
 ## Current Structure
 
@@ -37,14 +37,17 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - App icon, menu bar icon, Dashboard brand icon, status menu brand icon, design assets, and docs icon use the supplied detailed broom artwork from `Design/source-icon.png`.
 - Private GitHub repository and CI were configured.
 - Local `dist/` packaging exists and is ignored by git.
-- Main Dashboard/Scan/Results/Permissions/Settings window builds and launches.
+- Main Dashboard/Scan/Results/Applications/Permissions/Settings window builds and launches.
 - Main content pages use the supplied light technology background while preserving the native macOS sidebar.
 - Sidebar navigation uses subtle modern hover, click, and keyboard focus feedback while preserving the selected accent row, and the footer has persistent RU/EN language and light/dark appearance controls; language still defaults from system preferences when no override exists.
 - Menu bar Open focuses the existing main window before creating a new one.
 - `CleanMacCore` has a read-only scanner for user caches, logs, temporary files, Trash, Downloads review, Xcode Derived Data, browser caches, Node/npm/Yarn/pnpm caches, SwiftPM cache, and downloaded installers.
 - Results UI is backed by real scanner output, safe results are selected by default, and cleanup requires explicit confirmation.
+- Safe Mode now keeps review-risk results visible but unselectable, clears stale review selections when enabled, and rechecks risk immediately before cleanup execution.
 - Results now explain why each item was suggested, using structured reasons produced by the scanner rules.
+- Results now lists unavailable scan areas with localized names and exact paths, distinguishes missing optional folders from read failures, and links permission-related failures to the in-app Permissions screen.
 - Cleanup planning validates paths against category roots and moves accepted items to Trash instead of permanently deleting them.
+- Applications has a separate safe uninstaller for direct third-party `.app` bundles in `/Applications` and `~/Applications`; native checkboxes support multi-selection, exact bundle-ID leftover choices remain isolated per app, one batch confirmation shows the reviewed count and size, and every app still moves first so its failed move cannot touch leftovers.
 - Results UI now has compact category groups, risk-aware item review, a selected-item detail panel, and current-session Trash history with restore actions.
 - Restore logic refuses to overwrite existing original paths and reports missing Trash/original locations without deleting anything.
 - Scan UI has all/safe/review filters plus safe/review/clear selection presets.
@@ -52,13 +55,14 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Scan UI now binds to real scanner progress, including current area, percentage, found count, and measured size while scanning.
 - Downloads, logs, and temporary files use conservative smart rules to reduce noisy candidates from recent small downloads and likely active files.
 - Permissions UI checks live Full Disk Access status by probing protected metadata/readability and can refresh the result.
+- Finder Automation now shows the live Apple Events consent state, requests access only from an explicit button, and uses the permission to reveal selected items while preserving the NSWorkspace fallback.
 - English and Russian app localizations are included; macOS selects the language from system preferences.
 - The selected language override applies through the app's localizer, and the selected appearance applies to both the main window and menu bar popover.
 - The menu bar popover shows current disk usage, scan-in-progress state, last scan source/time, and last scan result summary with larger readable typography and rounded compact panels.
 - Settings can enable read-only auto scan while the app is running; it supports daily, hourly, and every-two-hours frequencies, uses the currently selected scan areas, and updates menu bar status.
 - Scheduled auto scan can show localized macOS completion notifications when the notification toggle is enabled and system permission allows it; Settings includes a test notification button to diagnose macOS permission/delivery state. Manual scans remain silent.
 - Private GitHub Release `v0.1.0` exists with unsigned zip and sha256 assets.
-- Release packaging creates a clean unsigned/ad-hoc local zip plus sha256, strips Finder/resource-fork metadata before archiving, and can optionally sign with Developer ID, enable hardened runtime, submit to Apple notary service, staple, and re-zip when credentials are configured.
+- Release packaging creates a clean unsigned/ad-hoc local zip plus sha256, strips Finder/resource-fork metadata before archiving, strictly verifies a fresh ZIP extraction, and can optionally sign with Developer ID, enable hardened runtime, submit to Apple notary service, staple, and re-zip when credentials are configured.
 
 ## Unfinished Or Risky Parts
 
@@ -69,6 +73,7 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 - Cleanup history is current-session only; persistent history across app launches is still future work.
 - Scheduled auto scan currently runs only while the CleanMac app process is running; launch-at-login or a privileged background agent is still future work.
 - Notification delivery depends on the macOS notification permission for CleanMac; if permission is denied, scheduled scans still complete silently.
+- Root-owned or otherwise protected third-party apps may fail to move without administrator privileges; CleanMac reports the failure and does not escalate privileges or remove leftovers.
 - Local Xcode emits a CoreSimulator warning; it does not currently block macOS builds.
 
 ## Strengths
@@ -89,5 +94,4 @@ CleanMac is a fresh macOS menu bar and windowed app shell for a custom system cl
 1. Configure Apple Developer signing secrets and cut a signed/notarized release.
 2. Persist cleanup history safely across app launches.
 3. Add launch-at-login support so scheduled scans can happen after reboot/login without manually opening CleanMac.
-4. Add deeper cleanup previews for large downloads and developer caches.
-5. Add more permission-specific scanner hints when protected roots are unavailable.
+4. Add read-only large-file review and deeper developer storage previews.

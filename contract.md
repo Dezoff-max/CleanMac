@@ -2,70 +2,77 @@
 
 ## Task
 
-- ID: TASK-027
-- Title: Sidebar click and keyboard focus polish
+- ID: TASK-032
+- Title: Multi-select application removal
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user selected adding click animation and keyboard focus styling after the sidebar hover polish.
-- Expected value: the sidebar feels responsive for mouse users and remains clear for keyboard navigation.
-- Main risk: focus styling can compete with the selected accent state or click animation can feel jumpy.
-- UX constraint: keep motion subtle, preserve readability, and respect Reduce Motion.
+- Why this task now: the user explicitly requested checkbox selection for removing several applications from the Applications screen.
+- Expected value: the user can build one reviewed removal set instead of confirming every app separately.
+- Main risk: mixing detail selection with removal selection, losing per-app leftover choices, or touching leftovers after an individual app move fails.
+- UX constraint: use native macOS checkbox controls; keep the last interacted app visible in the detail panel; preserve mandatory confirmation and Trash-only removal.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMac/Views/SidebarView.swift`
+  - `CleanMac/Views/ApplicationsView.swift`
+  - `CleanMac/en.lproj/Localizable.strings`
+  - `CleanMac/ru.lproj/Localizable.strings`
   - `project-analysis.md`
   - `roadmap.md`
   - `contract.md`
   - `progress.md`
+  - `verification.md`
 - Allowed commands:
-  - `./script/build_and_run.sh --verify`
+  - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
   - `swift test --package-path CleanMacCore`
-  - `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`
+  - `./script/build_and_run.sh --verify`
   - `git diff --check`
-  - visual screenshot commands if useful
+  - non-destructive UI inspection and screenshots
 - Out of scope:
-  - automatic cleanup or deletion;
-  - scanner or cleanup behavior;
-  - settings, scheduling, or notification behavior;
-  - release packaging changes;
-  - main window redesign.
+  - permanent deletion, Empty Trash, privilege escalation, or forced process termination;
+  - changing the application scanner or path allowlists;
+  - selecting leftovers automatically;
+  - removing a real installed application during verification;
+  - unrelated cleanup, permissions, packaging, or release changes.
 - Dependencies allowed: no
-- Destructive actions allowed: no
+- Destructive actions allowed: yes, only after the existing dedicated in-app confirmation and only for explicitly checked applications.
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - Sidebar rows show a subtle press/click animation.
-  - Keyboard-focused sidebar rows show a visible focus outline or glow.
-  - Selected section remains clear and does not lose focus readability.
-  - Russian labels still fit at the current sidebar width.
-  - Reduce Motion avoids animated movement and press scaling.
-  - Navigation selection behavior is unchanged.
+  - Every application row has a native checkbox with a visible checked state.
+  - Multiple applications can remain checked while one app is shown in the detail panel.
+  - Exact leftover choices are stored separately for each checked application.
+  - The summary and destructive button show the selected application count and total reviewed size.
+  - Confirmation lists the number of apps, selected leftovers, and total size.
+  - Each app is independently replanned and moved before its leftovers; one app failure cannot touch that app's leftovers or block safe reporting for the remaining checked apps.
+  - Successfully moved apps leave the list; failed apps remain selected for review.
+  - Refresh preserves only selections that still exist.
 - Required verification:
+  - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
   - `swift test --package-path CleanMacCore`
-  - `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`
-  - `git diff --check`
   - `./script/build_and_run.sh --verify`
+  - `git diff --check`
 - Manual checks:
-  - Sidebar renders without clipping, click feedback is visible, and keyboard focus styling is visible.
+  - Check at least two applications and confirm both checkboxes remain selected.
+  - Switch details and verify per-app leftover choices do not leak to another app.
+  - Open the batch confirmation and cancel it without removing anything.
 - Evidence to collect:
   - Build/test command exit status.
-  - Visual screenshot path if captured.
-  - File list touched.
+  - Accessibility state showing multiple checked rows and batch confirmation.
+  - UI screenshot path if captured.
 
 ## Restart Signals
 
 Restart or shrink the task if:
-- the custom row breaks sidebar selection;
-- press/focus states cause layout jumps;
-- the fix requires unrelated navigation or window restructuring.
+- SwiftUI checkbox composition breaks row accessibility or detail selection;
+- batch execution would require weakening the existing single-app planner/executor checks;
+- UI verification would require accepting a removal confirmation.
 
 ## Result
 
 - Status: complete
-- Verification result: Passed. Debug Xcode build, `./script/build_and_run.sh --verify`, SwiftPM tests, `git diff --check`, visual screenshot `/tmp/cleanmac-sidebar-keyboard-focus.png`, and local release packaging all pass.
-- Notes: Sidebar rows now have subtle click press feedback and visible keyboard focus styling. Reduce Motion disables press scaling and movement. Scan, cleanup, scheduling, notification, language, and theme behavior were not changed.
+- Verification result: passed. All 15 core tests, localization lint, `git diff --check`, Debug build, and `./script/build_and_run.sh --verify` pass. Live accessibility review showed two independently checked apps, isolated per-app leftover state, and the correct batch confirmation.
+- Notes: screenshot saved at `/tmp/cleanmac-task32-multiselect.jpg`. The batch confirmation was cancelled; no installed application or real leftover was moved.

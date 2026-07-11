@@ -12,6 +12,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DATA_DIR="$ROOT_DIR/build/XcodeData"
 APP_BUNDLE="$BUILD_DATA_DIR/Build/Products/$CONFIGURATION/$APP_NAME.app"
 APP_BINARY="$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+ENTITLEMENTS_PATH="$ROOT_DIR/CleanMac/CleanMac.entitlements"
 
 cd "$ROOT_DIR"
 
@@ -23,8 +24,21 @@ xcodebuild \
   -configuration "$CONFIGURATION" \
   -derivedDataPath "$BUILD_DATA_DIR" \
   build \
+  ENABLE_DEBUG_DYLIB=NO \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGN_IDENTITY=""
+
+xattr -cr "$APP_BUNDLE"
+xattr -dr com.apple.FinderInfo "$APP_BUNDLE" 2>/dev/null || true
+xattr -dr com.apple.ResourceFork "$APP_BUNDLE" 2>/dev/null || true
+
+codesign \
+  --force \
+  --options runtime \
+  --entitlements "$ENTITLEMENTS_PATH" \
+  --sign - \
+  "$APP_BUNDLE"
+codesign --verify --deep --strict --verbose=2 "$APP_BUNDLE"
 
 open_app() {
   /usr/bin/open -n "$APP_BUNDLE"

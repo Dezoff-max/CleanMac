@@ -220,3 +220,53 @@ Append-only history. Do not erase previous entries.
 - Next step: Decide whether to add a broader glass sidebar style or leave the sidebar interaction polish restrained.
 - Bottleneck: product decision.
 - Handoff: This is UI-only. Scan, cleanup, scheduling, notification, language, and theme behavior were not changed.
+
+## 2026-07-11 - TASK-028 - Enforce Safe Mode during cleanup review
+
+- What changed: Connected the existing Safe Mode preference to Results selection and cleanup execution. Review-risk items remain visible but show a disabled checkbox and lock indicator while Safe Mode is enabled; bulk selection and totals only include allowed items; enabling Safe Mode removes stale review selections; cleanup filters risk again before planning or execution.
+- Files touched: `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/ResultsView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; `swift test --package-path CleanMacCore` (11/11); Debug `xcodebuild`; `./script/build_and_run.sh --verify`; manual Safe Mode ON/OFF scan-results review; screenshot `/tmp/cleanmac-safe-mode-review.png`; independent diff review.
+- Result: Passed. A review-risk Derived Data result is locked and unselected with Safe Mode on, becomes selectable when Safe Mode is off, and is removed from selection immediately when Safe Mode is re-enabled. No cleanup action was triggered.
+- Next step: TASK-029 - show specific unavailable scan areas and permission guidance instead of only an issue count.
+- Bottleneck: none.
+- Handoff: Safe Mode is left enabled after verification. The known stale CoreSimulator warning remains non-blocking for macOS builds.
+
+## 2026-07-11 - TASK-030 - Real Finder Automation permission
+
+- What changed: Replaced the static Automation placeholder with a live Finder Apple Events permission state and explicit request/settings actions. Added off-main-thread preflight/request handling, Finder reveal through Apple Events only when granted, the existing NSWorkspace fallback, localized privacy text, the Automation entitlement, hardened Debug/Release signing, and strict verification of the archived release app.
+- Files touched: `CleanMac/Support/CleanMacAutomationService.swift`, `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Views/PermissionsView.swift`, `CleanMac/Views/ResultsView.swift`, `CleanMac/CleanMac.entitlements`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `CleanMac/en.lproj/InfoPlist.strings`, `CleanMac/ru.lproj/InfoPlist.strings`, `CleanMac.xcodeproj/project.pbxproj`, `script/build_and_run.sh`, `script/package_release.sh`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`, `trace.md`, `verification.md`.
+- Checks run: plist/localization lint; shell syntax checks; `git diff --check`; `swift test --package-path CleanMacCore` (11/11); `./script/build_and_run.sh --verify`; Debug runtime/entitlement/Info.plist inspection; live Permissions UI review through accessibility; `./script/package_release.sh`; SHA-256 verification; fresh ZIP extraction followed by strict codesign, hardened-runtime, entitlement, localized InfoPlist, and usage-description inspection; independent final diff review.
+- Result: Passed. Permissions opens without prompting, reports Finder Automation as `Не запрошен`, and exposes the active `Запросить доступ` button. No native consent button was pressed and no macOS privacy setting was changed during verification.
+- Next step: The user can press `Запросить доступ` and approve CleanMac in the native macOS dialog, then continue with TASK-029.
+- Bottleneck: none in code; the final consent decision belongs to the user.
+- Handoff: The release ZIP is ad-hoc signed for local validation because no Developer ID identity is configured. The known stale CoreSimulator warning remains non-blocking for macOS builds.
+
+## 2026-07-11 - TASK-029 - Explain unavailable scan areas
+
+- What changed: Replaced the generic Results issue banner with an actionable availability panel. It groups duplicate failures by cleanup category, shows localized area names and exact paths, distinguishes missing optional folders from read failures, confirms that other areas were scanned, and offers an in-app Permissions action only when reading actually failed.
+- Files touched: `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/ResultsView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`.
+- Checks run: `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; Debug `xcodebuild`; `./script/build_and_run.sh --verify`; `swift test --package-path CleanMacCore` (11/11); `git diff --check`; live read-only scan and accessibility review; screenshot `/tmp/cleanmac-task29-unavailable.png`; in-app Permissions navigation check.
+- Result: Passed. A real Safari cache read failure rendered as `Кэши браузеров — Не удалось прочитать` with `/Users/admin/Library/Caches/com.apple.Safari`; `Проверить доступы` opened the CleanMac Permissions page without opening System Settings or triggering another permission request.
+- Next step: choose between Developer ID signing, persistent cleanup history, or launch-at-login support.
+- Bottleneck: Developer ID distribution still requires Apple credentials; the other product tasks have no current blocker.
+- Handoff: No cleanup action was triggered and no files were moved. The existing selected scan areas and Safe Mode behavior were preserved. The known stale CoreSimulator warning remains non-blocking for macOS builds.
+
+## 2026-07-11 - TASK-031 - Safe application uninstaller
+
+- What changed: Added a separate Applications section that scans direct third-party `.app` bundles in `/Applications` and `~/Applications`, excludes Apple apps, CleanMac, symlinks, and nested bundles, and shows only exact bundle-ID Caches, Preferences, Saved Application State, and Logs leftovers. Leftovers are optional and unchecked by default. Removal has a dedicated confirmation, revalidates paths, moves the app first, stops before leftovers if that move fails, and uses Trash rather than permanent deletion.
+- Files touched: `CleanMacCore/Sources/CleanMacCore/ApplicationUninstaller.swift`, `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`, `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/ApplicationsView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`, `verification.md`.
+- Checks run: `swift test --package-path CleanMacCore` (15/15); `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; Debug `xcodebuild`; `./script/build_and_run.sh --verify`; live read-only Russian UI review; mandatory confirmation review followed by Cancel; screenshot `/tmp/cleanmac-task31-applications.jpg`.
+- Result: Passed. The live screen listed 39 third-party applications, showed exact optional leftovers unselected, fit the standard window, and displayed the mandatory app/leftover/size confirmation. Unit tests prove Apple/self/symlink exclusions, app-first Trash order, no leftover attempt after app-move failure, and rejection of outside/forged paths.
+- Next step: Add a read-only large-files review or deeper developer-storage cleanup preview.
+- Bottleneck: Root-owned third-party apps can require administrator privileges; this version fails safely and does not install a privileged helper.
+- Handoff: No installed application or real leftover was moved during verification. The confirmation dialog was cancelled. The known stale CoreSimulator warning remains non-blocking for macOS builds.
+
+## 2026-07-11 - TASK-032 - Multi-select application removal
+
+- What changed: Added native checkbox controls beside every application, separated checkbox selection from detail-row navigation, stored exact leftover choices per application, added a selected app/size summary, and changed the destructive action and confirmation to cover the whole reviewed set. Batch execution sequentially reuses the existing single-app planner and executor, so each app is revalidated and moved before its own leftovers; successful apps leave the list while failures remain selected for review.
+- Files touched: `CleanMac/Views/ApplicationsView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`, `verification.md`.
+- Checks run: `swift test --package-path CleanMacCore` (15/15); `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; `git diff --check`; Debug `xcodebuild`; `./script/build_and_run.sh --verify`; live accessibility and visual review; screenshot `/tmp/cleanmac-task32-multiselect.jpg`.
+- Result: Passed. AdGuard Mini and Antigravity stayed checked simultaneously, switching details did not change either checkbox, Antigravity's selected Preferences leftover remained isolated when AdGuard details were open, and the confirmation reported 2 apps, 1 leftover, and 816.2 MB.
+- Next step: Add a compact Select visible/Clear selection action if bulk selection becomes frequent, or continue with large-file review.
+- Bottleneck: none.
+- Handoff: The confirmation was cancelled and no real app or leftover was moved. The known stale CoreSimulator warning remains non-blocking; a transient FinderInfo attribute on the built `.app` was cleared before the successful verification rerun.

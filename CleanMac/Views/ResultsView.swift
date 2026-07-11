@@ -6,6 +6,7 @@ struct ResultsView: View {
     let results: [ScanResult]
     let report: CleanupScanReport?
     let scanError: String?
+    let safeModeEnabled: Bool
     @Binding var selectedResultIDs: Set<String>
     let isCleaning: Bool
     let isRestoring: Bool
@@ -16,13 +17,14 @@ struct ResultsView: View {
     let cleanupHistory: [CleanupHistoryItem]
     let onConfirmCleanup: () -> Void
     let onRestoreHistoryItem: (String) -> Void
+    let onOpenPermissions: () -> Void
 
     @State private var isShowingCleanupConfirmation = false
     @State private var selectedCategory: CleanupCategory?
     @State private var focusedResultID: String?
 
     private var selectedResults: [ScanResult] {
-        results.filter { selectedResultIDs.contains($0.id) }
+        results.filter(isResultSelected)
     }
 
     private var selectedSizeBytes: Int64 {
@@ -54,10 +56,53 @@ struct ResultsView: View {
                 category: category,
                 count: categoryResults.count,
                 sizeBytes: categoryResults.reduce(0) { $0 + $1.sizeBytes },
-                selectedCount: categoryResults.filter { selectedResultIDs.contains($0.id) }.count,
+                selectedCount: categoryResults.filter(isResultSelected).count,
                 safeCount: categoryResults.filter { $0.risk == .safe }.count,
                 reviewCount: categoryResults.filter { $0.risk == .review }.count
             )
+        }
+    }
+
+    private var unavailableScanAreas: [UnavailableScanArea] {
+        guard let report else {
+            return []
+        }
+
+        var failedPathsByCategory: [CleanupCategory: Set<String>] = [:]
+        for issue in report.issues {
+            failedPathsByCategory[issue.category, default: []].insert(issue.path)
+        }
+
+        var areas = failedPathsByCategory.map { category, paths in
+            UnavailableScanArea(
+                category: category,
+                paths: paths.sorted { $0.localizedStandardCompare($1) == .orderedAscending },
+                reason: .readFailed
+            )
+        }
+
+        let failedCategories = Set(failedPathsByCategory.keys)
+        areas.append(contentsOf: report.summaries.compactMap { summary in
+            guard !summary.isAvailable, !failedCategories.contains(summary.category) else {
+                return nil
+            }
+
+            let paths = summary.scannedPath
+                .components(separatedBy: ", ")
+                .filter { !$0.isEmpty }
+
+            return UnavailableScanArea(
+                category: summary.category,
+                paths: paths,
+                reason: .notFound
+            )
+        })
+
+        let categoryOrder = Dictionary(
+            uniqueKeysWithValues: CleanupCategory.allCases.enumerated().map { ($1, $0) }
+        )
+        return areas.sorted {
+            categoryOrder[$0.category, default: .max] < categoryOrder[$1.category, default: .max]
         }
     }
 
@@ -86,6 +131,15 @@ struct ResultsView: View {
                 }
 
                 statusBanners
+
+                if safeModeEnabled, results.contains(where: { $0.risk == .review }) {
+                    StatusBanner(
+                        title: L.t("results.safeMode.title"),
+                        message: L.t("results.safeMode.message"),
+                        systemImage: "lock.shield",
+                        tint: .blue
+                    )
+                }
 
                 if results.isEmpty {
                     emptyResultsPanel
@@ -145,7 +199,12 @@ struct ResultsView: View {
             )
         }
 
-        if let scanError {
+        if !unavailableScanAreas.isEmpty {
+            ScanAvailabilityPanel(
+                areas: unavailableScanAreas,
+                onOpenPermissions: onOpenPermissions
+            )
+        } else if let scanError {
             StatusBanner(
                 title: L.t("banner.scanIssues.title"),
                 message: scanError,
@@ -209,7 +268,7 @@ struct ResultsView: View {
             }
 
             Button {
-                selectedResultIDs = Set(visibleResults.map(\.id))
+                selectedResultIDs = Set(visibleResults.filter(isResultSelectable).map(\.id))
             } label: {
                 Label(L.t("button.selectVisible"), systemImage: "checklist.checked")
             }
@@ -313,10 +372,11 @@ struct ResultsView: View {
                     ResultRow(
                         result: result,
                         isFocused: focusedResult?.id == result.id,
+                        isSelectionEnabled: isResultSelectable(result),
                         isSelected: Binding(
-                            get: { selectedResultIDs.contains(result.id) },
+                            get: { isResultSelected(result) },
                             set: { isSelected in
-                                if isSelected {
+                                if isSelected, isResultSelectable(result) {
                                     selectedResultIDs.insert(result.id)
                                 } else {
                                     selectedResultIDs.remove(result.id)
@@ -398,11 +458,144 @@ struct ResultsView: View {
         )
     }
 
+    private func isResultSelectable(_ result: ScanResult) -> Bool {
+        !safeModeEnabled || result.risk == .safe
+    }
+
+    private func isResultSelected(_ result: ScanResult) -> Bool {
+        isResultSelectable(result) && selectedResultIDs.contains(result.id)
+    }
+
     private func reveal(_ path: String) {
         guard path != L.t("history.trashPath.unknown") else {
             return
         }
-        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+
+        let url = URL(fileURLWithPath: path)
+        Task {
+            let revealedWithAutomation = await CleanMacAutomationService.revealInFinder(url)
+            if !revealedWithAutomation {
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            }
+        }
+    }
+}
+
+private struct UnavailableScanArea: Identifiable {
+    enum Reason {
+        case readFailed
+        case notFound
+    }
+
+    let category: CleanupCategory
+    let paths: [String]
+    let reason: Reason
+
+    var id: String {
+        "\(category.rawValue)-\(reason == .readFailed ? "read" : "missing")"
+    }
+}
+
+private struct ScanAvailabilityPanel: View {
+    let areas: [UnavailableScanArea]
+    let onOpenPermissions: () -> Void
+
+    private var hasReadFailures: Bool {
+        areas.contains { $0.reason == .readFailed }
+    }
+
+    var body: some View {
+        InfoPanel {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 10) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text(L.t("results.availability.title"))
+                        .font(.headline)
+                    Spacer()
+                    Text(L.f("results.availability.count", areas.count))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+
+                Text(L.t(
+                    hasReadFailures
+                        ? "results.availability.message.readFailed"
+                        : "results.availability.message.notFound"
+                ))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+                VStack(spacing: 8) {
+                    ForEach(areas) { area in
+                        ScanAvailabilityRow(area: area)
+                    }
+                }
+
+                if hasReadFailures {
+                    HStack {
+                        Text(L.t("results.availability.permissionsHint"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button(action: onOpenPermissions) {
+                            Label(L.t("button.reviewPermissions"), systemImage: "lock.shield")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct ScanAvailabilityRow: View {
+    let area: UnavailableScanArea
+
+    private var cleanupArea: CleanupArea {
+        CleanMacCatalog.area(for: area.category)
+    }
+
+    private var statusTitle: String {
+        switch area.reason {
+        case .readFailed:
+            L.t("results.availability.readFailed")
+        case .notFound:
+            L.t("results.availability.notFound")
+        }
+    }
+
+    private var statusColor: Color {
+        area.reason == .readFailed ? .orange : .secondary
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: cleanupArea.systemImage)
+                .frame(width: 24)
+                .foregroundStyle(.tint)
+
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 8) {
+                    Text(cleanupArea.title)
+                        .font(.subheadline.weight(.semibold))
+                    Text(statusTitle)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(statusColor)
+                }
+
+                ForEach(area.paths, id: \.self) { path in
+                    Text(path)
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(Color.secondary.opacity(0.07), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
     }
 }
 
@@ -521,6 +714,7 @@ private struct CategorySummaryRow: View {
 private struct ResultRow: View {
     let result: ScanResult
     let isFocused: Bool
+    let isSelectionEnabled: Bool
     @Binding var isSelected: Bool
     let onFocus: () -> Void
 
@@ -531,6 +725,8 @@ private struct ResultRow: View {
                     .toggleStyle(.checkbox)
                     .labelsHidden()
                     .padding(.top, 2)
+                    .disabled(!isSelectionEnabled)
+                    .help(isSelectionEnabled ? "" : L.t("results.safeMode.locked"))
 
                 Image(systemName: result.isDirectory ? "folder" : "doc")
                     .font(.title3)
@@ -573,6 +769,12 @@ private struct ResultRow: View {
                         .font(.headline)
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
+                    if !isSelectionEnabled {
+                        Image(systemName: "lock.fill")
+                            .foregroundStyle(.secondary)
+                            .help(L.t("results.safeMode.locked"))
+                            .accessibilityLabel(L.t("results.safeMode.locked"))
+                    }
                     if isFocused {
                         Image(systemName: "sidebar.right")
                             .foregroundStyle(.tint)
