@@ -333,9 +333,27 @@ private struct DiskUsageSnapshot: Equatable {
     static func current() -> DiskUsageSnapshot {
         let homeURL = FileManager.default.homeDirectoryForCurrentUser
         let attributes = (try? FileManager.default.attributesOfFileSystem(forPath: homeURL.path)) ?? [:]
-        let totalBytes = numberValue(attributes[.systemSize])
-        let freeBytes = numberValue(attributes[.systemFreeSize])
-        let resourceValues = try? homeURL.resourceValues(forKeys: [.volumeLocalizedNameKey])
+        let resourceValues = try? homeURL.resourceValues(forKeys: [
+            .volumeLocalizedNameKey,
+            .volumeTotalCapacityKey,
+            .volumeAvailableCapacityKey,
+            .volumeAvailableCapacityForImportantUsageKey
+        ])
+
+        let resourceTotalBytes = Int64(resourceValues?.volumeTotalCapacity ?? 0)
+        let systemTotalBytes = numberValue(attributes[.systemSize])
+        let totalBytes = resourceTotalBytes > 0 ? resourceTotalBytes : systemTotalBytes
+
+        let importantUsageBytes = resourceValues?.volumeAvailableCapacityForImportantUsage ?? 0
+        let availableBytes = Int64(resourceValues?.volumeAvailableCapacity ?? 0)
+        let systemFreeBytes = numberValue(attributes[.systemFreeSize])
+        let freeBytes = if importantUsageBytes > 0 {
+            importantUsageBytes
+        } else if availableBytes > 0 {
+            availableBytes
+        } else {
+            systemFreeBytes
+        }
 
         return DiskUsageSnapshot(
             volumeName: resourceValues?.volumeLocalizedName,

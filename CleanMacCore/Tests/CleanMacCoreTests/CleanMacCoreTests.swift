@@ -319,6 +319,209 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: trashedFolder.path))
     }
 
+    func testApplicationScannerFindsOnlyThirdPartyAppsAndExactLeftovers() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let sharedApplications = root.appending(path: "Applications", directoryHint: .isDirectory)
+        let userApplications = home.appending(path: "Applications", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: sharedApplications, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: userApplications, withIntermediateDirectories: true)
+
+        let thirdPartyApp = try makeFakeApplication(
+            named: "Example",
+            bundleIdentifier: "com.example.editor",
+            in: sharedApplications
+        )
+        _ = try makeFakeApplication(
+            named: "AppleUtility",
+            bundleIdentifier: "com.apple.utility",
+            in: sharedApplications
+        )
+        _ = try makeFakeApplication(
+            named: "CleanMac",
+            bundleIdentifier: "com.codex.cleanmac",
+            in: userApplications
+        )
+
+        let cache = home.appending(path: "Library/Caches/com.example.editor", directoryHint: .isDirectory)
+        let preferences = home.appending(path: "Library/Preferences/com.example.editor.plist")
+        let savedState = home.appending(path: "Library/Saved Application State/com.example.editor.savedState", directoryHint: .isDirectory)
+        let logs = home.appending(path: "Library/Logs/com.example.editor", directoryHint: .isDirectory)
+        let applicationSupport = home.appending(path: "Library/Application Support/com.example.editor", directoryHint: .isDirectory)
+
+        for folder in [cache, savedState, logs, applicationSupport] {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try writeBytes(count: 8, to: folder.appending(path: "data.bin"))
+        }
+        try FileManager.default.createDirectory(at: preferences.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try writeBytes(count: 8, to: preferences)
+
+        let alias = sharedApplications.appending(path: "Example Alias.app")
+        try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: thirdPartyApp)
+
+        let report = InstalledApplicationScanner(
+            applicationDirectories: [sharedApplications, userApplications],
+            homeDirectory: home,
+            excludedBundleIdentifiers: ["com.codex.cleanmac"],
+            maxDescendantsPerItem: 100
+        ).scan()
+
+        XCTAssertEqual(report.applications.map(\.name), ["Example"])
+        XCTAssertEqual(report.applications.first?.bundleIdentifier, "com.example.editor")
+        XCTAssertEqual(
+            Set(report.applications.first?.leftovers.map(\.kind) ?? []),
+            Set(ApplicationLeftoverKind.allCases)
+        )
+        XCTAssertFalse(report.applications.first?.leftovers.contains { $0.path == applicationSupport.path } ?? true)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: thirdPartyApp.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: applicationSupport.path))
+    }
+
+    func testApplicationRemovalMovesAppFirstThenExactLeftovers() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let applications = root.appending(path: "Applications", directoryHint: .isDirectory)
+        let trash = root.appending(path: "Trash", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: applications, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: trash, withIntermediateDirectories: true)
+
+        let appURL = try makeFakeApplication(
+            named: "Example",
+            bundleIdentifier: "com.example.editor",
+            in: applications
+        )
+        let cache = home.appending(path: "Library/Caches/com.example.editor", directoryHint: .isDirectory)
+        let preferences = home.appending(path: "Library/Preferences/com.example.editor.plist")
+        let applicationSupport = home.appending(path: "Library/Application Support/com.example.editor", directoryHint: .isDirectory)
+        for folder in [cache, applicationSupport] {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try writeBytes(count: 8, to: folder.appending(path: "data.bin"))
+        }
+        try FileManager.default.createDirectory(at: preferences.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try writeBytes(count: 8, to: preferences)
+
+        let application = try XCTUnwrap(InstalledApplicationScanner(
+            applicationDirectories: [applications],
+            homeDirectory: home,
+            maxDescendantsPerItem: 100
+        ).scan().applications.first)
+        let plan = ApplicationRemovalPlanner(
+            applicationDirectories: [applications],
+            homeDirectory: home
+        ).plan(
+            for: application,
+            selectedLeftoverIDs: Set(application.leftovers.map(\.id))
+        )
+
+        var movedPaths: [String] = []
+        let report = ApplicationRemovalExecutor { url in
+            movedPaths.append(url.path)
+            let destination = trash.appending(path: "\(movedPaths.count)-\(url.lastPathComponent)")
+            try FileManager.default.moveItem(at: url, to: destination)
+            return destination
+        }.execute(plan: plan)
+
+        XCTAssertTrue(report.applicationMoved)
+        XCTAssertEqual(report.failedItems.count, 0)
+        XCTAssertEqual(report.rejectedItems.count, 0)
+        XCTAssertEqual(movedPaths.first, appURL.path)
+        XCTAssertEqual(Set(movedPaths.dropFirst()), Set([cache.path, preferences.path]))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: appURL.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: cache.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: preferences.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: applicationSupport.path))
+    }
+
+    func testApplicationRemovalDoesNotTouchLeftoversWhenAppMoveFails() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let applications = root.appending(path: "Applications", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: applications, withIntermediateDirectories: true)
+        let appURL = try makeFakeApplication(
+            named: "Example",
+            bundleIdentifier: "com.example.editor",
+            in: applications
+        )
+        let cache = home.appending(path: "Library/Caches/com.example.editor", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: cache, withIntermediateDirectories: true)
+        try writeBytes(count: 8, to: cache.appending(path: "data.bin"))
+
+        let application = try XCTUnwrap(InstalledApplicationScanner(
+            applicationDirectories: [applications],
+            homeDirectory: home,
+            maxDescendantsPerItem: 100
+        ).scan().applications.first)
+        let plan = ApplicationRemovalPlanner(
+            applicationDirectories: [applications],
+            homeDirectory: home
+        ).plan(for: application, selectedLeftoverIDs: Set(application.leftovers.map(\.id)))
+
+        var attemptedPaths: [String] = []
+        let report = ApplicationRemovalExecutor { url in
+            attemptedPaths.append(url.path)
+            throw NSError(domain: "CleanMacCoreTests", code: 1)
+        }.execute(plan: plan)
+
+        XCTAssertFalse(report.applicationMoved)
+        XCTAssertEqual(report.failedItems.count, 1)
+        XCTAssertEqual(attemptedPaths, [appURL.path])
+        XCTAssertTrue(FileManager.default.fileExists(atPath: appURL.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: cache.path))
+    }
+
+    func testApplicationRemovalPlannerRejectsOutsideAppAndUnknownLeftover() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let allowedApplications = root.appending(path: "Applications", directoryHint: .isDirectory)
+        let outsideApplications = root.appending(path: "Other", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: allowedApplications, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: outsideApplications, withIntermediateDirectories: true)
+        _ = try makeFakeApplication(
+            named: "Outside",
+            bundleIdentifier: "com.example.outside",
+            in: outsideApplications
+        )
+
+        let outsideApplication = try XCTUnwrap(InstalledApplicationScanner(
+            applicationDirectories: [outsideApplications],
+            homeDirectory: home
+        ).scan().applications.first)
+        let outsidePlan = ApplicationRemovalPlanner(
+            applicationDirectories: [allowedApplications],
+            homeDirectory: home
+        ).plan(for: outsideApplication, selectedLeftoverIDs: [])
+
+        XCTAssertNil(outsidePlan.applicationItem)
+        XCTAssertEqual(outsidePlan.rejectedItems.first?.reason, .invalidApplicationPath)
+
+        _ = try makeFakeApplication(
+            named: "Allowed",
+            bundleIdentifier: "com.example.allowed",
+            in: allowedApplications
+        )
+        let allowedApplication = try XCTUnwrap(InstalledApplicationScanner(
+            applicationDirectories: [allowedApplications],
+            homeDirectory: home
+        ).scan().applications.first)
+        let forgedPath = home.appending(path: "Library/Application Support/com.example.allowed").path
+        let forgedPlan = ApplicationRemovalPlanner(
+            applicationDirectories: [allowedApplications],
+            homeDirectory: home
+        ).plan(for: allowedApplication, selectedLeftoverIDs: [forgedPath])
+
+        XCTAssertNotNil(forgedPlan.applicationItem)
+        XCTAssertTrue(forgedPlan.leftoverItems.isEmpty)
+        XCTAssertEqual(forgedPlan.rejectedItems.first?.reason, .invalidLeftover)
+    }
+
     private func makeTemporaryRoot() throws -> URL {
         let root = FileManager.default.temporaryDirectory
             .appending(path: "CleanMacCoreTests-\(UUID().uuidString)", directoryHint: .isDirectory)
@@ -328,6 +531,34 @@ final class CleanMacCoreTests: XCTestCase {
 
     private func writeBytes(count: Int, to url: URL) throws {
         try Data(repeating: 1, count: count).write(to: url)
+    }
+
+    private func makeFakeApplication(
+        named name: String,
+        bundleIdentifier: String,
+        in directory: URL
+    ) throws -> URL {
+        let applicationURL = directory.appending(path: "\(name).app", directoryHint: .isDirectory)
+        let contentsURL = applicationURL.appending(path: "Contents", directoryHint: .isDirectory)
+        let executableURL = contentsURL.appending(path: "MacOS/\(name)")
+        try FileManager.default.createDirectory(
+            at: executableURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+
+        let info: [String: Any] = [
+            "CFBundleIdentifier": bundleIdentifier,
+            "CFBundleDisplayName": name,
+            "CFBundleName": name
+        ]
+        let infoData = try PropertyListSerialization.data(
+            fromPropertyList: info,
+            format: .xml,
+            options: 0
+        )
+        try infoData.write(to: contentsURL.appending(path: "Info.plist"))
+        try writeBytes(count: 16, to: executableURL)
+        return applicationURL
     }
 
     private func setModificationDate(_ date: Date, for url: URL) throws {

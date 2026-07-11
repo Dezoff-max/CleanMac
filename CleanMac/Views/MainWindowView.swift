@@ -65,6 +65,13 @@ struct MainWindowView: View {
         .onChange(of: selectedAreaIDs) { _, newValue in
             CleanMacScanPreferences.storeSelectedAreaIDs(newValue)
         }
+        .onChange(of: safeModeEnabled) { _, isEnabled in
+            guard isEnabled else {
+                return
+            }
+
+            restrictSelectionToSafeItems()
+        }
     }
 
     @ViewBuilder
@@ -95,6 +102,7 @@ struct MainWindowView: View {
                 results: scanResults,
                 report: scanReport,
                 scanError: scanError,
+                safeModeEnabled: safeModeEnabled,
                 selectedResultIDs: $selectedResultIDs,
                 isCleaning: isCleaning,
                 isRestoring: isRestoring,
@@ -104,8 +112,13 @@ struct MainWindowView: View {
                 restoreProblemMessage: restoreProblemMessage,
                 cleanupHistory: cleanupHistory,
                 onConfirmCleanup: cleanupSelectedItems,
-                onRestoreHistoryItem: restoreHistoryItem
+                onRestoreHistoryItem: restoreHistoryItem,
+                onOpenPermissions: {
+                    selectedSectionID = CleanMacSection.permissions.rawValue
+                }
             )
+        case .applications:
+            ApplicationsView()
         case .permissions:
             PermissionsView()
         case .settings:
@@ -203,7 +216,13 @@ struct MainWindowView: View {
             return
         }
 
-        let selectedItems = scanItems.filter { selectedResultIDs.contains($0.id) }
+        if safeModeEnabled {
+            restrictSelectionToSafeItems()
+        }
+
+        let selectedItems = scanItems.filter {
+            selectedResultIDs.contains($0.id) && (!safeModeEnabled || $0.risk == .safe)
+        }
         guard !selectedItems.isEmpty else {
             cleanupProblemMessage = L.t("cleanup.noneSelected")
             return
@@ -247,6 +266,11 @@ struct MainWindowView: View {
                 )
             }
         }
+    }
+
+    private func restrictSelectionToSafeItems() {
+        let safeItemIDs = Set(scanItems.filter { $0.risk == .safe }.map(\.id))
+        selectedResultIDs.formIntersection(safeItemIDs)
     }
 
     private func restoreHistoryItem(_ historyID: String) {

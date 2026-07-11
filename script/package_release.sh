@@ -11,6 +11,7 @@ BUILD_DATA_DIR="$ROOT_DIR/build/XcodeData"
 DIST_DIR="$ROOT_DIR/dist"
 BUILT_APP="$BUILD_DATA_DIR/Build/Products/$CONFIGURATION/$APP_NAME.app"
 DIST_APP="$DIST_DIR/$APP_NAME.app"
+ENTITLEMENTS_PATH="$ROOT_DIR/CleanMac/CleanMac.entitlements"
 SIGN_IDENTITY="${CLEANMAC_SIGN_IDENTITY:-}"
 NOTARIZE="${CLEANMAC_NOTARIZE:-0}"
 NOTARY_PROFILE="${CLEANMAC_NOTARY_PROFILE:-}"
@@ -58,6 +59,16 @@ create_zip() {
   rm -rf "$zip_root"
 }
 
+verify_zip() (
+  local zip_path="$1"
+  local verify_root
+  verify_root="$(mktemp -d "${TMPDIR:-/tmp}/cleanmac-release-verify.XXXXXX")"
+  trap 'rm -rf "$verify_root"' EXIT
+
+  ditto -x -k "$zip_path" "$verify_root"
+  codesign --verify --deep --strict --verbose=2 "$verify_root/$APP_NAME.app"
+)
+
 build_notary_args() {
   if [[ -n "$NOTARY_PROFILE" ]]; then
     NOTARY_ARGS=(--keychain-profile "$NOTARY_PROFILE")
@@ -102,11 +113,13 @@ sanitize_app_bundle "$DIST_APP"
 if [[ -n "$SIGN_IDENTITY" ]]; then
   echo "Signing $DIST_APP with: $SIGN_IDENTITY"
   codesign --force --deep --options runtime --timestamp --sign "$SIGN_IDENTITY" "$DIST_APP"
+  codesign --force --options runtime --timestamp --entitlements "$ENTITLEMENTS_PATH" --sign "$SIGN_IDENTITY" "$DIST_APP"
   sanitize_app_bundle "$DIST_APP"
   codesign --verify --deep --strict --verbose=2 "$DIST_APP"
 else
   echo "No CLEANMAC_SIGN_IDENTITY configured; applying ad-hoc signature for local validation."
-  codesign --force --deep --sign - "$DIST_APP"
+  codesign --force --deep --options runtime --sign - "$DIST_APP"
+  codesign --force --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign - "$DIST_APP"
   sanitize_app_bundle "$DIST_APP"
   codesign --verify --deep --strict --verbose=2 "$DIST_APP"
 fi
@@ -131,6 +144,12 @@ if [[ "$NOTARIZE" == "1" || "$NOTARIZE" == "true" ]]; then
   sanitize_app_bundle "$DIST_APP"
   create_zip "$ZIP_PATH"
 fi
+
+# Reading the app while creating the archive can make File Provider attach
+# Finder metadata again. Remove it on a best-effort basis; verify the actual
+# distributable ZIP from a fresh extraction below.
+sanitize_app_bundle "$DIST_APP"
+verify_zip "$ZIP_PATH"
 
 shasum -a 256 "$ZIP_PATH" > "$ZIP_PATH.sha256"
 

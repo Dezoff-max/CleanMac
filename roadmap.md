@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-031
+  Title: Safe application uninstaller
+  Goal: Let the user review and move a third-party app plus exact bundle-ID leftovers to Trash.
+  What to do: Add an isolated app scanner/removal policy in `CleanMacCore`, a separate Applications screen, mandatory confirmation, and temporary-fixture tests.
+  Files: `CleanMacCore/**`, `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/ApplicationsView.swift`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: Only direct third-party apps in `/Applications` and `~/Applications` are listed; only exact Caches/Preferences/Saved State/Logs leftovers are optional; the app is moved first; failures cannot delete leftovers; no real app is removed during verification.
+  Verification: `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; localization lint; read-only visual review
+  Priority: high
+  Impact: high
+  Risk: high
+  Effort: medium
+  Confidence: high
+  Score: high impact / high risk / medium
+
 - [x] ID: TASK-001
   Title: Main window UI and launch lifecycle
   Goal: Make CleanMac open as a normal windowed app on launch while staying available from the menu bar after the window closes.
@@ -377,3 +391,45 @@
   Effort: small
   Confidence: high
   Score: medium impact / low risk / small
+
+- [x] ID: TASK-028
+  Title: Enforce Safe Mode during cleanup review
+  Goal: Make the enabled-by-default Safe Mode actually prevent review-risk items from being selected or moved to Trash.
+  What to do: Pass Safe Mode into Results, lock review-risk selection while it is enabled, clear stale review selections when the preference turns on, and filter selected items again before cleanup execution.
+  Files: `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/ResultsView.swift`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: Safe Mode keeps review-risk items visible for inspection but unselectable; selection summaries and bulk selection include only allowed items; switching Safe Mode on removes stale review selections; cleanup execution rejects review-risk items even if stale selection state reaches it; disabling Safe Mode preserves the existing confirmation and Trash-only flow.
+  Verification: `swift test --package-path CleanMacCore`; Debug Xcode build; localization lint; `git diff --check`; `./script/build_and_run.sh --verify`; manual safe-mode ON/OFF review.
+  Priority: high
+  Impact: high
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: high impact / low risk / small
+
+- [x] ID: TASK-029
+  Title: Explain unavailable scan areas
+  Goal: Replace the generic scan issue count with actionable details about which cleanup areas could not be checked.
+  What to do: Present unavailable category names and paths from the existing scan report, then guide the user to Permissions when access is the likely cause without changing scanner or cleanup behavior.
+  Files: `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/ResultsView.swift`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: Results identifies unavailable scan areas and gives a clear next action; successful categories and cleanup safety behavior remain unchanged.
+  Verification: `swift test --package-path CleanMacCore`; Debug Xcode build; localization lint; `git diff --check`; `./script/build_and_run.sh --verify`; manual unavailable-area review.
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small
+
+- [x] ID: TASK-030
+  Title: Real Finder Automation permission
+  Goal: Replace the static Automation placeholder with a real macOS Apple Events permission for revealing selected items in Finder.
+  What to do: Check Finder Automation without prompting, request access only from an explicit button, show granted/not-requested/denied/unavailable states, use Apple Events for Finder reveal with an NSWorkspace fallback, and preserve the entitlement through Debug and Release signing.
+  Files: `CleanMac/Support/CleanMacAutomationService.swift`, `CleanMac/Views/PermissionsView.swift`, `CleanMac/Views/ResultsView.swift`, `CleanMac/Models/CleanMacModels.swift`, `CleanMac/*/Localizable.strings`, `CleanMac/*/InfoPlist.strings`, `CleanMac/CleanMac.entitlements`, `CleanMac.xcodeproj/project.pbxproj`, `script/**`, Loop docs
+  Definition of done: Opening Permissions never prompts automatically; the Automation row shows the live Finder status; Request Access invokes the native macOS consent flow off the main thread; denied access links to Automation settings; Finder reveal uses Apple Events only when granted and still works through the existing fallback otherwise; built and packaged apps contain the usage description and Automation entitlement.
+  Verification: localization and plist lint; `swift test --package-path CleanMacCore`; Debug Xcode build; `./script/build_and_run.sh --verify`; `./script/package_release.sh`; Info.plist and codesign entitlement inspection; manual Permissions UI review without triggering cleanup.
+  Priority: high
+  Impact: medium
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: medium impact / medium risk / medium

@@ -5,6 +5,7 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
     case dashboard
     case scan
     case results
+    case applications
     case permissions
     case settings
 
@@ -15,6 +16,7 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
         case .dashboard: L.t("section.dashboard")
         case .scan: L.t("section.scan")
         case .results: L.t("section.results")
+        case .applications: L.t("section.applications")
         case .permissions: L.t("section.permissions")
         case .settings: L.t("section.settings")
         }
@@ -25,6 +27,7 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
         case .dashboard: "gauge.with.dots.needle.67percent"
         case .scan: "magnifyingglass"
         case .results: "checklist"
+        case .applications: "app.badge.checkmark"
         case .permissions: "lock.shield"
         case .settings: "gearshape"
         }
@@ -222,7 +225,10 @@ enum PermissionState {
     case limited
     case unknown
     case recommended
-    case later
+    case notRequested
+    case denied
+    case unavailable
+    case checking
 
     var title: String {
         switch self {
@@ -230,7 +236,10 @@ enum PermissionState {
         case .limited: L.t("permission.state.limited")
         case .unknown: L.t("permission.state.unknown")
         case .recommended: L.t("permission.state.recommended")
-        case .later: L.t("permission.state.later")
+        case .notRequested: L.t("permission.state.notRequested")
+        case .denied: L.t("permission.state.denied")
+        case .unavailable: L.t("permission.state.unavailable")
+        case .checking: L.t("permission.state.checking")
         }
     }
 }
@@ -365,7 +374,10 @@ enum CleanMacCatalog {
         ]
     }
 
-    static func permissions(fullDiskAccess: FullDiskAccessCheckResult) -> [PermissionItem] {
+    static func permissions(
+        fullDiskAccess: FullDiskAccessCheckResult,
+        finderAutomationPermission: FinderAutomationPermission?
+    ) -> [PermissionItem] {
         [
             PermissionItem(
                 id: "files",
@@ -384,9 +396,9 @@ enum CleanMacCatalog {
             PermissionItem(
                 id: "automation",
                 title: L.t("permission.automation.title"),
-                detail: L.t("permission.automation.detail"),
+                detail: automationDetail(for: finderAutomationPermission),
                 systemImage: "wand.and.stars",
-                state: .later
+                state: permissionState(for: finderAutomationPermission)
             )
         ]
     }
@@ -399,6 +411,23 @@ enum CleanMacCatalog {
         }
     }
 
+    private static func permissionState(
+        for automationPermission: FinderAutomationPermission?
+    ) -> PermissionState {
+        switch automationPermission {
+        case nil:
+            .checking
+        case .granted:
+            .granted
+        case .notDetermined:
+            .notRequested
+        case .denied:
+            .denied
+        case .targetNotRunning, .unavailable:
+            .unavailable
+        }
+    }
+
     private static func fullDiskDetail(for result: FullDiskAccessCheckResult) -> String {
         switch result.state {
         case .granted:
@@ -407,6 +436,25 @@ enum CleanMacCatalog {
             L.f("permission.fullDisk.detail.limited", result.readableProbeCount, result.availableProbeCount)
         case .unknown:
             L.t("permission.fullDisk.detail.unknown")
+        }
+    }
+
+    private static func automationDetail(
+        for automationPermission: FinderAutomationPermission?
+    ) -> String {
+        switch automationPermission {
+        case nil:
+            L.t("permission.automation.detail.checking")
+        case .granted:
+            L.t("permission.automation.detail.granted")
+        case .notDetermined:
+            L.t("permission.automation.detail.notRequested")
+        case .denied:
+            L.t("permission.automation.detail.denied")
+        case .targetNotRunning:
+            L.t("permission.automation.detail.finderUnavailable")
+        case .unavailable:
+            L.t("permission.automation.detail.unavailable")
         }
     }
 

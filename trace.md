@@ -22,3 +22,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: the test used a 64-byte "large download" threshold, but APFS allocated size for tiny files is several KB.
 - Fix: raised the test threshold and fixture size to model allocated-size behavior more realistically.
 - Status: resolved; `swift test --package-path CleanMacCore` passes.
+
+## 2026-07-11 - TASK-030 - Debug Automation signing
+
+- Symptom: the first ad-hoc Debug signing pass rejected Finder metadata; after sanitizing the bundle, the app still terminated at launch because hardened runtime blocked `CleanMac.debug.dylib` for having no shared Team ID with the ad-hoc main executable.
+- Cause: Xcode's Debug product uses separate preview/debug dynamic libraries, while ad-hoc signatures have no stable Team ID for hardened library validation. The raw build bundle also retained extended attributes that codesign refuses.
+- Fix: sanitize only the generated bundle, build Debug with `ENABLE_DEBUG_DYLIB=NO` so it has one executable, then sign the app ad-hoc with hardened runtime and the Automation entitlement. Release remains hardened and is signed in two passes so only the outer app receives the Automation entitlement. Because File Provider can reattach Finder metadata to `dist/CleanMac.app`, packaging now strictly verifies a fresh extraction of the metadata-free ZIP.
+- Status: resolved; `./script/build_and_run.sh --verify` launches successfully with `adhoc,runtime`, and the extracted Release ZIP passes strict signature, usage-description, and entitlement inspection.
