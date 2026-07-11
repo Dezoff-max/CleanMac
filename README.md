@@ -5,8 +5,8 @@
 <h1 align="center">CleanMac</h1>
 
 <p align="center">
-  Безопасная локальная очистка macOS с предварительным просмотром,<br>
-  Safe Mode и удалением приложений через Корзину.
+  Safe, local-first cleanup for macOS with review-first scanning,<br>
+  Safe Mode, and Trash-only removal.
 </p>
 
 <p align="center">
@@ -17,72 +17,72 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/Dezoff-max/CleanMac" alt="MIT License"></a>
 </p>
 
-CleanMac — нативное SwiftUI-приложение для macOS, которое сначала сканирует выбранные области, объясняет найденные кандидаты и только после явного подтверждения перемещает разрешённые элементы в Корзину. Приложение работает локально: в коде нет сетевой отправки результатов сканирования, аналитики или облачного аккаунта.
+CleanMac is a native SwiftUI utility that scans selected macOS locations, explains every cleanup candidate, and moves only confirmed items to Trash. Everything runs locally: the code contains no scan-result uploads, analytics, or cloud accounts.
 
 > [!IMPORTANT]
-> Текущий публичный релиз не подписан Developer ID и не нотарифицирован Apple. macOS Gatekeeper может заблокировать запуск загруженной сборки. Для разработки можно собрать приложение из исходников; не отключайте системную защиту ради запуска неподписанного файла.
+> The current public build is ad-hoc signed and is not notarized by Apple. macOS Gatekeeper may block the downloaded app. You can build CleanMac from source for development; do not disable system security to run an unsigned file.
 
-## Интерфейс
+## Interface
 
 <p align="center">
-  <img src="docs/screenshots/overview.png" alt="Главный экран CleanMac" width="100%">
+  <img src="docs/screenshots/overview.png" alt="CleanMac dashboard" width="100%">
 </p>
 
-| Выбор областей сканирования | Групповое удаление приложений |
+| Scan area selection | Multi-select application removal |
 | --- | --- |
-| <img src="docs/screenshots/scan-areas.png" alt="Области сканирования CleanMac"> | <img src="docs/screenshots/applications-multiselect.png" alt="Выбор нескольких приложений в CleanMac"> |
+| <img src="docs/screenshots/scan-areas.png" alt="CleanMac scan areas"> | <img src="docs/screenshots/applications-multiselect.png" alt="Selecting multiple applications in CleanMac"> |
 
-## Возможности
+## Features
 
-- **Безопасное сканирование.** Кэши пользователя и браузеров, логи, временные файлы, Xcode Derived Data, кэши Node/SwiftPM, Загрузки, установщики и Корзина.
-- **Понятный просмотр результатов.** Категории, размер, риск, причина рекомендации, точный путь и недоступные для чтения области.
-- **Safe Mode.** Включён по умолчанию и блокирует выбор элементов, требующих ручной проверки.
-- **Очистка через Корзину.** Разрешённые пути повторно проверяются перед выполнением; постоянное удаление не используется.
-- **Восстановление.** Элементы, перемещённые в текущем сеансе, можно вернуть, если исходный путь свободен.
-- **Удаление приложений.** Поиск сторонних программ в `/Applications` и `~/Applications`, выбор нескольких приложений и необязательных точных остатков по bundle ID.
-- **Меню-бар и автоматическое сканирование.** Статус диска, последний результат, расписание безопасного сканирования и локальные уведомления, пока CleanMac запущен.
-- **Контроль разрешений.** Живой статус Full Disk Access и Finder Automation без автоматического запроса доступа.
-- **Русский и английский интерфейс.** Переключение языка и светлой/тёмной темы внутри приложения.
+- **Safe scanning.** User and browser caches, logs, temporary files, Xcode Derived Data, Node/SwiftPM caches, Downloads, installers, and Trash.
+- **Explainable review.** Categories, sizes, risk levels, recommendation reasons, exact paths, and locations that could not be read.
+- **Safe Mode.** Enabled by default and prevents selection of items that require manual review.
+- **Trash-only cleanup.** Accepted paths are validated again before execution; permanent deletion is not used.
+- **Session restore.** Items moved during the current session can be restored when their original path is available.
+- **Application removal.** Finds third-party apps in `/Applications` and `~/Applications`, supports multi-selection, and offers optional exact bundle-ID leftovers.
+- **Menu bar and scheduled scans.** Disk status, the latest scan summary, safe scan scheduling, and local notifications while CleanMac is running.
+- **Permission visibility.** Live Full Disk Access and Finder Automation status without automatic permission prompts.
+- **English and Russian UI.** Switch language and light/dark appearance directly inside the app.
 
-## Модель безопасности
+## Safety Model
 
-1. Сканирование выполняется только для чтения.
-2. Каждый кандидат относится к известной категории и допустимому корневому пути.
-3. Очистка требует явного выбора и отдельного подтверждения.
-4. Перед выполнением пути проверяются повторно.
-5. Файлы перемещаются в Корзину, а не удаляются навсегда.
-6. При удалении приложения сначала перемещается сам `.app`; связанные остатки не затрагиваются, если этот шаг завершился ошибкой.
-7. CleanMac не повышает привилегии и не устанавливает системный helper.
+1. Scanning is read-only.
+2. Every candidate belongs to a known category and an allowlisted root path.
+3. Cleanup requires explicit selection and a separate confirmation.
+4. Paths are validated again immediately before execution.
+5. Accepted files are moved to Trash instead of being permanently deleted.
+6. During application removal, the `.app` bundle is moved first. Its leftovers remain untouched if that step fails.
+7. CleanMac does not escalate privileges or install a system helper.
 
-## Установка
+## Installation
 
-Готовые архивы находятся на странице [Releases](https://github.com/Dezoff-max/CleanMac/releases/latest). Вместе с ZIP публикуется файл `.sha256` для проверки загрузки:
+Download the latest archive from [GitHub Releases](https://github.com/Dezoff-max/CleanMac/releases/latest). Each ZIP is published with a `.sha256` file:
 
 ```bash
 shasum -a 256 CleanMac-*.zip
 ```
 
-Сравните полученный хеш с первым значением в приложенном файле `.sha256`, затем распакуйте архив и переместите `CleanMac.app` в `/Applications`.
+Compare the resulting hash with the first value in the attached `.sha256` file. Then extract the archive and move `CleanMac.app` to `/Applications`.
 
-Актуальные ограничения готовой сборки:
+Current prebuilt release limitations:
 
-- macOS 14 или новее;
-- архитектура Apple Silicon (`arm64`);
-- релиз пока подписан только ad-hoc и не нотарифицирован Apple.
+- macOS 14 or later;
+- Apple Silicon (`arm64`);
+- ad-hoc signed and not notarized by Apple.
 
-## Разрешения macOS
+## macOS Permissions
 
-CleanMac запрашивает доступ только по действию пользователя:
+CleanMac requests access only after a user action:
 
-- **Файлы и папки** — для выбранных пользовательских областей;
-- **Полный доступ к диску** — опционально, для более глубокого чтения защищённых метаданных;
-- **Автоматизация Finder** — опционально, только чтобы показать выбранный элемент в Finder.
+- **Files and Folders** — for selected user locations;
+- **Full Disk Access** — optional, for deeper checks of protected metadata;
+- **Finder Automation** — optional, only for revealing a selected item in Finder.
 
-Сканирование и очистка не требуют Finder Automation. Разрешения можно проверить на экране «Доступы» и изменить в системных настройках macOS.
+Scanning and cleanup do not require Finder Automation. Permission status is available on the Permissions screen and can be changed in macOS System Settings.
 
-## Сборка из исходников
+## Build from Source
 
-Требуются macOS 14+ и Xcode 26+.
+Requires macOS 14+ and Xcode 26+.
 
 ```bash
 git clone https://github.com/Dezoff-max/CleanMac.git
@@ -90,39 +90,39 @@ cd CleanMac
 ./script/build_and_run.sh --verify
 ```
 
-Тесты ядра:
+Run the core test suite:
 
 ```bash
 swift test --package-path CleanMacCore
 ```
 
-Локальный Release ZIP и SHA-256:
+Create a local Release ZIP and SHA-256 file:
 
 ```bash
 ./script/package_release.sh
 ```
 
-Подписание Developer ID и нотарификация описаны в [docs/signing-notarization.md](docs/signing-notarization.md).
+Developer ID signing and notarization are documented in [docs/signing-notarization.md](docs/signing-notarization.md).
 
-## Структура проекта
+## Project Structure
 
 ```text
-CleanMac/             SwiftUI-приложение для macOS
-CleanMacCore/         Тестируемое ядро сканирования и очистки
-script/               Сборка, запуск и упаковка релиза
-docs/                 Документация и скриншоты
-.github/workflows/    CI и публикация GitHub Releases
+CleanMac/             SwiftUI macOS application
+CleanMacCore/         Testable scanning and cleanup core
+script/               Build, launch, and release packaging
+docs/                 Documentation and screenshots
+.github/workflows/    CI and GitHub Release automation
 ```
 
-## Участие в разработке
+## Contributing
 
-1. Создайте отдельную ветку от `main`.
-2. Сохраняйте модель безопасности: scan → review → confirm → Trash.
-3. Добавляйте тесты для изменений путей, сканирования и удаления.
-4. Перед Pull Request выполните `swift test --package-path CleanMacCore` и `./script/build_and_run.sh --verify`.
+1. Create a focused branch from `main`.
+2. Preserve the safety flow: scan → review → confirm → Trash.
+3. Add tests for changes to scanning, path validation, or removal behavior.
+4. Before opening a pull request, run `swift test --package-path CleanMacCore` and `./script/build_and_run.sh --verify`.
 
-Сообщения об ошибках и предложения можно создавать через [GitHub Issues](https://github.com/Dezoff-max/CleanMac/issues).
+Bug reports and feature ideas are welcome in [GitHub Issues](https://github.com/Dezoff-max/CleanMac/issues).
 
-## Лицензия
+## License
 
-Проект распространяется по лицензии [MIT](LICENSE).
+CleanMac is available under the [MIT License](LICENSE).
