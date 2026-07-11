@@ -46,6 +46,7 @@
 | Area | Command or check | When to run | Success signal | Fallback |
 | --- | --- | --- | --- | --- |
 | macOS app launch | `./script/build_and_run.sh --verify` | UI, app lifecycle, assets, or project changes | Build succeeds and `pgrep -x CleanMac` finds the app | Run the xcodebuild command from this file and inspect launch logs |
+| About window | Open the app menu item, switch RU/EN and light/dark, then inspect the Window menu | About scene, metadata, localization, theme, or links change | One fixed-size About window shows the active language/theme, accurate bundle version/build, and GitHub/Releases/License links | Inspect the accessibility tree and capture a screenshot without activating external links |
 | Core package | `swift test --package-path CleanMacCore` | Core model, scanner, or package changes | All tests pass | Run `cd CleanMacCore && swift test` |
 | Application removal | Temporary fake `.app` fixtures with an injected Trash handler plus read-only UI review | Application scanner, removal policy, multi-selection, or Applications UI changes | App target is moved first; failed app move leaves leftovers untouched; outside/forged paths are rejected; multiple checkboxes and per-app leftovers stay isolated; no real app is removed | Run the focused `testApplication*` SwiftPM tests and inspect the batch confirmation without accepting it |
 | Release package | `./script/package_release.sh` | Packaging, release, or CI artifact changes | `dist/*.zip` and `.sha256` are created and checksum passes | Inspect `build/XcodeData/Build/Products/Release` |

@@ -16,6 +16,16 @@
 "menu.open" = "Open CleanMac";
 "menu.open.short" = "Open";
 "menu.quit" = "Quit";
+"about.menu" = "About CleanMac";
+"about.windowTitle" = "About CleanMac";
+"about.tagline" = "Safe, local-first cleanup for macOS";
+"about.version" = "Version %@ (%@)";
+"about.developer" = "Developer";
+"about.license" = "License";
+"about.github" = "GitHub";
+"about.releases" = "Releases";
+"about.safetyNote" = "CleanMac scans first and moves only confirmed items to Trash.";
+"about.close" = "Close";
 "status.disk.defaultName" = "Macintosh HD";
 "status.disk.percent" = "%d%% used";
 "status.disk.usedOfTotal" = "%@ of %@ used";

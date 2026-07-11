@@ -2,77 +2,75 @@
 
 ## Task
 
-- ID: TASK-032
-- Title: Multi-select application removal
+- ID: TASK-033
+- Title: Custom About window and v0.2.1 release
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user explicitly requested checkbox selection for removing several applications from the Applications screen.
-- Expected value: the user can build one reviewed removal set instead of confirming every app separately.
-- Main risk: mixing detail selection with removal selection, losing per-app leftover choices, or touching leftovers after an individual app move fails.
-- UX constraint: use native macOS checkbox controls; keep the last interacted app visible in the detail panel; preserve mandatory confirmation and Trash-only removal.
+- Why this task now: the user asked to replace the sparse system About panel with a polished window consistent with their other macOS apps, before publishing the pending v0.2.1 release.
+- Expected value: About CleanMac clearly presents the product, exact installed version/build, local-first safety model, author, license, and project links.
+- Main risk: creating duplicate windows, hardcoding a stale version, or using macOS APIs newer than the current macOS 14 deployment target.
+- UX constraint: preserve the current RU/EN language and light/dark appearance selections; keep the window compact, fixed-size, and independently closable.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMac/Views/ApplicationsView.swift`
+  - `CleanMac/CleanMacApp.swift`
+  - `CleanMac/Views/AboutView.swift`
   - `CleanMac/en.lproj/Localizable.strings`
   - `CleanMac/ru.lproj/Localizable.strings`
+  - `CleanMac.xcodeproj/project.pbxproj`
   - `project-analysis.md`
   - `roadmap.md`
   - `contract.md`
   - `progress.md`
+  - `trace.md`
   - `verification.md`
 - Allowed commands:
-  - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
+  - localization/plist lint
   - `swift test --package-path CleanMacCore`
   - `./script/build_and_run.sh --verify`
-  - `git diff --check`
+  - `./script/package_release.sh`
   - non-destructive UI inspection and screenshots
+  - focused Git/GitHub release commands after verification
 - Out of scope:
-  - permanent deletion, Empty Trash, privilege escalation, or forced process termination;
-  - changing the application scanner or path allowlists;
-  - selecting leftovers automatically;
-  - removing a real installed application during verification;
-  - unrelated cleanup, permissions, packaging, or release changes.
+  - cleanup behavior, scanner rules, application removal, permissions, signing identity setup, or notarization;
+  - adding dependencies or changing the macOS deployment target;
+  - presenting an ad-hoc package as Apple-notarized.
 - Dependencies allowed: no
-- Destructive actions allowed: yes, only after the existing dedicated in-app confirmation and only for explicitly checked applications.
+- Destructive actions allowed: no
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - Every application row has a native checkbox with a visible checked state.
-  - Multiple applications can remain checked while one app is shown in the detail panel.
-  - Exact leftover choices are stored separately for each checked application.
-  - The summary and destructive button show the selected application count and total reviewed size.
-  - Confirmation lists the number of apps, selected leftovers, and total size.
-  - Each app is independently replanned and moved before its leftovers; one app failure cannot touch that app's leftovers or block safe reporting for the remaining checked apps.
-  - Successfully moved apps leave the list; failed apps remain selected for review.
-  - Refresh preserves only selections that still exist.
+  - The app menu replaces the system About action with a localized `About CleanMac` action.
+  - A singleton About scene opens centered and does not create duplicate windows.
+  - The window presents the CleanMac icon, name, localized tagline, exact bundle version/build, developer, local-first mode, MIT license, and working GitHub/Release/License links.
+  - The selected RU/EN language and light/dark appearance apply to the About window.
+  - The window has a deliberate fixed content size and normal close behavior.
+  - Version 0.2.1 build 3 is packaged and published with an honest unsigned/ad-hoc distribution note.
 - Required verification:
-  - `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`
+  - localization lint
   - `swift test --package-path CleanMacCore`
   - `./script/build_and_run.sh --verify`
+  - `./script/package_release.sh`
   - `git diff --check`
 - Manual checks:
-  - Check at least two applications and confirm both checkboxes remain selected.
-  - Switch details and verify per-app leftover choices do not leak to another app.
-  - Open the batch confirmation and cancel it without removing anything.
-- Evidence to collect:
-  - Build/test command exit status.
-  - Accessibility state showing multiple checked rows and batch confirmation.
-  - UI screenshot path if captured.
+  - Open About from the application menu and confirm its visual hierarchy in Russian.
+  - Switch to English and dark appearance and confirm the About content updates.
+  - Invoke About more than once and confirm only one About window exists.
+  - Inspect the packaged app Info.plist for version 0.2.1 build 3 and verify the ZIP checksum.
 
 ## Restart Signals
 
 Restart or shrink the task if:
-- SwiftUI checkbox composition breaks row accessibility or detail selection;
-- batch execution would require weakening the existing single-app planner/executor checks;
-- UI verification would require accepting a removal confirmation.
+- the SwiftUI `Window` scene does not behave as a singleton on macOS 14;
+- replacing `.appInfo` removes required application-menu behavior;
+- visual verification reveals clipping or a fixed-size window that does not fit localized content.
 
 ## Result
 
-- Status: complete
-- Verification result: passed. All 15 core tests, localization lint, `git diff --check`, Debug build, and `./script/build_and_run.sh --verify` pass. Live accessibility review showed two independently checked apps, isolated per-app leftover state, and the correct batch confirmation.
-- Notes: screenshot saved at `/tmp/cleanmac-task32-multiselect.jpg`. The batch confirmation was cancelled; no installed application or real leftover was moved.
+- Status: in progress
+- Verification result: pending
+- Notes: the current branch already contains the intended v0.2.1 build-number bump; no release has been published yet.

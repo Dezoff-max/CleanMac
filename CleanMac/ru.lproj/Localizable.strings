@@ -16,6 +16,16 @@
 "menu.open" = "Открыть CleanMac";
 "menu.open.short" = "Открыть";
 "menu.quit" = "Выйти";
+"about.menu" = "О CleanMac";
+"about.windowTitle" = "О CleanMac";
+"about.tagline" = "Безопасная локальная очистка macOS";
+"about.version" = "Версия %@ (%@)";
+"about.developer" = "Разработчик";
+"about.license" = "Лицензия";
+"about.github" = "GitHub";
+"about.releases" = "Релизы";
+"about.safetyNote" = "CleanMac сначала сканирует и перемещает в Корзину только подтверждённые элементы.";
+"about.close" = "Закрыть";
 "status.disk.defaultName" = "Macintosh HD";
 "status.disk.percent" = "занято %d%%";
 "status.disk.usedOfTotal" = "Занято %@ из %@";
