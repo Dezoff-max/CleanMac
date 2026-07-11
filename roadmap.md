@@ -1,5 +1,19 @@
 # Roadmap
 
+- [ ] ID: TASK-033
+  Title: Custom About window and v0.2.1 release
+  Goal: Replace the default About panel with a polished localized CleanMac window, then publish the verified v0.2.1 build.
+  What to do: Add a singleton SwiftUI About scene, live bundle version/build data, project links, RU/EN copy, theme support, and complete the protected PR/release flow.
+  Files: `CleanMac/CleanMacApp.swift`, `CleanMac/Views/AboutView.swift`, `CleanMac/*/Localizable.strings`, version settings, Loop docs
+  Definition of done: One fixed-size About window opens from the app menu, matches the selected language/theme, shows accurate metadata and working links, and v0.2.1 is released with verified assets.
+  Verification: localization lint; `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; `./script/package_release.sh`; visual review; GitHub CI
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small
+
 - [x] ID: TASK-032
   Title: Multi-select application removal
   Goal: Let the user check several applications and remove the reviewed set through one mandatory confirmation.

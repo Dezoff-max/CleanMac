@@ -4,6 +4,7 @@ import SwiftUI
 @main
 struct CleanMacApp: App {
     @NSApplicationDelegateAdaptor(CleanMacAppDelegate.self) private var appDelegate
+    @Environment(\.openWindow) private var openWindow
     @AppStorage(CleanMacAppearance.storageKey) private var appearanceMode = CleanMacAppearance.defaultCode
     @AppStorage(CleanMacLanguage.storageKey) private var languageCode = CleanMacLanguage.defaultCode
 
@@ -23,6 +24,22 @@ struct CleanMacApp: App {
         }
         .defaultSize(width: 980, height: 720)
         .windowResizability(.contentMinSize)
+        .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button(L.t("about.menu")) {
+                    openWindow(id: "about")
+                }
+            }
+        }
+
+        Window(L.t("about.windowTitle"), id: "about") {
+            AboutView()
+                .environment(\.locale, language.locale)
+                .preferredColorScheme(appearance.colorScheme)
+        }
+        .defaultSize(width: 520, height: 500)
+        .defaultPosition(.center)
+        .windowResizability(.contentSize)
 
         MenuBarExtra("CleanMac", image: "MenuBarIcon") {
             StatusMenuView()
