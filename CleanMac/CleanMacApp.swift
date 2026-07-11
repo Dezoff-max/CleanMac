@@ -38,6 +38,7 @@ final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
+        configureDockIcon()
         NSApp.activate(ignoringOtherApps: true)
         CleanMacNotificationService.configure()
         requestNotificationAuthorizationIfUseful()
@@ -50,6 +51,12 @@ final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         autoScanScheduler.stop()
+    }
+
+    private func configureDockIcon() {
+        guard let icon = NSImage(named: "BrandIcon") else { return }
+        icon.isTemplate = false
+        NSApp.applicationIconImage = icon
     }
 
     private func requestNotificationAuthorizationIfUseful() {
