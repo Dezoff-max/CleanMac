@@ -71,6 +71,6 @@ Restart or shrink the task if:
 
 ## Result
 
-- Status: in progress
-- Verification result: pending
-- Notes: the current branch already contains the intended v0.2.1 build-number bump; no release has been published yet.
+- Status: complete
+- Verification result: passed. Localization lint and key parity, all 15 core tests, `git diff --check`, Debug build/launch, live RU/EN and light/dark About review, singleton Window-menu inspection, Release packaging, checksum comparison, fresh-ZIP strict signature verification, protected GitHub CI, and the tag-driven Release workflow all passed.
+- Notes: PR #6 was merged into `main`; GitHub Release `v0.2.1` is published as latest with the verified arm64 ad-hoc archive and SHA-256 attachment. Per the user's final simplification, the metadata card contains only Developer and License.
