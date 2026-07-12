@@ -1,6 +1,7 @@
 import Darwin
 import Foundation
 import IOKit.ps
+import CleanMacCore
 
 struct StatusSystemSnapshot: Equatable {
     let cpuFraction: Double
@@ -40,6 +41,14 @@ struct StatusDiskSnapshot: Equatable {
             return 0
         }
         return min(max(Double(usedBytes) / Double(totalBytes), 0), 1)
+    }
+
+    var freeFraction: Double? {
+        LowDiskSpaceWarningPolicy.freeFraction(totalBytes: totalBytes, freeBytes: freeBytes)
+    }
+
+    var isLowSpace: Bool {
+        LowDiskSpaceWarningPolicy.isLowSpace(totalBytes: totalBytes, freeBytes: freeBytes)
     }
 
     static func current() -> StatusDiskSnapshot {

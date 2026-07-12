@@ -23,6 +23,7 @@ struct MainWindowView: View {
     @AppStorage("CleanMac.confirmBeforeCleanup") private var confirmBeforeCleanup = true
     @AppStorage("CleanMac.showMenuBarStatus") private var showMenuBarStatus = true
     @AppStorage(CleanMacPreferenceKeys.scanInProgress) private var scanInProgress = false
+    @AppStorage(CleanMacPreferenceKeys.requestedSection) private var requestedSectionID = ""
 
     private let minimumScanAnimationDuration: TimeInterval = 1.15
     private let cleanupHistoryStore = CleanupHistoryStore()
@@ -74,6 +75,13 @@ struct MainWindowView: View {
             }
 
             restrictSelectionToSafeItems()
+        }
+        .task(id: requestedSectionID) {
+            guard !requestedSectionID.isEmpty else {
+                return
+            }
+            await Task.yield()
+            applyRequestedSection(requestedSectionID)
         }
     }
 
@@ -139,6 +147,17 @@ struct MainWindowView: View {
         CleanMacCatalog.cleanupAreas
             .filter { selectedAreaIDs.contains($0.id) }
             .map(\.category)
+    }
+
+    private func applyRequestedSection(_ rawValue: String) {
+        guard !rawValue.isEmpty else {
+            return
+        }
+        defer { requestedSectionID = "" }
+        guard CleanMacSection(rawValue: rawValue) != nil else {
+            return
+        }
+        selectedSectionID = rawValue
     }
 
     private var selectedAreas: [CleanupArea] {

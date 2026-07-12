@@ -64,6 +64,46 @@ enum CleanMacNotificationService {
         await add(request)
     }
 
+    static func notifyLowDiskSpaceIfNeeded(
+        _ disk: StatusDiskSnapshot,
+        defaults: UserDefaults = .standard,
+        now: Date = Date()
+    ) async {
+        let lastTimestamp = defaults.double(forKey: CleanMacPreferenceKeys.lowDiskSpaceLastNotificationTimestamp)
+        let lastNotificationDate = lastTimestamp > 0 ? Date(timeIntervalSince1970: lastTimestamp) : nil
+        guard LowDiskSpaceWarningPolicy.shouldNotify(
+            totalBytes: disk.totalBytes,
+            freeBytes: disk.freeBytes,
+            lastNotificationDate: lastNotificationDate,
+            now: now
+        ) else {
+            return
+        }
+
+        let settings = await notificationSettings()
+        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
+            return
+        }
+
+        let content = UNMutableNotificationContent()
+        content.title = L.t("notification.lowDisk.title")
+        content.body = L.f(
+            "notification.lowDisk.body",
+            CleanMacFormatters.bytes(disk.freeBytes),
+            Int(((disk.freeFraction ?? 0) * 100).rounded(.down))
+        )
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "CleanMac.lowDiskSpace",
+            content: content,
+            trigger: nil
+        )
+        if await add(request) {
+            defaults.set(now.timeIntervalSince1970, forKey: CleanMacPreferenceKeys.lowDiskSpaceLastNotificationTimestamp)
+        }
+    }
+
     static func sendTestNotification(defaults: UserDefaults = .standard) async -> CleanMacNotificationDeliveryResult {
         guard notificationsEnabled(defaults: defaults) else {
             return .disabled

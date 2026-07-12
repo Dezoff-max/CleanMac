@@ -62,6 +62,7 @@ struct CleanMacApp: App {
 
 final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
     private let autoScanScheduler = CleanMacAutoScanScheduler()
+    private let lowDiskSpaceMonitor = CleanMacLowDiskSpaceMonitor()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         MainWindowController.prepareForInitialPresentation(isBackgroundLaunch: !NSApp.isActive)
@@ -70,6 +71,7 @@ final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
         CleanMacNotificationService.configure()
         requestNotificationAuthorizationIfUseful()
         autoScanScheduler.start()
+        lowDiskSpaceMonitor.start()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -87,6 +89,7 @@ final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         autoScanScheduler.stop()
+        lowDiskSpaceMonitor.stop()
     }
 
     private func configureDockIcon() {
