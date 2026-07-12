@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-042
+  Title: Idempotent GitHub Release publishing
+  Goal: Prevent a successful tag package from reporting failure when the corresponding GitHub Release already exists.
+  What to do: Detect the release first, create it only when missing, otherwise replace same-named assets with `gh release upload --clobber` while preserving notes.
+  Files: `.github/workflows/release.yml`, Loop docs
+  Definition of done: missing and existing release paths are explicit; the existing v0.3.0 path succeeds without duplicate releases or metadata loss; PR CI is green.
+  Verification: YAML parse; embedded shell syntax; controlled v0.3.0 asset refresh; clean downloaded checksum verification; GitHub PR checks
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small
+
 - [x] ID: TASK-041
   Title: CleanMac v0.3.0 release
   Goal: Ship the verified disk analysis, onboarding, system dashboard, developer cleanup, and duplicate finder as the next feature release.
