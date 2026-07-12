@@ -7,6 +7,7 @@ struct CleanMacApp: App {
     @Environment(\.openWindow) private var openWindow
     @AppStorage(CleanMacAppearance.storageKey) private var appearanceMode = CleanMacAppearance.defaultCode
     @AppStorage(CleanMacLanguage.storageKey) private var languageCode = CleanMacLanguage.defaultCode
+    @AppStorage(CleanMacPreferenceKeys.onboardingCompleted) private var onboardingCompleted = false
 
     private var language: CleanMacLanguage {
         CleanMacLanguage(rawValue: languageCode) ?? .current
@@ -18,9 +19,18 @@ struct CleanMacApp: App {
 
     var body: some Scene {
         WindowGroup("CleanMac", id: "main") {
-            MainWindowView()
-                .environment(\.locale, language.locale)
-                .preferredColorScheme(appearance.colorScheme)
+            Group {
+                if onboardingCompleted {
+                    MainWindowView()
+                        .preferredColorScheme(appearance.colorScheme)
+                } else {
+                    OnboardingView {
+                        onboardingCompleted = true
+                    }
+                    .preferredColorScheme(nil)
+                }
+            }
+            .environment(\.locale, language.locale)
         }
         .defaultSize(width: 980, height: 720)
         .windowResizability(.contentMinSize)

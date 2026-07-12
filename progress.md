@@ -290,3 +290,33 @@ Append-only history. Do not erase previous entries.
 - Next step: Add read-only large-file review or deeper developer-storage previews.
 - Bottleneck: none. Developer ID signing/notarization still separately requires Apple credentials.
 - Handoff: The app remains on the Russian/light Results screen. The known stale CoreSimulator warning remains non-blocking for macOS builds.
+
+## 2026-07-12 - TASK-035 - Read-only disk analysis
+
+- What changed: Added a separate Disk Analysis sidebar section backed by a cancellable read-only `CleanMacCore` scanner. It offers no-exclusion whole-disk scanning from `/`, Home, Downloads, and a native custom-folder picker; one scan powers a bounded radial multi-ring map with folder drill-down/breadcrumbs and a large-file list with 50/100/500 MB/1 GB filters, size/date/type sorting, nil initial selection, and Finder/Open actions. Analyzer results never enter cleanup reports, junk totals, cleanup selection, history, or scheduled scans.
+- Files touched: `CleanMacCore/Sources/CleanMacCore/DiskAnalyzer.swift`, `CleanMacCore/Tests/CleanMacCoreTests/DiskAnalyzerTests.swift`, `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Support/DiskAnalysisWorkspaceService.swift`, `CleanMac/Views/DiskAnalysisView.swift`, `CleanMac/Views/DiskSunburstView.swift`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`, `trace.md`, `verification.md`.
+- Checks run: `swift test --package-path CleanMacCore` (28/28); localization plist lint and RU/EN key parity; `git diff --check`; repeated Debug `xcodebuild`; repeated `./script/build_and_run.sh --verify`; live Russian/light Home and whole-disk scans; visual radial-map and large-file review; nil initial row selection/action-state check; no-exclusion `/` scan through system/application/user/developer paths.
+- Result: Passed. The live whole-disk scan visited 1,316,113 accessible objects, measured 68.73 GB, found 124 files over 50 MB, and showed Applications, System, Users, Library, var, opt, usr, tmp, and bin branches. It reported 457 macOS-protected locations instead of escalating privileges. No file was selected automatically and no cleanup or mutation occurred.
+- Next step: Add launch-at-login support or deeper developer-storage previews.
+- Bottleneck: a truly complete physical-volume total is limited by macOS access controls and APFS/mounted representations; the analyzer reports what the current process can read and explains why Finder may differ.
+- Handoff: Whole-disk mode deliberately has no path exclusion list per user direction. It can be slower and can include mounted paths. The known stale CoreSimulator warning remains non-blocking for macOS builds.
+
+## 2026-07-12 - TASK-035 - Disk analysis interaction polish
+
+- What changed: Replaced the standard scan spinner with a custom gradient ring/pulse indicator and added efficient radial-map hover hit-testing. The hovered sector now grows with a short animation, glow, and localized floating tooltip containing its folder name and binary-gigabyte size; Reduce Motion disables continuous movement.
+- Files touched: `CleanMac/Views/DiskAnalysisProgressIndicator.swift`, `CleanMac/Views/DiskAnalysisView.swift`, `CleanMac/Views/DiskSunburstView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`, `trace.md`, `verification.md`.
+- Checks run: `swift test --package-path CleanMacCore` (28/28); localization plist lint and RU/EN key parity; `git diff --check`; Debug `xcodebuild`; `./script/build_and_run.sh --verify`; live Russian/light whole-disk progress review; live map hover review showing `.cache` at `1.510 ГБ`; cancellation smoke check.
+- Result: Passed. The modern indicator renders during a live `/` scan, the hovered sector enlarges and displays its GB tooltip, and cancellation returns without modifying files.
+- Next step: Decide whether to add launch-at-login support or a rectangular treemap alternative.
+- Bottleneck: none. macOS access controls still limit unreadable protected paths, and the stale CoreSimulator warning remains non-blocking for macOS builds.
+- Handoff: The verification scan was cancelled through the UI after the indicator check. No cleanup, application removal, restore, or file mutation was triggered.
+
+## 2026-07-12 - TASK-036 - First-launch system onboarding
+
+- What changed: Added a four-step first-launch flow inside the primary CleanMac window: Welcome, real product capabilities, optional Full Disk Access guidance with live read-only status, and completion. The screen uses semantic macOS colors/materials and the system appearance rather than the saved in-app theme, supports Back/Next/Skip, Return as the default action, Reduce Motion, RU/EN localization, and persists completion through `CleanMac.onboardingCompleted`.
+- Files touched: `CleanMac/CleanMacApp.swift`, `CleanMac/Support/CleanMacPreferences.swift`, `CleanMac/Views/OnboardingView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`, `trace.md`, `verification.md`.
+- Checks run: `swift test --package-path CleanMacCore` (28/28); localization plist lint and RU/EN key parity; `git diff --check`; Debug `xcodebuild`; repeated `./script/build_and_run.sh --verify`; live Russian/light review of all four pages; Back and top-right Skip checks; completion-to-Dashboard check; completed relaunch check.
+- Result: Passed. Onboarding is the only primary-window content before completion, all four pages fit the standard window, permission settings are explicit-only, both finishing and skipping store completion, and the next launch opens Dashboard directly.
+- Next step: Decide whether Settings should expose a "Show onboarding again" action.
+- Bottleneck: none. The known generated-app FinderInfo attribute required the already documented build-product cleanup before the successful verification rerun; the stale CoreSimulator warning remains non-blocking.
+- Handoff: The completion flag was deleted after verification so the new onboarding is visible on the user's next launch. No System Settings button, scan, cleanup, app removal, or restore action was triggered.

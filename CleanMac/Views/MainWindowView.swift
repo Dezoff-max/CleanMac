@@ -43,13 +43,15 @@ struct MainWindowView: View {
                 .navigationTitle(selectedSection.title)
                 .toolbar {
                     ToolbarItemGroup {
-                        Button {
-                            runScan()
-                        } label: {
-                            Label(isAnyScanInProgress ? L.t("button.scanning") : L.t("button.scan"), systemImage: "magnifyingglass")
+                        if selectedSection != .diskAnalysis {
+                            Button {
+                                runScan()
+                            } label: {
+                                Label(isAnyScanInProgress ? L.t("button.scanning") : L.t("button.scan"), systemImage: "magnifyingglass")
+                            }
+                            .accessibilityLabel(isAnyScanInProgress ? L.t("button.scanning") : L.t("button.scan"))
+                            .disabled(isAnyScanInProgress || selectedAreaIDs.isEmpty)
                         }
-                        .accessibilityLabel(isAnyScanInProgress ? L.t("button.scanning") : L.t("button.scan"))
-                        .disabled(isAnyScanInProgress || selectedAreaIDs.isEmpty)
 
                         Button {
                             selectedSectionID = CleanMacSection.settings.rawValue
@@ -118,6 +120,8 @@ struct MainWindowView: View {
                     selectedSectionID = CleanMacSection.permissions.rawValue
                 }
             )
+        case .diskAnalysis:
+            DiskAnalysisView()
         case .applications:
             ApplicationsView()
         case .permissions:

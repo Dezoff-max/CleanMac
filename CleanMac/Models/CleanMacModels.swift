@@ -5,6 +5,7 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
     case dashboard
     case scan
     case results
+    case diskAnalysis
     case applications
     case permissions
     case settings
@@ -16,6 +17,7 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
         case .dashboard: L.t("section.dashboard")
         case .scan: L.t("section.scan")
         case .results: L.t("section.results")
+        case .diskAnalysis: L.t("section.diskAnalysis")
         case .applications: L.t("section.applications")
         case .permissions: L.t("section.permissions")
         case .settings: L.t("section.settings")
@@ -27,6 +29,7 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
         case .dashboard: "gauge.with.dots.needle.67percent"
         case .scan: "magnifyingglass"
         case .results: "checklist"
+        case .diskAnalysis: "chart.pie.fill"
         case .applications: "app.badge.checkmark"
         case .permissions: "lock.shield"
         case .settings: "gearshape"

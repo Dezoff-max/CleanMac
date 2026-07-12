@@ -50,3 +50,24 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: each window saved its complete local array with `try?`, while the default restore ended in path-based `FileManager.moveItem` after canonical checks.
 - Fix: history writes now read, merge, and atomically replace records while preserving terminal restored state; the UI reports write failures; the production move walks every source/destination directory component through `openat(..., O_NOFOLLOW)`, pins the resulting descriptors, and uses `renameatx_np(RENAME_EXCL)`.
 - Status: resolved; the multi-window merge regression, direct/nested/symlink Trash fixtures, intermediate-component regression, exclusive no-overwrite restore tests, all 23 core tests, and the app build/launch pass.
+
+## 2026-07-12 - TASK-035 - Bounded map root starvation
+
+- Symptom: the first live Home scan collapsed 7.44 GB into the root `Other` segment even though later top-level folders should have been visible.
+- Cause: depth-first enumeration let one early deep subtree consume the global 5,000-node map budget before later root folders were registered.
+- Fix: kept the bounded deep-tree budget but reserved a capped set of direct root nodes, so later top-level folders retain truthful totals and only unavailable deeper detail collapses into `Other`; added a regression with a deep early folder and a large late root folder.
+- Status: resolved; 28 core tests pass and the live whole-disk map shows distinct Applications, System, Users, Library, var, opt, usr, tmp, and bin branches.
+
+## 2026-07-12 - TASK-035 - Generated app Finder metadata
+
+- Symptom: the first final `./script/build_and_run.sh --verify` pass built successfully but ad-hoc signing rejected `com.apple.FinderInfo` on the generated Debug app.
+- Cause: Finder/File Provider metadata was attached to the build product, matching the previously documented local signing behavior.
+- Fix: cleared extended attributes only from `build/XcodeData/Build/Products/Debug/CleanMac.app` and repeated the standard verification command.
+- Status: resolved; the repeated check reports a valid on-disk signature and satisfied designated requirement.
+
+## 2026-07-12 - TASK-036 - Repeated generated app Finder metadata
+
+- Symptom: the first onboarding launch verification built successfully but signing again rejected `com.apple.FinderInfo` on the generated Debug app.
+- Cause: the same local Finder/File Provider metadata behavior already documented for TASK-035 recurred after rebuilding the app.
+- Fix: cleared extended attributes only from the generated Debug `.app` and repeated the standard verification command without touching source or user files.
+- Status: resolved; the final app is valid on disk, satisfies its designated requirement, and launches into the first onboarding page.

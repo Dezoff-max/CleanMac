@@ -33,6 +33,7 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 
 ## Completed Parts
 
+- First launch now opens a localized four-step system-adaptive onboarding inside the primary window. It introduces only shipped CleanMac capabilities, checks Full Disk Access without prompting, opens privacy settings only from an explicit button, and persists completion or skip so later launches open the main UI directly.
 - Repository was cleaned and renamed to CleanMac.
 - App icon, menu bar icon, Dashboard brand icon, status menu brand icon, design assets, and docs icon use the supplied detailed broom artwork from `Design/source-icon.png`.
 - Public GitHub repository and CI were configured.
@@ -42,6 +43,7 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - Sidebar navigation uses subtle modern hover, click, and keyboard focus feedback while preserving the selected accent row, and the footer has persistent RU/EN language and light/dark appearance controls; language still defaults from system preferences when no override exists.
 - Menu bar Open focuses the existing main window before creating a new one.
 - `CleanMacCore` has a read-only scanner for user caches, logs, temporary files, Trash, Downloads review, Xcode Derived Data, browser caches, Node/npm/Yarn/pnpm caches, SwiftPM cache, and downloaded installers.
+- Disk Analysis is a separate read-only workspace with whole-disk (`/` with no path exclusions), Home, Downloads, and custom-folder sources. One cancellable scan powers a bounded multi-ring folder map plus a non-selected large-file list with 50 MB, 100 MB, 500 MB, and 1 GB filters, size/date/type sorting, and Finder/Open actions. Its data never enters cleanup reports, junk totals, history, or scheduled scans.
 - Results UI is backed by real scanner output, safe results are selected by default, and cleanup requires explicit confirmation.
 - Safe Mode now keeps review-risk results visible but unselectable, clears stale review selections when enabled, and rechecks risk immediately before cleanup execution.
 - Results now explain why each item was suggested, using structured reasons produced by the scanner rules.
@@ -75,6 +77,7 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - Scheduled auto scan currently runs only while the CleanMac app process is running; launch-at-login or a privileged background agent is still future work.
 - Notification delivery depends on the macOS notification permission for CleanMac; if permission is denied, scheduled scans still complete silently.
 - Root-owned or otherwise protected third-party apps may fail to move without administrator privileges; CleanMac reports the failure and does not escalate privileges or remove leftovers.
+- Whole-disk analysis intentionally attempts every path beneath `/`, including system and mounted-volume paths. macOS-protected locations remain unreadable without the required system access, while APFS firmlinks/mounted representations can make the measured total differ from Finder; the UI reports these limitations and never treats the result as junk. The analysis UI uses a custom Reduce Motion-aware progress indicator and an interactive radial map whose hovered sector enlarges and reports its exact size in GB.
 - Local Xcode emits a CoreSimulator warning; it does not currently block macOS builds.
 
 ## Strengths
@@ -94,5 +97,5 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 
 1. Configure Apple Developer signing secrets and cut a signed/notarized release.
 2. Add launch-at-login support so scheduled scans can happen after reboot/login without manually opening CleanMac.
-3. Add read-only large-file review and deeper developer storage previews.
+3. Add deeper developer storage previews.
 4. Decide whether application removals should have a separate, equally constrained history model.

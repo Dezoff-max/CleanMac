@@ -1,5 +1,33 @@
 # Roadmap
 
+- [x] ID: TASK-036
+  Title: First-launch system onboarding
+  Goal: Introduce CleanMac on first launch with a native four-step flow matching the supplied reference structure.
+  What to do: Add system-adaptive Welcome, capabilities, Full Disk Access, and completion pages inside the primary launch window, with persistent completion and explicit-only System Settings access.
+  Files: `CleanMac/CleanMacApp.swift`, `CleanMac/Support/CleanMacPreferences.swift`, `CleanMac/Views/OnboardingView.swift`, localization, Loop docs
+  Definition of done: Onboarding appears only before completion, follows system appearance, supports Back/Next/Skip, describes only shipped features, never requests access automatically, and a completed relaunch opens the main UI directly.
+  Verification: localization lint/key parity; `swift test --package-path CleanMacCore`; Debug build; `./script/build_and_run.sh --verify`; first-launch/relaunch visual review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: low
+  Effort: medium
+  Confidence: high
+  Score: high impact / low risk / medium
+
+- [x] ID: TASK-035
+  Title: Read-only disk analysis
+  Goal: Explain disk usage with a large-file review and an interactive radial folder map without classifying personal files as junk.
+  What to do: Add a cancellable bounded analyzer in `CleanMacCore`, whole-disk/Home/Downloads/custom-folder sources, 50 MB–1 GB filters, size/date/type sorting, Finder/Open actions, a modern animated scan indicator, and a multi-ring drill-down map inspired by the supplied reference.
+  Files: `CleanMacCore/Sources/CleanMacCore/DiskAnalyzer.swift`, focused core tests, `CleanMac/Views/DiskAnalysisView.swift`, narrow AppKit folder/workspace service, navigation/localization, Loop docs
+  Definition of done: One read-only scan powers both modes; no file is selected automatically; map sectors drill into folders and animate a localized GB tooltip on hover; analyzer results stay out of all cleanup totals, plans, history, and scheduled scans.
+  Verification: `swift test --package-path CleanMacCore`; localization lint/key parity; Debug build; `./script/build_and_run.sh --verify`; read-only visual review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: large
+  Confidence: high
+  Score: high impact / medium risk / large
+
 - [x] ID: TASK-034
   Title: Persistent cleanup history
   Goal: Preserve Trash-based cleanup history across app launches without trusting stored paths blindly.
