@@ -14,6 +14,7 @@ struct DiskAnalysisView: View {
     @State private var statusMessage: String?
     @State private var problemMessage: String?
     @State private var isScanning = false
+    @State private var isChoosingCustomFolder = false
     @State private var activeScanID: UUID?
     @State private var workerTask: Task<DiskAnalysisReport, Error>?
     @State private var coordinatorTask: Task<Void, Never>?
@@ -133,11 +134,8 @@ struct DiskAnalysisView: View {
                 }
             }
         }
-        .onChange(of: source) { _, newSource in
+        .onChange(of: source) { _, _ in
             resetResults()
-            if newSource == .custom, customFolderURL == nil {
-                chooseCustomFolder()
-            }
         }
         .onChange(of: threshold) { _, _ in
             keepOnlyVisibleSelection()
@@ -179,24 +177,25 @@ struct DiskAnalysisView: View {
     }
 
     private var sourcePicker: some View {
-        Picker(L.t("disk.source.title"), selection: $source) {
+        Picker(L.t("disk.source.title"), selection: sourceSelection) {
             ForEach(DiskAnalysisSource.allCases) { source in
                 Text(source.title).tag(source)
             }
         }
         .pickerStyle(.segmented)
         .frame(maxWidth: 560)
+        .disabled(isScanning || isChoosingCustomFolder)
     }
 
     private var sourceActions: some View {
         HStack(spacing: 10) {
             if source == .custom {
                 Button {
-                    chooseCustomFolder()
+                    presentCustomFolderPicker()
                 } label: {
                     Label(L.t("disk.source.choose"), systemImage: "folder.badge.plus")
                 }
-                .disabled(isScanning)
+                .disabled(isScanning || isChoosingCustomFolder)
             }
 
             if isScanning {
@@ -212,7 +211,7 @@ struct DiskAnalysisView: View {
                     Label(L.t("disk.scan.button"), systemImage: "play.fill")
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(sourceURL == nil)
+                .disabled(sourceURL == nil || isChoosingCustomFolder)
             }
         }
     }
@@ -589,17 +588,37 @@ struct DiskAnalysisView: View {
         }
     }
 
-    private func chooseCustomFolder() {
-        guard let selectedURL = DiskAnalysisWorkspaceService.chooseFolder() else {
-            if customFolderURL == nil, source == .custom {
-                source = .home
+    private var sourceSelection: Binding<DiskAnalysisSource> {
+        Binding(
+            get: { source },
+            set: { newSource in
+                guard newSource != source else { return }
+                if newSource == .custom, customFolderURL == nil {
+                    presentCustomFolderPicker()
+                } else {
+                    source = newSource
+                }
             }
-            return
-        }
+        )
+    }
 
-        customFolderURL = selectedURL
-        source = .custom
-        resetResults()
+    private func presentCustomFolderPicker() {
+        guard !isScanning, !isChoosingCustomFolder else { return }
+        isChoosingCustomFolder = true
+
+        Task { @MainActor in
+            await Task.yield()
+            let selectedURL = DiskAnalysisWorkspaceService.chooseFolder()
+            isChoosingCustomFolder = false
+            guard let selectedURL else { return }
+
+            let wasCustomSource = source == .custom
+            customFolderURL = selectedURL
+            source = .custom
+            if wasCustomSource {
+                resetResults()
+            }
+        }
     }
 
     private func startScan() {

@@ -120,3 +120,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: the workflow always called `gh release create`, while `v0.3.0` had already been published and verified through the approved local release flow.
 - Fix: query the tag first; create only when missing, otherwise upload the same ZIP/checksum names with `--clobber` while preserving the current title and English notes.
 - Status: resolved for future executions; the exact existing-release branch refreshed both `v0.3.0` assets successfully and clean-download SHA-256 verification passed. The historical failed run remains unchanged because reruns use the workflow stored at the tagged commit.
+
+## 2026-07-12 - TASK-043 - Custom folder segment did not open
+
+- Symptom: clicking `Своя папка` in Disk Analysis or Duplicate Finder did not reliably activate the source or show the native folder picker.
+- Cause: both views called synchronous `NSOpenPanel.runModal()` directly from the segmented Picker's `onChange` callback while SwiftUI was still applying the source-state transaction.
+- Fix: use an intercepting source Binding, defer panel presentation to the next main-actor turn, and mutate the source only after a folder is selected; cancel leaves the previous source unchanged.
+- Status: resolved; live Russian checks opened both native panels, verified cancel fallback, selected `/Users/admin/Documents` in both sections, and confirmed that no scan started automatically.
