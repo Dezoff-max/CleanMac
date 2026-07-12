@@ -106,3 +106,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: the known local Finder/File Provider metadata behavior recurred on the build product.
 - Fix: cleared extended attributes only from `build/XcodeData/Build/Products/Debug/CleanMac.app` and repeated the standard verification command without touching source or user files.
 - Status: resolved; the repeated verification reported a valid on-disk signature and launched the current Debug app.
+
+## 2026-07-12 - TASK-041 - Non-portable checksum path
+
+- Symptom: the first downloaded `v0.3.0` checksum contained the absolute local `/Users/admin/Documents/CleanMac/dist/...` path, so `shasum -c` could resolve the developer machine's file instead of the ZIP beside the downloaded checksum.
+- Cause: `package_release.sh` passed the absolute `ZIP_PATH` directly to `shasum`.
+- Fix: generate the checksum from inside `dist` using only the ZIP basename, replace the GitHub checksum asset, and repeat verification from a clean temporary download directory.
+- Status: resolved; the published checksum now references `CleanMac-515f591-unsigned.zip`, and clean-directory verification checks the downloaded ZIP successfully.

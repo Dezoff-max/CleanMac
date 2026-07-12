@@ -55,6 +55,6 @@
 
 ## Result
 
-- Status: in progress
-- Verification result: pending final main-branch package and GitHub release validation.
-- Notes: no Developer ID identity is installed, so the release will remain transparently labeled ad-hoc signed and not notarized.
+- Status: complete
+- Verification result: 40 SwiftPM tests, local Debug build/launch, green PR CI, main merge, Release packaging, strict fresh-extraction signature verification, 0.3.0 (4) metadata, arm64 architecture, portable SHA-256 verification, and downloaded GitHub asset verification all passed.
+- Notes: public latest release `v0.3.0` targets merge commit `515f591`, contains the verified ZIP and portable checksum, and is transparently labeled ad-hoc signed and not notarized because no Developer ID identity is installed.

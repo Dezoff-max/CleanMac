@@ -370,3 +370,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Exercise the result and confirmation layout on a user-approved disposable folder, then cut a release only when requested.
 - Bottleneck: Full hashing of very large files is intentionally slow and remains an explicit opt-in; hidden files and package contents stay outside this stage.
 - Handoff: The current Debug app is running on the Russian Duplicate Finder initial screen. No user file was scanned or moved, and no destructive confirmation was accepted.
+
+## 2026-07-12 - TASK-041 - CleanMac v0.3.0 release
+
+- What changed: Bumped CleanMac to 0.3.0 build 4, updated the feature PR title and English summary, waited for green CI, merged PR #9 into `main`, rebuilt `dist/CleanMac.app` and the arm64 ad-hoc ZIP from merge commit `515f591`, published `v0.3.0` with English notes, and fixed checksum generation so downloaded `.sha256` files contain a portable ZIP basename rather than a developer-machine path.
+- Files touched: `CleanMac.xcodeproj/project.pbxproj`, `script/package_release.sh`, generated ignored `dist/CleanMac.app`, `dist/CleanMac-515f591-unsigned.zip`, `dist/CleanMac-515f591-unsigned.zip.sha256`, `contract.md`, `project-analysis.md`, `roadmap.md`, `progress.md`, `trace.md`, GitHub PR #9, and GitHub Release `v0.3.0`.
+- Checks run: `swift test --package-path CleanMacCore` (40/40); `./script/build_and_run.sh --verify`; Debug version/build/arm64/signature inspection; green GitHub PR CI; `./script/package_release.sh`; local and fresh-extraction strict codesign verification; local and clean downloaded SHA-256 verification; downloaded release bundle version/build/architecture inspection; GitHub release metadata inspection.
+- Result: Passed. PR #9 is merged. `v0.3.0` is public, latest, non-prerelease, targets `515f591`, and contains `CleanMac-515f591-unsigned.zip` plus its portable checksum. The ZIP SHA-256 is `cd5d94601d3a5e5bb5e8681f71ccf2decb216638ec83159cd6aca3d65c0a0cbf`; the extracted app reports 0.3.0 (4), arm64, and a valid strict ad-hoc signature.
+- Next step: Install the packaged app in `/Applications`; Developer ID signing and Apple notarization remain the next distribution upgrade when credentials are available.
+- Bottleneck: This Mac has no Developer ID identity, so Gatekeeper can reject the downloaded ad-hoc build even though its integrity and signature are valid.
+- Handoff: `dist/` contains the current 0.3.0 app and verified release assets. No security setting, Login Item, privacy permission, cleanup selection, application, or user file was changed.

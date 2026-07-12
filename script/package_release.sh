@@ -169,7 +169,10 @@ fi
 sanitize_app_bundle "$DIST_APP"
 verify_zip "$ZIP_PATH"
 
-shasum -a 256 "$ZIP_PATH" > "$ZIP_PATH.sha256"
+(
+  cd "$(dirname "$ZIP_PATH")"
+  shasum -a 256 "$(basename "$ZIP_PATH")"
+) > "$ZIP_PATH.sha256"
 
 echo "Created:"
 echo "  $DIST_APP"
