@@ -71,3 +71,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: the same local Finder/File Provider metadata behavior already documented for TASK-035 recurred after rebuilding the app.
 - Fix: cleared extended attributes only from the generated Debug `.app` and repeated the standard verification command without touching source or user files.
 - Status: resolved; the final app is valid on disk, satisfies its designated requirement, and launches into the first onboarding page.
+
+## 2026-07-12 - TASK-036 - Finder metadata between release signing passes
+
+- Symptom: the first Release packaging run copied the current app into `dist`, but the second codesign pass rejected FinderInfo that File Provider attached after the first pass.
+- Cause: the script sanitized before and after the pair of signing commands, leaving a short unsanitized interval between nested-code signing and outer-app signing.
+- Fix: sanitize the generated app between both signing passes for Developer ID and ad-hoc paths, then retain the existing fresh-ZIP verification.
+- Status: resolved; packaging completes, the ZIP checksum passes, and strict signature verification succeeds for both the fresh extraction and the sanitized local `dist/CleanMac.app`.

@@ -320,3 +320,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Decide whether Settings should expose a "Show onboarding again" action.
 - Bottleneck: none. The known generated-app FinderInfo attribute required the already documented build-product cleanup before the successful verification rerun; the stale CoreSimulator warning remains non-blocking.
 - Handoff: The completion flag was deleted after verification so the new onboarding is visible on the user's next launch. No System Settings button, scan, cleanup, app removal, or restore action was triggered.
+
+## 2026-07-12 - TASK-036 - Release artifact refresh
+
+- What changed: Rebuilt `Documents/CleanMac/dist/CleanMac.app` from commit `53e68ff`, created the matching unsigned ZIP and SHA-256 file, and hardened the packaging script by sanitizing File Provider metadata between its nested and outer signing passes.
+- Files touched: `script/package_release.sh`, `progress.md`, `trace.md`.
+- Checks run: `./script/package_release.sh`; fresh-ZIP strict codesign verification; local app strict codesign verification after removing FinderInfo; `shasum -a 256 -c dist/CleanMac-53e68ff-unsigned.zip.sha256`.
+- Result: Passed. The current Release executable was produced on 2026-07-12 12:27:17, the ZIP checksum is `5062e433beb9eca85aa73a85d15fd7b08008e9981ed594da50f6a14d50b71ac3`, and both the local app and fresh ZIP extraction satisfy their designated requirements.
+- Next step: Push the feature branch and open the protected-main pull request.
+- Bottleneck: no Developer ID identity is installed, so the artifact remains ad-hoc signed and not notarized.
+- Handoff: The separate `/Users/admin/Desktop/CleanMac` project copy remains untouched and still contains version 1.0 (1) artifacts.
