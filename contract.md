@@ -2,59 +2,52 @@
 
 ## Task
 
-- ID: TASK-041
-- Title: CleanMac v0.3.0 release
+- ID: TASK-042
+- Title: Idempotent GitHub Release publishing
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the feature branch has a green CI run and contains several user-visible additions since v0.2.1.
-- Expected value: a reproducible v0.3.0 package and GitHub release that match the current app and make the new functionality available together.
-- Main risk: publishing an artifact from an unmerged or differently versioned commit, attaching stale ZIP files, or implying Apple notarization when only ad-hoc signing is available.
-- Release assumption: the new feature set warrants minor version 0.3.0 with build number 4; GitHub release copy remains English.
+- Why this task now: the `v0.3.0` tag workflow packaged successfully but failed when it tried to create a release that had already been published manually.
+- Expected value: future tag runs can safely create a missing release or refresh matching assets on an existing release without sending a false build-failure notification.
+- Main risk: overwriting release notes or introducing a second release while handling the existing-release path.
+- Safety choice: preserve existing release title/notes and replace only matching ZIP/checksum assets with `gh release upload --clobber`.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMac.xcodeproj/project.pbxproj`
-  - generated `dist/CleanMac.app`, ZIP, and SHA-256 assets;
-  - GitHub PR/release metadata;
-  - Loop documentation files
+  - `.github/workflows/release.yml`;
+  - Loop documentation files.
 - Allowed commands:
-  - read-only source, Git, bundle, signing, and release inspection;
-  - `swift test --package-path CleanMacCore`;
-  - Debug `xcodebuild`;
-  - `./script/build_and_run.sh --verify`;
-  - `./script/package_release.sh`;
-  - PR update/merge and GitHub Release publishing explicitly approved by the user;
-  - `git diff --check`.
+  - read-only Actions run/log/release inspection;
+  - YAML and embedded shell syntax checks;
+  - execute the approved existing-release branch against `v0.3.0` with the already verified local assets;
+  - standard Git/PR/CI checks and merge after green status.
 - Out of scope:
-  - new product behavior, cleanup execution, permission changes, Developer ID signing, notarization, dependencies, or architecture changes.
-- Dependencies allowed: no external dependencies; system CryptoKit only
-- Destructive actions allowed: replace generated ignored `dist/` artifacts only; no user-data cleanup
+  - moving or recreating `v0.3.0`, changing app code/assets, changing release notes, adding secrets, signing, notarization, or deleting Actions history.
+- Dependencies allowed: none
+- Destructive actions allowed: replace same-named `v0.3.0` release assets only; no user files
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - Debug and Release bundles both report version 0.3.0 and build 4.
-  - The feature PR is green and merged into `main` before tagging.
-  - The final arm64 ZIP is built from the tagged main commit, passes strict signature verification after fresh extraction, and has a matching SHA-256 file.
-  - GitHub Release v0.3.0 is public, latest, not prerelease, uses English notes, and contains exactly the verified ZIP and SHA-256 assets.
-  - The distribution note clearly says the build is ad-hoc signed and not Apple-notarized.
+  - Missing releases still use `gh release create` with the existing title and notes.
+  - Existing releases use `gh release upload --clobber` and keep their metadata.
+  - The exact existing-release shell path succeeds for `v0.3.0` and leaves exactly the verified ZIP and checksum assets.
+  - Workflow YAML, embedded shell, PR CI, and final GitHub release metadata checks pass.
 - Required verification:
-  - `swift test --package-path CleanMacCore`;
-  - `./script/build_and_run.sh --verify`;
-  - `./script/package_release.sh`;
-  - extracted bundle version/build/architecture/signature inspection;
-  - local and downloaded SHA-256 verification;
-  - GitHub CI and release metadata inspection;
-  - `git diff --check`.
+  - Ruby YAML parse;
+  - extracted publish-step `bash -n`;
+  - controlled existing-release execution for `v0.3.0`;
+  - clean downloaded SHA-256 verification;
+  - `git diff --check`;
+  - green GitHub PR checks.
 - Manual checks:
-  - Confirm the About metadata and packaged bundle both show 0.3.0 (4).
-  - Confirm Gatekeeper limitations are documented without recommending security bypasses.
+  - Confirm `v0.3.0` remains public/latest with its English release notes unchanged.
+  - Confirm the historical failed run remains only as immutable history and is not presented as a broken app build.
 
 ## Result
 
 - Status: complete
-- Verification result: 40 SwiftPM tests, local Debug build/launch, green PR CI, main merge, Release packaging, strict fresh-extraction signature verification, 0.3.0 (4) metadata, arm64 architecture, portable SHA-256 verification, and downloaded GitHub asset verification all passed.
-- Notes: public latest release `v0.3.0` targets merge commit `515f591`, contains the verified ZIP and portable checksum, and is transparently labeled ad-hoc signed and not notarized because no Developer ID identity is installed.
+- Verification result: workflow YAML parsed; embedded shell passed `bash -n`; the stubbed missing-release path called `gh release create`; the exact existing-release path successfully refreshed `v0.3.0` assets through `--clobber`; English metadata remained in place; the clean downloaded checksum passed; final diff and PR CI passed.
+- Notes: the historical run cannot be made green by rerunning because reruns use the workflow stored at the tagged commit; this task fixes future executions without rewriting the published tag.

@@ -61,13 +61,21 @@ jobs:
       - name: Package Release app
         run: ./script/package_release.sh
 
-      - name: Create GitHub Release
+      - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag_name="${GITHUB_REF_NAME:-manual-release}"
-          gh release create "$tag_name" \
-            dist/*.zip \
-            dist/*.sha256 \
-            --title "CleanMac $tag_name" \
-            --notes "Unsigned CleanMac build. Download the zip and verify it with the attached sha256 file."
+          if gh release view "$tag_name" >/dev/null 2>&1; then
+            echo "Release $tag_name already exists; replacing matching assets."
+            gh release upload "$tag_name" \
+              dist/*.zip \
+              dist/*.sha256 \
+              --clobber
+          else
+            gh release create "$tag_name" \
+              dist/*.zip \
+              dist/*.sha256 \
+              --title "CleanMac $tag_name" \
+              --notes "Unsigned CleanMac build. Download the zip and verify it with the attached sha256 file."
+          fi

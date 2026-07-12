@@ -113,3 +113,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: `package_release.sh` passed the absolute `ZIP_PATH` directly to `shasum`.
 - Fix: generate the checksum from inside `dist` using only the ZIP basename, replace the GitHub checksum asset, and repeat verification from a clean temporary download directory.
 - Status: resolved; the published checksum now references `CleanMac-515f591-unsigned.zip`, and clean-directory verification checks the downloaded ZIP successfully.
+
+## 2026-07-12 - TASK-042 - Existing release made tag workflow fail
+
+- Symptom: the `v0.3.0` Release workflow packaged the app successfully but the final job failed with `a release with the same tag name already exists: v0.3.0`.
+- Cause: the workflow always called `gh release create`, while `v0.3.0` had already been published and verified through the approved local release flow.
+- Fix: query the tag first; create only when missing, otherwise upload the same ZIP/checksum names with `--clobber` while preserving the current title and English notes.
+- Status: resolved for future executions; the exact existing-release branch refreshed both `v0.3.0` assets successfully and clean-download SHA-256 verification passed. The historical failed run remains unchanged because reruns use the workflow stored at the tagged commit.

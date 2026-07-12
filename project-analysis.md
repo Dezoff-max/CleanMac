@@ -11,7 +11,7 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - `script/build_and_run.sh`: local Debug build and launch entrypoint.
 - `script/package_release.sh`: local Release `.app`, `.zip`, and `.sha256` packaging.
 - `.github/workflows/ci.yml`: GitHub CI for core tests, Debug app build, and unsigned Release artifact.
-- `.github/workflows/release.yml`: tag-driven GitHub Release workflow for unsigned/ad-hoc zip and sha256 assets, with optional Developer ID signing/notarization when private secrets are configured.
+- `.github/workflows/release.yml`: idempotent tag-driven GitHub Release workflow for unsigned/ad-hoc zip and sha256 assets, with optional Developer ID signing/notarization when private secrets are configured; it creates a missing release or replaces matching assets on an existing release without overwriting its notes.
 - `docs/` and `Design/`: icon and project assets.
 
 ## Tech Stack

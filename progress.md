@@ -380,3 +380,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Install the packaged app in `/Applications`; Developer ID signing and Apple notarization remain the next distribution upgrade when credentials are available.
 - Bottleneck: This Mac has no Developer ID identity, so Gatekeeper can reject the downloaded ad-hoc build even though its integrity and signature are valid.
 - Handoff: `dist/` contains the current 0.3.0 app and verified release assets. No security setting, Login Item, privacy permission, cleanup selection, application, or user file was changed.
+
+## 2026-07-12 - TASK-042 - Idempotent GitHub Release publishing
+
+- What changed: Replaced the unconditional `gh release create` step with an idempotent publish step. Missing tag releases keep the existing creation behavior; existing releases preserve their title/notes and replace matching ZIP/checksum assets through `gh release upload --clobber`.
+- Files touched: `.github/workflows/release.yml`, `contract.md`, `project-analysis.md`, `roadmap.md`, `progress.md`, `trace.md`.
+- Checks run: GitHub failure-log inspection; Ruby YAML parse; extracted publish-step `bash -n`; stubbed missing-release branch; exact existing-release branch against `v0.3.0`; clean downloaded `shasum -a 256 -c`; release metadata/asset inspection; `git diff --check`; GitHub PR CI.
+- Result: Passed. The original red run was a duplicate-publication error after a successful package, not an app build failure. `v0.3.0` remains public/latest with its English notes and exactly the verified ZIP and portable checksum assets.
+- Next step: Use the normal tag workflow for the next version; no manual pre-creation is required, but the workflow now safely tolerates it.
+- Bottleneck: The historical `v0.3.0` failure cannot be turned green without rewriting the tag because GitHub reruns the workflow definition stored at that tagged commit.
+- Handoff: No release tag, note, app binary, security setting, secret, or user file was changed; only same-named verified release assets were refreshed.
