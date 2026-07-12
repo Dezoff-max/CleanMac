@@ -60,6 +60,6 @@
 
 ## Result
 
-- Status: in progress
-- Verification result: pending implementation and focused policy/UI checks.
-- Notes: the warning uses the same available-capacity value shown in the menu-bar disk card; APFS purgeable-space behavior remains represented by macOS capacity APIs.
+- Status: complete
+- Verification result: focused boundary/cooldown tests and all 43 core tests passed; localization lint/key parity, Debug build, ad-hoc signature/launch, normal-capacity hidden state, one-shot Disk Analysis routing, diff checks, and GitHub PR CI passed.
+- Notes: the warning uses the same available-capacity value shown in the menu-bar disk card; it never requests notification permission or starts a scan automatically. APFS purgeable-space behavior remains represented by macOS capacity APIs.

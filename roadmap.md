@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] ID: TASK-044
+- [x] ID: TASK-044
   Title: Low disk space warning
   Goal: Warn when available disk space falls below 10% without spamming or starting cleanup automatically.
   What to do: Add a testable threshold/cooldown policy, a background best-effort notification check, an adaptive warning card in the menu-bar popover, and direct navigation to Disk Analysis.
