@@ -390,3 +390,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Use the normal tag workflow for the next version; no manual pre-creation is required, but the workflow now safely tolerates it.
 - Bottleneck: The historical `v0.3.0` failure cannot be turned green without rewriting the tag because GitHub reruns the workflow definition stored at that tagged commit.
 - Handoff: No release tag, note, app binary, security setting, secret, or user file was changed; only same-named verified release assets were refreshed.
+
+## 2026-07-12 - TASK-043 - Fix custom-folder source selection
+
+- What changed: Replaced direct Picker state binding with an intercepting Binding in Disk Analysis and Duplicate Finder. Selecting Custom Folder now schedules the native folder panel after the current SwiftUI update, prevents duplicate panel requests, leaves the previous source selected on cancel, and activates Custom Folder only after a real selection. Source controls remain disabled only while scanning, cleaning, or the panel is open.
+- Files touched: `CleanMac/Views/DiskAnalysisView.swift`, `CleanMac/Views/DuplicateFinderView.swift`, `contract.md`, `project-analysis.md`, `roadmap.md`, `progress.md`, `trace.md`.
+- Checks run: Debug `xcodebuild`; `./script/build_and_run.sh --verify`; live Russian accessibility interaction in both sections; Duplicate Finder cancel path; `/Users/admin/Documents` selection in both sections without starting scans; `swift test --package-path CleanMacCore`; `git diff --check`.
+- Result: Passed. Both Custom Folder segments open the native panel, the selected path appears with the segment active, and neither analysis nor duplicate scanning starts automatically.
+- Next step: Package a 0.3.1 bug-fix release only when explicitly requested.
+- Bottleneck: none; the known CoreSimulator warning remains unrelated and non-blocking for macOS builds.
+- Handoff: CleanMac is running from the current Debug product on Duplicate Finder with `/Users/admin/Documents` selected. No cleanup, duplicate move, or scan was triggered.

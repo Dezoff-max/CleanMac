@@ -14,6 +14,7 @@ struct DuplicateFinderView: View {
     @State private var problemMessage: String?
     @State private var isScanning = false
     @State private var isCleaning = false
+    @State private var isChoosingCustomFolder = false
     @State private var showingCleanupConfirmation = false
     @State private var activeScanID: UUID?
     @State private var workerTask: Task<DuplicateScanReport, Error>?
@@ -97,11 +98,8 @@ struct DuplicateFinderView: View {
                 }
             }
         }
-        .onChange(of: source) { _, newSource in
+        .onChange(of: source) { _, _ in
             resetResults()
-            if newSource == .custom, customFolderURL == nil {
-                chooseCustomFolder()
-            }
         }
         .onChange(of: includeLargeFiles) { _, _ in
             resetResults()
@@ -170,25 +168,25 @@ struct DuplicateFinderView: View {
     }
 
     private var sourcePicker: some View {
-        Picker(L.t("duplicates.source.title"), selection: $source) {
+        Picker(L.t("duplicates.source.title"), selection: sourceSelection) {
             ForEach(DuplicateSearchSource.allCases) { source in
                 Text(source.title).tag(source)
             }
         }
         .pickerStyle(.segmented)
         .frame(maxWidth: 480)
-        .disabled(isScanning || isCleaning)
+        .disabled(isScanning || isCleaning || isChoosingCustomFolder)
     }
 
     private var sourceActions: some View {
         HStack(spacing: 10) {
             if source == .custom {
                 Button {
-                    chooseCustomFolder()
+                    presentCustomFolderPicker()
                 } label: {
                     Label(L.t("duplicates.source.choose"), systemImage: "folder.badge.plus")
                 }
-                .disabled(isScanning || isCleaning)
+                .disabled(isScanning || isCleaning || isChoosingCustomFolder)
             }
 
             if isScanning {
@@ -204,7 +202,7 @@ struct DuplicateFinderView: View {
                     Label(L.t("duplicates.scan.button"), systemImage: "play.fill")
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(sourceURL == nil || isCleaning)
+                .disabled(sourceURL == nil || isCleaning || isChoosingCustomFolder)
             }
         }
     }
@@ -435,16 +433,37 @@ struct DuplicateFinderView: View {
         }
     }
 
-    private func chooseCustomFolder() {
-        guard let selectedURL = DuplicateWorkspaceService.chooseFolder() else {
-            if customFolderURL == nil, source == .custom {
-                source = .downloads
+    private var sourceSelection: Binding<DuplicateSearchSource> {
+        Binding(
+            get: { source },
+            set: { newSource in
+                guard newSource != source else { return }
+                if newSource == .custom, customFolderURL == nil {
+                    presentCustomFolderPicker()
+                } else {
+                    source = newSource
+                }
             }
-            return
+        )
+    }
+
+    private func presentCustomFolderPicker() {
+        guard !isScanning, !isCleaning, !isChoosingCustomFolder else { return }
+        isChoosingCustomFolder = true
+
+        Task { @MainActor in
+            await Task.yield()
+            let selectedURL = DuplicateWorkspaceService.chooseFolder()
+            isChoosingCustomFolder = false
+            guard let selectedURL else { return }
+
+            let wasCustomSource = source == .custom
+            customFolderURL = selectedURL
+            source = .custom
+            if wasCustomSource {
+                resetResults()
+            }
         }
-        customFolderURL = selectedURL
-        source = .custom
-        resetResults()
     }
 
     private func startScan() {

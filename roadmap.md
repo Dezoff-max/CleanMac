@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-043
+  Title: Fix custom-folder source selection
+  Goal: Make the Custom Folder source reliably open the native folder picker in both Disk Analysis and Duplicate Finder.
+  What to do: Decouple `NSOpenPanel.runModal()` from the segmented Picker update transaction, keep the previous source on cancel, and apply the custom source only after a folder is selected.
+  Files: `CleanMac/Views/DiskAnalysisView.swift`, `CleanMac/Views/DuplicateFinderView.swift`, Loop docs
+  Definition of done: both Custom Folder segments open the picker; cancel keeps the previous source; selecting a folder activates Custom Folder and displays its path; no scan starts automatically.
+  Verification: Debug build; `./script/build_and_run.sh --verify`; live Russian interaction check for cancel and select paths in both sections; `swift test --package-path CleanMacCore`; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: high impact / low risk / small
+
 - [x] ID: TASK-042
   Title: Idempotent GitHub Release publishing
   Goal: Prevent a successful tag package from reporting failure when the corresponding GitHub Release already exists.

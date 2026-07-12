@@ -2,52 +2,52 @@
 
 ## Task
 
-- ID: TASK-042
-- Title: Idempotent GitHub Release publishing
+- ID: TASK-043
+- Title: Fix custom-folder source selection
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the `v0.3.0` tag workflow packaged successfully but failed when it tried to create a release that had already been published manually.
-- Expected value: future tag runs can safely create a missing release or refresh matching assets on an existing release without sending a false build-failure notification.
-- Main risk: overwriting release notes or introducing a second release while handling the existing-release path.
-- Safety choice: preserve existing release title/notes and replace only matching ZIP/checksum assets with `gh release upload --clobber`.
+- Why this task now: the user reported that the Custom Folder source looked inactive in both read-only analysis workspaces.
+- Expected value: reliable native folder selection without forcing a scan or losing the current built-in source on cancel.
+- Main risk: opening a synchronous AppKit modal during a SwiftUI Picker state transaction can drop or visually revert the selection.
+- Safety choice: intercept the custom value, defer the panel one main-actor turn, and change source state only after selection.
 
 ## Builder Scope
 
 - Allowed files:
-  - `.github/workflows/release.yml`;
+  - `CleanMac/Views/DiskAnalysisView.swift`;
+  - `CleanMac/Views/DuplicateFinderView.swift`;
   - Loop documentation files.
 - Allowed commands:
-  - read-only Actions run/log/release inspection;
-  - YAML and embedded shell syntax checks;
-  - execute the approved existing-release branch against `v0.3.0` with the already verified local assets;
+  - source inspection and Debug build/launch;
+  - live native panel open/cancel/select checks without starting a scan;
+  - `swift test --package-path CleanMacCore`;
   - standard Git/PR/CI checks and merge after green status.
 - Out of scope:
-  - moving or recreating `v0.3.0`, changing app code/assets, changing release notes, adding secrets, signing, notarization, or deleting Actions history.
+  - scanning user folders, cleanup, release/version/package changes, localization, dependencies, or architecture changes.
 - Dependencies allowed: none
-- Destructive actions allowed: replace same-named `v0.3.0` release assets only; no user files
+- Destructive actions allowed: none
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - Missing releases still use `gh release create` with the existing title and notes.
-  - Existing releases use `gh release upload --clobber` and keep their metadata.
-  - The exact existing-release shell path succeeds for `v0.3.0` and leaves exactly the verified ZIP and checksum assets.
-  - Workflow YAML, embedded shell, PR CI, and final GitHub release metadata checks pass.
+  - Both Custom Folder segments open their localized native folder panel.
+  - Cancel keeps the previous built-in source and leaves controls active.
+  - Selecting a folder activates Custom Folder, shows the exact path, and exposes the change-folder button.
+  - No scan starts from source selection alone.
 - Required verification:
-  - Ruby YAML parse;
-  - extracted publish-step `bash -n`;
-  - controlled existing-release execution for `v0.3.0`;
-  - clean downloaded SHA-256 verification;
+  - Debug build and signed launch verification;
+  - live cancel/select interactions in both sections;
+  - `swift test --package-path CleanMacCore`;
   - `git diff --check`;
   - green GitHub PR checks.
 - Manual checks:
-  - Confirm `v0.3.0` remains public/latest with its English release notes unchanged.
-  - Confirm the historical failed run remains only as immutable history and is not presented as a broken app build.
+  - Confirm the selected path is visible and no progress indicator appears.
+  - Do not start scanning or move any user file during verification.
 
 ## Result
 
 - Status: complete
-- Verification result: workflow YAML parsed; embedded shell passed `bash -n`; the stubbed missing-release path called `gh release create`; the exact existing-release path successfully refreshed `v0.3.0` assets through `--clobber`; English metadata remained in place; the clean downloaded checksum passed; final diff and PR CI passed.
-- Notes: the historical run cannot be made green by rerunning because reruns use the workflow stored at the tagged commit; this task fixes future executions without rewriting the published tag.
+- Verification result: Debug build and signed launch passed; both native panels opened; cancel preserved Downloads in Duplicate Finder; selecting `/Users/admin/Documents` activated Custom Folder and displayed the path in both sections; no scan started; core tests, diff checks, and PR CI passed.
+- Notes: the fix changes only source-selection timing and does not expand folder access or scanner scope.
