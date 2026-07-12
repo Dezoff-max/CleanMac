@@ -2,69 +2,75 @@
 
 ## Task
 
-- ID: TASK-039
-- Title: Advanced developer cleanup
+- ID: TASK-040
+- Title: Safe duplicate finder
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: CleanMac already scans Node/npm, SwiftPM, and Xcode DerivedData, but does not expose the other reproducible developer caches requested by the user.
-- Expected value: developers can review package-manager, IDE, AI-tool, and Xcode storage through explicit allowlisted categories instead of broad home-directory scans.
-- Main risk: IDE and AI tools keep settings, extensions, projects, history, sessions, and memory beside caches; Xcode Archives and Simulator data can be valuable and must never be treated as ordinary auto-selected junk.
-- Assumption: “old” Simulator data means a direct Simulator device or user-installed runtime whose modification date is at least 180 days old. System-managed runtimes under `/Library` remain out of scope because the current Trash-based executor cannot safely uninstall them.
+- Why this task now: Disk Analysis explains space usage, while duplicate detection can identify exact redundant personal files without mixing them into junk totals.
+- Expected value: a separate review workspace finds byte-identical files efficiently and always preserves one protected original.
+- Main risk: hashing large folders is expensive, files can change between scan and cleanup, hard links are not real duplicate storage, and broad deletion must never follow from an automatic selection.
+- UX constraint: Home, Downloads, or one explicit custom folder; no whole-disk default; no automatic selection; one visibly protected original per group; confirmation before Trash.
+- Performance assumption: standard mode defers size-matched files over 500 MiB and lists them in the report; slow mode hashes them with at most two concurrent hashing operations.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMacCore/Sources/CleanMacCore/CleanupModels.swift`
-  - `CleanMacCore/Sources/CleanMacCore/CleanupPathPolicy.swift`
-  - `CleanMacCore/Sources/CleanMacCore/CleanupPlanner.swift`
-  - `CleanMacCore/Sources/CleanMacCore/CleanupScanner.swift`
-  - `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`
+  - `CleanMacCore/Sources/CleanMacCore/DuplicateFinder.swift`
+  - `CleanMacCore/Sources/CleanMacCore/DuplicateCleanup.swift`
+  - `CleanMacCore/Tests/CleanMacCoreTests/DuplicateFinderTests.swift`
   - `CleanMac/Models/CleanMacModels.swift`
+  - `CleanMac/Support/DuplicateWorkspaceService.swift`
+  - `CleanMac/Views/DuplicateFinderView.swift`
+  - `CleanMac/Views/MainWindowView.swift`
   - `CleanMac/en.lproj/Localizable.strings`
   - `CleanMac/ru.lproj/Localizable.strings`
   - Loop documentation files
 - Allowed commands:
-  - read-only source and local path-name inspection;
+  - read-only source and reference inspection;
   - localization plist lint and RU/EN key parity;
   - `swift test --package-path CleanMacCore`;
   - Debug `xcodebuild`;
   - `./script/build_and_run.sh --verify`;
+  - temporary-fixture duplicate scans and injected Trash tests;
+  - live UI review without accepting cleanup;
   - `git diff --check`.
 - Out of scope:
-  - scanning an entire `.codex`, `.claude`, Cursor, or VS Code data root;
-  - settings, extensions, projects, sessions, history, memories, backups, or workspace storage;
-  - deleting or moving real developer data during verification;
-  - system-managed Simulator runtime removal from `/Library`;
-  - new dependencies, privileged helpers, signing, packaging, or release changes.
-- Dependencies allowed: no
-- Destructive actions allowed: no
+  - automatic selection or deletion;
+  - permanent deletion, secure erase, hard-link replacement, or cloud deduplication;
+  - whole-disk scanning, Photos-library interpretation, package contents, or hidden-file scanning;
+  - persistent duplicate history, privileged access, new dependencies, release/package changes.
+- Dependencies allowed: no external dependencies; system CryptoKit only
+- Destructive actions allowed: no real user files; injected temporary-fixture Trash handler only
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - Package-manager caches include exact Homebrew, pip, Cargo registry cache/source, and Gradle cache roots.
-  - Cursor and VS Code include only exact Electron/cache roots and never `User`, extensions, workspace storage, or backups.
-  - Codex and Claude include only exact cache/temp roots and never projects, sessions, history, shell snapshots, or memories.
-  - Xcode DeviceSupport and Previews appear as separate categories.
-  - Simulator review includes only direct user Device/runtime entries at least 180 days old; recent entries are excluded.
-  - Xcode Archives lists `.xcarchive` bundles as review items, is not selected by default, and never becomes a safe result.
-  - All accepted cleanup paths still pass the category allowlist and root items remain rejected.
+  - Files are reduced by exact logical size before any hashing.
+  - Size candidates receive a first-block SHA-256; only matching partial buckets receive a full streaming SHA-256.
+  - Full hashes run through a bounded scheduler with no more than two concurrent operations by default.
+  - Files sharing device and inode are represented once and never create false duplicate savings.
+  - Every final group exposes one deterministic protected original and one or more selectable copies.
+  - Selected copy IDs are empty after scanning; the original has no selectable control.
+  - Standard mode reports matching-size files over 500 MiB as deferred instead of hiding them; slow mode includes them.
+  - Cleanup planning accepts only unchanged scanned copies beneath the selected root, rejects originals/unknown/outside/symlink/changed paths, and requires the original to still exist.
+  - Execution uses macOS Trash only and requires an explicit UI confirmation.
+  - Duplicate results never enter junk totals, normal Results, cleanup history, or scheduled scans.
 - Required verification:
-  - focused exact-root, forbidden-path, risk, age, and planner tests;
+  - focused pipeline, partial/full separation, hard-link, slow-mode, cancellation, keeper, planner, and injected-Trash tests;
   - `swift test --package-path CleanMacCore`;
   - localization lint and RU/EN key parity;
   - Debug `xcodebuild`;
   - `./script/build_and_run.sh --verify`;
+  - live Russian duplicate-screen review with no scan of real user data and no cleanup confirmation acceptance;
   - `git diff --check`.
 - Manual checks:
-  - Review Scan in Russian and confirm all new categories fit and explain their scope.
-  - Confirm Xcode Archives is unchecked in a fresh default selection and shows the review badge.
-  - Do not start cleanup or change user files.
+  - Confirm the new sidebar destination, adaptive layout, source controls, slow-mode explanation, empty initial selection, Original/Copy labels, and disabled cleanup action.
+  - Use only temporary fixtures for result/confirmation inspection.
 
 ## Result
 
 - Status: complete
-- Verification result: passed — 32 core tests, localization lint/key parity, Debug build, signed launch verification, live Russian Scan review, and clean diff checks.
-- Notes: implementation intentionally uses narrower roots than MacSai where a neighboring directory may contain user state. The live window confirmed Archives and Simulator are review-only and disabled; existing saved selections were preserved. No scan or cleanup was started.
+- Verification result: 40 SwiftPM tests passed; localization lint and RU/EN key parity passed; Debug build and signed launch verification passed; the live Russian initial screen was reviewed without scanning or moving user files; final diff checks passed.
+- Notes: the implementation follows MacSai's staged matching idea but deliberately removes its 500 MiB drop and preselection behavior.

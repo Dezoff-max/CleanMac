@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-040
+  Title: Safe duplicate finder
+  Goal: Find exact duplicate files through staged SHA-256 hashing while always preserving one original and requiring explicit Trash review.
+  What to do: Add size/partial/full-hash stages, hard-link exclusion, a bounded slow mode for files over 500 MiB, a separate grouped UI, and a copy-only Trash planner/executor.
+  Files: duplicate core models/scanner/planner/tests, duplicate SwiftUI screen/workspace service, navigation/localization, Loop docs
+  Definition of done: no automatic selection; large candidates are reported or hashed in slow mode; originals cannot be selected; only unchanged validated copies can move to Trash after confirmation.
+  Verification: focused safety/performance tests; localization lint/key parity; `swift test --package-path CleanMacCore`; Debug build; `./script/build_and_run.sh --verify`; temporary-fixture UI review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: high
+  Effort: large
+  Confidence: high
+  Score: high impact / high risk / large
+
 - [x] ID: TASK-039
   Title: Advanced developer cleanup
   Goal: Add precise cleanup categories for package managers, IDEs, AI tools, and Xcode storage without touching developer settings, extensions, projects, history, or memory.

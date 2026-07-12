@@ -99,3 +99,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: sanitizing once between signing steps still leaves a narrow external metadata race on the `Documents`-backed `dist` folder.
 - Fix: wrapped every app signing and local verification pass in a bounded three-attempt sanitize-and-retry helper, preserving strict fresh-ZIP verification as the final source of truth.
 - Status: resolved for the distributable; packaging created `CleanMac-13fc508-unsigned.zip` and its fresh extraction satisfies the designated requirement. File Provider can still reattach FinderInfo later to the convenience `dist/CleanMac.app`, so the verified ZIP remains the release source of truth.
+
+## 2026-07-12 - TASK-040 - Repeated generated app Finder metadata
+
+- Symptom: the first duplicate-finder launch verification built successfully but ad-hoc signing rejected `com.apple.FinderInfo` on the generated Debug app.
+- Cause: the known local Finder/File Provider metadata behavior recurred on the build product.
+- Fix: cleared extended attributes only from `build/XcodeData/Build/Products/Debug/CleanMac.app` and repeated the standard verification command without touching source or user files.
+- Status: resolved; the repeated verification reported a valid on-disk signature and launched the current Debug app.

@@ -43,7 +43,7 @@ struct MainWindowView: View {
                 .navigationTitle(selectedSection.title)
                 .toolbar {
                     ToolbarItemGroup {
-                        if selectedSection != .diskAnalysis {
+                        if selectedSection != .diskAnalysis, selectedSection != .duplicates {
                             Button {
                                 runScan()
                             } label: {
@@ -122,6 +122,8 @@ struct MainWindowView: View {
             )
         case .diskAnalysis:
             DiskAnalysisView()
+        case .duplicates:
+            DuplicateFinderView()
         case .applications:
             ApplicationsView()
         case .settings:
