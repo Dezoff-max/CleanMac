@@ -43,6 +43,7 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - Sidebar navigation uses subtle modern hover, click, and keyboard focus feedback while preserving the selected accent row, and the footer has persistent RU/EN language and light/dark appearance controls; language still defaults from system preferences when no override exists.
 - Menu bar Open focuses the existing main window before creating a new one.
 - `CleanMacCore` has a read-only scanner for user caches, logs, temporary files, Trash, Downloads review, Xcode Derived Data, browser caches, Node/npm/Yarn/pnpm caches, SwiftPM cache, and downloaded installers.
+- Advanced developer cleanup uses exact allowlists for Homebrew, pip, Cargo registry cache/source, Gradle, Cursor/VS Code caches, Codex/Claude cache/temp folders, Xcode DeviceSupport, Previews, old user Simulator data, and individual Xcode Archives. IDE settings/extensions and AI projects/sessions/history/memory are excluded; Simulator and Archives require review, and Archives are never selected by default.
 - Disk Analysis is a separate read-only workspace with whole-disk (`/` with no path exclusions), Home, Downloads, and custom-folder sources. One cancellable scan powers a bounded multi-ring folder map plus a non-selected large-file list with 50 MB, 100 MB, 500 MB, and 1 GB filters, size/date/type sorting, and Finder/Open actions. Its data never enters cleanup reports, junk totals, history, or scheduled scans.
 - Results UI is backed by real scanner output, safe results are selected by default, and cleanup requires explicit confirmation.
 - Safe Mode now keeps review-risk results visible but unselectable, clears stale review selections when enabled, and rechecks risk immediately before cleanup execution.
@@ -97,5 +98,5 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 ## Recommended Next Work
 
 1. Configure Apple Developer signing secrets and cut a signed/notarized release.
-2. Add deeper developer storage previews.
+2. Decide whether to add read-only system-managed Simulator runtime guidance through Xcode tooling rather than moving `/Library` bundles directly.
 3. Decide whether application removals should have a separate, equally constrained history model.

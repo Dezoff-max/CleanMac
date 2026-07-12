@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-039
+  Title: Advanced developer cleanup
+  Goal: Add precise cleanup categories for package managers, IDEs, AI tools, and Xcode storage without touching developer settings, extensions, projects, history, or memory.
+  What to do: Add exact allowlist roots, localized category/reason copy, 180-day Simulator review filtering, and review-only non-default Xcode Archives.
+  Files: cleanup core models/scanner/policy/tests, app catalog/localization, Loop docs
+  Definition of done: reproducible caches are discoverable; sensitive neighboring data is excluded by tests; Simulator and Archives stay manual review; Archives is never selected by default.
+  Verification: focused safety tests; `swift test --package-path CleanMacCore`; localization lint/key parity; Debug build; `./script/build_and_run.sh --verify`; read-only Scan review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: high
+  Effort: medium
+  Confidence: high
+  Score: high impact / high risk / medium
+
 - [x] ID: TASK-038
   Title: Settings permissions and launch at login
   Goal: Consolidate access controls in Settings and keep scheduled CleanMac work available after macOS login without opening the main window.

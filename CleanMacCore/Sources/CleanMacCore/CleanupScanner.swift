@@ -143,11 +143,7 @@ public struct CleanupScanner {
 
             let childURLs: [URL]
             do {
-                childURLs = try fileManager.contentsOfDirectory(
-                    at: rootURL,
-                    includingPropertiesForKeys: Array(resourceKeys),
-                    options: [.skipsPackageDescendants]
-                )
+                childURLs = try candidateURLs(in: rootURL, category: category)
             } catch {
                 issues.append(CleanupScanIssue(
                     category: category,
@@ -159,7 +155,7 @@ public struct CleanupScanner {
 
             let remainingItemLimit = max(0, options.maxItemsPerCategory - items.count)
             let candidateURLs = childURLs
-                .filter { shouldInclude($0, in: category) }
+                .filter { shouldInclude($0, in: category, options: options) }
                 .prefix(remainingItemLimit)
 
             for (candidateIndex, candidateURL) in candidateURLs.enumerated() {
@@ -226,9 +222,16 @@ public struct CleanupScanner {
 
     private func priority(for category: CleanupCategory) -> Int {
         switch category {
-        case .browserCaches, .nodePackageCaches, .swiftPackageBuilds, .downloadedInstallers:
+        case .browserCaches,
+             .nodePackageCaches,
+             .swiftPackageBuilds,
+             .developerPackageCaches,
+             .developerIDECaches,
+             .developerAITemporaryFiles,
+             .downloadedInstallers,
+             .xcodePreviews:
             3
-        case .xcodeDerivedData:
+        case .xcodeDerivedData, .xcodeDeviceSupport, .xcodeSimulatorData, .xcodeArchives:
             2
         case .userCaches, .downloads:
             1
@@ -237,12 +240,51 @@ public struct CleanupScanner {
         }
     }
 
-    private func shouldInclude(_ url: URL, in category: CleanupCategory) -> Bool {
+    private func candidateURLs(in rootURL: URL, category: CleanupCategory) throws -> [URL] {
+        let directChildren = try fileManager.contentsOfDirectory(
+            at: rootURL,
+            includingPropertiesForKeys: Array(resourceKeys),
+            options: [.skipsPackageDescendants]
+        )
+
+        guard category == .xcodeArchives else {
+            return directChildren
+        }
+
+        return directChildren.flatMap { childURL in
+            if childURL.pathExtension.lowercased() == "xcarchive" {
+                return [childURL]
+            }
+
+            let values = try? childURL.resourceValues(forKeys: [.isDirectoryKey])
+            guard values?.isDirectory == true else {
+                return []
+            }
+
+            let nestedChildren = try? fileManager.contentsOfDirectory(
+                at: childURL,
+                includingPropertiesForKeys: Array(resourceKeys),
+                options: [.skipsPackageDescendants]
+            )
+            return nestedChildren?.filter { $0.pathExtension.lowercased() == "xcarchive" } ?? []
+        }
+    }
+
+    private func shouldInclude(
+        _ url: URL,
+        in category: CleanupCategory,
+        options: CleanupScanOptions
+    ) -> Bool {
         switch category {
         case .downloadedInstallers:
-            isDownloadedInstallerOrArchive(url)
+            return isDownloadedInstallerOrArchive(url)
+        case .xcodeArchives:
+            return url.pathExtension.lowercased() == "xcarchive"
+        case .xcodeSimulatorData:
+            let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
+            return isOlderThan(values?.contentModificationDate, options.staleDeveloperDataAge)
         default:
-            true
+            return true
         }
     }
 
@@ -359,9 +401,24 @@ public struct CleanupScanner {
 
     private func risk(for category: CleanupCategory) -> CleanupRiskLevel {
         switch category {
-        case .userCaches, .browserCaches, .nodePackageCaches, .swiftPackageBuilds, .logs, .temporaryFiles:
+        case .userCaches,
+             .browserCaches,
+             .nodePackageCaches,
+             .swiftPackageBuilds,
+             .developerPackageCaches,
+             .developerIDECaches,
+             .developerAITemporaryFiles,
+             .logs,
+             .temporaryFiles,
+             .xcodePreviews:
             .safe
-        case .trash, .downloads, .downloadedInstallers, .xcodeDerivedData:
+        case .trash,
+             .downloads,
+             .downloadedInstallers,
+             .xcodeDerivedData,
+             .xcodeDeviceSupport,
+             .xcodeSimulatorData,
+             .xcodeArchives:
             .review
         }
     }
@@ -382,6 +439,12 @@ public struct CleanupScanner {
             return [.nodePackageCache]
         case .swiftPackageBuilds:
             return [.swiftPackageCache]
+        case .developerPackageCaches:
+            return [.developerPackageCache]
+        case .developerIDECaches:
+            return [.developerIDECache]
+        case .developerAITemporaryFiles:
+            return [.developerAITemporaryFile]
         case .downloads:
             var reasons: [CleanupScanReason] = []
             if isDownloadedInstallerOrArchive(url) {
@@ -411,6 +474,16 @@ public struct CleanupScanner {
             return isDownloadedInstallerOrArchive(url) ? [.installerArchive] : []
         case .xcodeDerivedData:
             return [.xcodeBuildData]
+        case .xcodeDeviceSupport:
+            return [.xcodeDeviceSupport]
+        case .xcodePreviews:
+            return [.xcodePreviewData]
+        case .xcodeSimulatorData:
+            return isOlderThan(resourceValues?.contentModificationDate, options.staleDeveloperDataAge)
+                ? [.staleSimulatorData]
+                : []
+        case .xcodeArchives:
+            return url.pathExtension.lowercased() == "xcarchive" ? [.xcodeArchive] : []
         }
     }
 

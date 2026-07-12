@@ -5,12 +5,19 @@ public enum CleanupCategory: String, CaseIterable, Codable, Identifiable, Sendab
     case browserCaches = "browser-cache"
     case nodePackageCaches = "node-cache"
     case swiftPackageBuilds = "swiftpm"
+    case developerPackageCaches = "developer-package-cache"
+    case developerIDECaches = "developer-ide-cache"
+    case developerAITemporaryFiles = "developer-ai-temp"
     case logs
     case temporaryFiles = "temp"
     case trash
     case downloads
     case downloadedInstallers = "installers"
     case xcodeDerivedData = "xcode"
+    case xcodeDeviceSupport = "xcode-device-support"
+    case xcodePreviews = "xcode-previews"
+    case xcodeSimulatorData = "xcode-simulator"
+    case xcodeArchives = "xcode-archives"
 
     public var id: String { rawValue }
 }
@@ -25,6 +32,9 @@ public enum CleanupScanReason: String, Equatable, Sendable {
     case browserCache
     case nodePackageCache
     case swiftPackageCache
+    case developerPackageCache
+    case developerIDECache
+    case developerAITemporaryFile
     case staleLog
     case rotatedLog
     case staleTemporary
@@ -33,6 +43,10 @@ public enum CleanupScanReason: String, Equatable, Sendable {
     case oldDownload
     case installerArchive
     case xcodeBuildData
+    case xcodeDeviceSupport
+    case xcodePreviewData
+    case staleSimulatorData
+    case xcodeArchive
 }
 
 public struct CleanupScanOptions: Equatable, Sendable {
@@ -42,6 +56,7 @@ public struct CleanupScanOptions: Equatable, Sendable {
     public var staleDownloadAge: TimeInterval
     public var staleLogAge: TimeInterval
     public var staleTemporaryAge: TimeInterval
+    public var staleDeveloperDataAge: TimeInterval
 
     public init(
         maxItemsPerCategory: Int = 80,
@@ -49,7 +64,8 @@ public struct CleanupScanOptions: Equatable, Sendable {
         largeDownloadThresholdBytes: Int64 = 100 * 1024 * 1024,
         staleDownloadAge: TimeInterval = 30 * 24 * 60 * 60,
         staleLogAge: TimeInterval = 7 * 24 * 60 * 60,
-        staleTemporaryAge: TimeInterval = 24 * 60 * 60
+        staleTemporaryAge: TimeInterval = 24 * 60 * 60,
+        staleDeveloperDataAge: TimeInterval = 180 * 24 * 60 * 60
     ) {
         self.maxItemsPerCategory = max(1, maxItemsPerCategory)
         self.maxDescendantsPerItem = max(1, maxDescendantsPerItem)
@@ -57,6 +73,7 @@ public struct CleanupScanOptions: Equatable, Sendable {
         self.staleDownloadAge = max(0, staleDownloadAge)
         self.staleLogAge = max(0, staleLogAge)
         self.staleTemporaryAge = max(0, staleTemporaryAge)
+        self.staleDeveloperDataAge = max(0, staleDeveloperDataAge)
     }
 }
 

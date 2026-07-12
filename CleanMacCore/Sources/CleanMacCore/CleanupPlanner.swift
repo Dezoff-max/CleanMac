@@ -71,6 +71,30 @@ public struct CleanupPlanner {
             ))
         }
 
+        if item.category == .xcodeArchives, url.pathExtension.lowercased() != "xcarchive" {
+            return .rejected(rejection(
+                for: item,
+                reason: .outsideAllowedRoot,
+                message: "Only individual Xcode archive bundles can be cleaned."
+            ))
+        }
+
+        let directChildCategories: Set<CleanupCategory> = [
+            .xcodeDeviceSupport,
+            .xcodePreviews,
+            .xcodeSimulatorData
+        ]
+        if directChildCategories.contains(item.category) {
+            let canonicalParentPath = url.deletingLastPathComponent().canonicalPath
+            guard rootPaths.contains(canonicalParentPath) else {
+                return .rejected(rejection(
+                    for: item,
+                    reason: .outsideAllowedRoot,
+                    message: "Only direct children of this cleanup root can be cleaned."
+                ))
+            }
+        }
+
         let values = try? url.resourceValues(forKeys: [.isSymbolicLinkKey])
         guard values?.isSymbolicLink != true else {
             return .rejected(rejection(

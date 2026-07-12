@@ -191,6 +191,12 @@
 "results.reason.nodePackageCache.detail" = "Этот кэш npm/Yarn/pnpm обычно можно скачать заново, когда он понадобится проекту.";
 "results.reason.swiftPackageCache.title" = "Кэш SwiftPM";
 "results.reason.swiftPackageCache.detail" = "Swift Package Manager сможет пересоздать эти данные кэша и сборки при следующих сборках.";
+"results.reason.developerPackageCache.title" = "Кэш инструментов разработки";
+"results.reason.developerPackageCache.detail" = "Homebrew, pip, Cargo или Gradle смогут заново скачать или собрать данные из этой точной папки кэша.";
+"results.reason.developerIDECache.title" = "Кэш редактора";
+"results.reason.developerIDECache.detail" = "Это точная папка кэша Cursor или VS Code; настройки, расширения, рабочие области и резервные копии исключены.";
+"results.reason.developerAITemporaryFile.title" = "Временные данные AI-инструмента";
+"results.reason.developerAITemporaryFile.detail" = "Элемент находится в точной папке кэша или временных файлов Codex/Claude; проекты, сессии, история и память исключены.";
 "results.reason.staleLog.title" = "Старый лог";
 "results.reason.staleLog.detail" = "Лог выглядит старше окна активного использования, поэтому предложен для безопасной проверки очистки.";
 "results.reason.rotatedLog.title" = "Ротированный лог";
@@ -207,6 +213,14 @@
 "results.reason.installerArchive.detail" = "Файл похож на установщик или архив, который может быть уже не нужен после установки или распаковки.";
 "results.reason.xcodeBuildData.title" = "Данные сборки Xcode";
 "results.reason.xcodeBuildData.detail" = "Derived Data создаётся Xcode и быстро растёт, но проектные кэши лучше проверять перед очисткой.";
+"results.reason.xcodeDeviceSupport.title" = "Поддержка устройств Xcode";
+"results.reason.xcodeDeviceSupport.detail" = "Эти данные можно скачать заново, но версии для используемых устройств лучше сохранить, чтобы не ждать повторной загрузки.";
+"results.reason.xcodePreviewData.title" = "Данные превью Xcode";
+"results.reason.xcodePreviewData.detail" = "Xcode пересоздаст этот кэш SwiftUI-превью при следующем использовании.";
+"results.reason.staleSimulatorData.title" = "Старые данные Simulator";
+"results.reason.staleSimulatorData.detail" = "Это устройство или пользовательский runtime Simulator не менялись минимум 180 дней и требуют ручной проверки.";
+"results.reason.xcodeArchive.title" = "Архив Xcode — требуется проверка";
+"results.reason.xcodeArchive.detail" = ".xcarchive может содержать важную релизную сборку и dSYM. CleanMac никогда не выбирает его автоматически.";
 
 "cleanup.confirm.title" = "Переместить выбранное в Корзину?";
 "cleanup.confirm.message" = "CleanMac переместит выбранные элементы: %d, общий объём: %@, в Корзину. При необходимости их можно восстановить.";
@@ -309,6 +323,12 @@
 "area.nodeCaches.detail" = "Кэши npm, Yarn и pnpm для JavaScript-проектов.";
 "area.swiftpm.title" = "Кэш сборки SwiftPM";
 "area.swiftpm.detail" = "Кэши Swift Package Manager для Xcode и командной строки.";
+"area.developerPackages.title" = "Кэши инструментов разработки";
+"area.developerPackages.detail" = "Точные папки кэшей Homebrew, pip, Cargo registry и Gradle.";
+"area.developerIDEs.title" = "Кэши Cursor и VS Code";
+"area.developerIDEs.detail" = "Только кэши. Настройки, расширения, рабочие области и резервные копии не включаются.";
+"area.developerAI.title" = "Временные данные Codex и Claude";
+"area.developerAI.detail" = "Только точные папки кэша и временных файлов. Проекты, сессии, история, shell snapshots и память не затрагиваются.";
 "area.logs.title" = "Логи";
 "area.logs.detail" = "Старые и ротированные диагностические логи, без активных файлов.";
 "area.temporary.title" = "Временные файлы";
@@ -321,6 +341,14 @@
 "area.installers.detail" = "DMG, PKG, ZIP, XIP и .app в Загрузках, требующие ручной проверки.";
 "area.xcode.title" = "Derived Data Xcode";
 "area.xcode.detail" = "Кэши сборки, которые быстро растут при разработке.";
+"area.xcodeDeviceSupport.title" = "Xcode DeviceSupport";
+"area.xcodeDeviceSupport.detail" = "Версии поддержки устройств для ручной проверки; позже Xcode может скачать их заново.";
+"area.xcodePreviews.title" = "Превью Xcode";
+"area.xcodePreviews.detail" = "Пересоздаваемые данные SwiftUI-превью, созданные Xcode.";
+"area.xcodeSimulator.title" = "Старые данные Simulator";
+"area.xcodeSimulator.detail" = "Устройства и пользовательские runtime без изменений минимум 180 дней. Системные runtime не затрагиваются.";
+"area.xcodeArchives.title" = "Архивы Xcode — Требует проверки";
+"area.xcodeArchives.detail" = "Релизные архивы и dSYM никогда не выбираются автоматически. Проверь каждый .xcarchive перед очисткой.";
 
 "risk.safe" = "Безопасно";
 "risk.review" = "Проверить";
