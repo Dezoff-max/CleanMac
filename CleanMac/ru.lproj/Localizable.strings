@@ -55,8 +55,13 @@
 "status.metrics.batteryPower" = "От батареи";
 "status.metrics.rate" = "%@/с";
 "status.metrics.uptime" = "%dч %02dм";
+"status.lowDisk.title" = "Заканчивается место";
+"status.lowDisk.message" = "Свободно %@. Открой Анализ диска и запусти сканирование, чтобы найти, что занимает место.";
+"status.lowDisk.action" = "Анализ диска";
 "notification.autoScan.title" = "Автосканирование завершено";
 "notification.autoScan.body" = "Найдено: %d, объём: %@. Очистка не выполнялась.";
+"notification.lowDisk.title" = "На диске заканчивается место";
+"notification.lowDisk.body" = "Свободно %@ (%d%%). Открой Анализ диска и запусти сканирование CleanMac.";
 "notification.test.title" = "CleanMac уведомления работают";
 "notification.test.body" = "Это тестовое уведомление. Автоскан сможет показывать такой баннер после завершения.";
 

@@ -55,8 +55,13 @@
 "status.metrics.batteryPower" = "On battery";
 "status.metrics.rate" = "%@/s";
 "status.metrics.uptime" = "%dh %02dm";
+"status.lowDisk.title" = "Storage is running low";
+"status.lowDisk.message" = "%@ remains. Open Disk Analysis and run a scan to find what is using space.";
+"status.lowDisk.action" = "Disk Analysis";
 "notification.autoScan.title" = "Auto scan finished";
 "notification.autoScan.body" = "%d items, %@ found. No cleanup was performed.";
+"notification.lowDisk.title" = "Your disk is running low";
+"notification.lowDisk.body" = "%@ remains (%d%%). Open Disk Analysis and run a CleanMac scan.";
 "notification.test.title" = "CleanMac notifications work";
 "notification.test.body" = "This is a test notification. Auto scan can show this kind of banner after finishing.";
 

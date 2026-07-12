@@ -400,3 +400,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Package a 0.3.1 bug-fix release only when explicitly requested.
 - Bottleneck: none; the known CoreSimulator warning remains unrelated and non-blocking for macOS builds.
 - Handoff: CleanMac is running from the current Debug product on Duplicate Finder with `/Users/admin/Documents` selected. No cleanup, duplicate move, or scan was triggered.
+
+## 2026-07-12 - TASK-044 - Low disk space warning
+
+- What changed: Added a shared low-space policy with a strict under-10% threshold and a 24-hour notification cooldown. CleanMac now checks capacity at launch and every 30 minutes, sends a localized warning only when macOS notifications are already authorized, and records the cooldown only after successful delivery. The menu-bar popover shows an adaptive warning card with remaining space, a scan recommendation, and a direct Disk Analysis action that reveals or opens the main window without starting analysis.
+- Files touched: `CleanMacCore/Sources/CleanMacCore/LowDiskSpaceWarningPolicy.swift`, `CleanMacCore/Tests/CleanMacCoreTests/LowDiskSpaceWarningPolicyTests.swift`, `CleanMac/CleanMacApp.swift`, `CleanMac/Support/CleanMacLowDiskSpaceMonitor.swift`, `CleanMac/Support/CleanMacNotificationService.swift`, `CleanMac/Support/CleanMacPreferences.swift`, `CleanMac/Support/MainWindowController.swift`, `CleanMac/Support/StatusSystemMetrics.swift`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/StatusMenuView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `contract.md`, `project-analysis.md`, `roadmap.md`, `progress.md`, `trace.md`, `verification.md`.
+- Checks run: focused `LowDiskSpaceWarningPolicyTests` (3/3); full `swift test --package-path CleanMacCore` (43/43); localization plist lint and RU/EN key parity; `git diff --check`; `./script/build_and_run.sh --verify`; live one-shot route check to the Russian Disk Analysis screen; normal-capacity hidden-state check; GitHub PR core-test and macOS-build CI.
+- Result: Passed. Exactly 10% does not warn, below 10% does; notifications are limited to one successful delivery per 24 hours; the action opens Disk Analysis without selecting files or starting a scan. No notification permission was changed and no real warning was sent during verification.
+- Next step: Publish a feature release only when explicitly requested.
+- Bottleneck: system notification delivery remains dependent on macOS permission; the known CoreSimulator version warning remains unrelated and non-blocking for macOS builds.
+- Handoff: The current Debug app uses the normal live disk capacity, so the warning remains naturally hidden. No scan, cleanup, application removal, release, or user-file mutation occurred.

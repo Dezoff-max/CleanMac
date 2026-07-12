@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-044
+  Title: Low disk space warning
+  Goal: Warn when available disk space falls below 10% without spamming or starting cleanup automatically.
+  What to do: Add a testable threshold/cooldown policy, a background best-effort notification check, an adaptive warning card in the menu-bar popover, and direct navigation to Disk Analysis.
+  Files: low-space core policy/tests, status metrics/menu, notification/monitor/preferences/window routing, localization, Loop docs
+  Definition of done: below 10% shows the menu warning and may notify only when already authorized; notifications are limited to once per 24 hours; the button opens Disk Analysis; copy recommends a scan; no scan starts automatically.
+  Verification: focused policy tests; full SwiftPM tests; localization lint/key parity; Debug build/launch; menu navigation review; `git diff --check`; green GitHub CI
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: medium
+  Confidence: high
+  Score: medium impact / low risk / medium
+
 - [x] ID: TASK-043
   Title: Fix custom-folder source selection
   Goal: Make the Custom Folder source reliably open the native folder picker in both Disk Analysis and Duplicate Finder.

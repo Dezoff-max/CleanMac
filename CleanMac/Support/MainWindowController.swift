@@ -49,8 +49,11 @@ enum MainWindowController {
     }
 
     @MainActor
-    static func show(openWindow: OpenWindowAction) {
+    static func show(openWindow: OpenWindowAction, section: CleanMacSection? = nil) {
         suppressInitialPresentation = false
+        if let section {
+            UserDefaults.standard.set(section.rawValue, forKey: CleanMacPreferenceKeys.requestedSection)
+        }
 
         if let existingWindow = NSApp.windows.first(where: { $0.identifier == identifier }) {
             existingWindow.deminiaturize(nil)

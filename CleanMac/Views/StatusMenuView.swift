@@ -16,6 +16,9 @@ struct StatusMenuView: View {
         VStack(alignment: .leading, spacing: 12) {
             header
             metricGrid
+            if snapshot.disk.isLowSpace {
+                lowDiskWarning
+            }
             networkStrip
             systemPanel
             actions
@@ -143,6 +146,53 @@ struct StatusMenuView: View {
             RoundedRectangle(cornerRadius: 15, style: .continuous)
                 .strokeBorder(Color(nsColor: .separatorColor).opacity(0.7))
         }
+    }
+
+    private var lowDiskWarning: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(spacing: 9) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+
+                Text(L.t("status.lowDisk.title"))
+                    .font(.system(size: 13, weight: .bold))
+
+                Spacer()
+
+                Text("\(Int(((snapshot.disk.freeFraction ?? 0) * 100).rounded(.down)))%")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(.orange)
+                    .monospacedDigit()
+            }
+
+            Text(L.f(
+                "status.lowDisk.message",
+                CleanMacFormatters.bytes(snapshot.disk.freeBytes)
+            ))
+            .font(.system(size: 11, weight: .medium))
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                MainWindowController.show(openWindow: openWindow, section: .diskAnalysis)
+            } label: {
+                Label(L.t("status.lowDisk.action"), systemImage: "chart.pie.fill")
+                    .font(.system(size: 12, weight: .bold))
+                    .frame(maxWidth: .infinity, minHeight: 30)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.orange)
+        }
+        .padding(12)
+        .background(
+            Color.orange.opacity(colorScheme == .dark ? 0.12 : 0.08),
+            in: RoundedRectangle(cornerRadius: 15, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                .strokeBorder(Color.orange.opacity(0.45))
+        }
+        .accessibilityElement(children: .contain)
     }
 
     private var systemPanel: some View {

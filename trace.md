@@ -127,3 +127,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: both views called synchronous `NSOpenPanel.runModal()` directly from the segmented Picker's `onChange` callback while SwiftUI was still applying the source-state transaction.
 - Fix: use an intercepting source Binding, defer panel presentation to the next main-actor turn, and mutate the source only after a folder is selected; cancel leaves the previous source unchanged.
 - Status: resolved; live Russian checks opened both native panels, verified cancel fallback, selected `/Users/admin/Documents` in both sections, and confirmed that no scan started automatically.
+
+## 2026-07-12 - TASK-044 - Requested section was consumed before scene restoration
+
+- Symptom: the first live route check consumed the requested Disk Analysis section but the restored main window still displayed Overview.
+- Cause: `onAppear` applied the external selection before SwiftUI restored the existing `@SceneStorage` sidebar value.
+- Fix: consume the requested section from an ID-driven task after one main-actor yield, then clear the one-shot preference.
+- Status: resolved; the second clean launch opened directly on the Russian Disk Analysis screen and did not start a scan.
