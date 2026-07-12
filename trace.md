@@ -78,3 +78,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: the script sanitized before and after the pair of signing commands, leaving a short unsanitized interval between nested-code signing and outer-app signing.
 - Fix: sanitize the generated app between both signing passes for Developer ID and ad-hoc paths, then retain the existing fresh-ZIP verification.
 - Status: resolved; packaging completes, the ZIP checksum passes, and strict signature verification succeeds for both the fresh extraction and the sanitized local `dist/CleanMac.app`.
+
+## 2026-07-12 - TASK-037 - Menu popover ignored selected appearance
+
+- Symptom: the first reference-based menu used a fixed purple palette; after replacing it with semantic colors, live dark-theme review still showed a light popover while the main CleanMac window was dark.
+- Cause: the `.window` `MenuBarExtra` presentation did not honor `preferredColorScheme`, so its SwiftUI environment remained light even though the stored CleanMac appearance was dark.
+- Fix: removed the fixed reference palette, used adaptive system materials/semantic colors, and injected `CleanMacAppearance.colorScheme` directly into the menu popover environment.
+- Status: resolved; live Russian screenshots confirm distinct light and dark popovers, and the original light preference was restored after review.

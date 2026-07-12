@@ -62,7 +62,7 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - English and Russian app localizations are included; macOS selects the language from system preferences.
 - The standard About panel is replaced by a centered singleton CleanMac window with live version/build metadata, local-first safety details, project links, and immediate RU/EN plus light/dark updates.
 - The selected language override applies through the app's localizer, and the selected appearance applies to both the main window and menu bar popover.
-- The menu bar popover shows current disk usage, scan-in-progress state, last scan source/time, and last scan result summary with larger readable typography and rounded compact panels.
+- The menu bar popover is a compact live dashboard with CPU, memory, disk, battery, network, uptime, scan state, and last-scan summary. Its 2x2 gauge layout uses system materials and follows the light/dark appearance selected in CleanMac rather than a fixed reference color scheme.
 - Settings can enable read-only auto scan while the app is running; it supports daily, hourly, and every-two-hours frequencies, uses the currently selected scan areas, and updates menu bar status.
 - Scheduled auto scan can show localized macOS completion notifications when the notification toggle is enabled and system permission allows it; Settings includes a test notification button to diagnose macOS permission/delivery state. Manual scans remain silent.
 - Public GitHub Release `v0.2.1` is the latest release and includes the verified arm64 ad-hoc zip and sha256 assets.

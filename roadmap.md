@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-037
+  Title: Live system dashboard menu bar
+  Goal: Rebuild the menu-bar popover as a compact live system dashboard based on the supplied Mac Sai layout.
+  What to do: Add lightweight local CPU/memory/disk/battery/network/uptime sampling, an adaptive light/dark 2x2 gauge layout, compact scan state, and reference-style bottom actions.
+  Files: `CleanMac/Support/StatusSystemMetrics.swift`, `CleanMac/Views/StatusMenuView.swift`, app scene styling, localization, Loop docs
+  Definition of done: Live metrics refresh only while open, unavailable battery degrades safely, existing scan state remains visible, actions work, and RU/EN content fits the popover.
+  Verification: localization lint/key parity; `swift test --package-path CleanMacCore`; Debug build; `./script/build_and_run.sh --verify`; live menu screenshot/accessibility review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: high impact / medium risk / medium
+
 - [x] ID: TASK-036
   Title: First-launch system onboarding
   Goal: Introduce CleanMac on first launch with a native four-step flow matching the supplied reference structure.

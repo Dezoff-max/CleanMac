@@ -54,7 +54,7 @@ struct CleanMacApp: App {
         MenuBarExtra("CleanMac", image: "MenuBarIcon") {
             StatusMenuView()
                 .environment(\.locale, language.locale)
-                .preferredColorScheme(appearance.colorScheme)
+                .environment(\.colorScheme, appearance.colorScheme)
         }
         .menuBarExtraStyle(.window)
     }

@@ -330,3 +330,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Push the feature branch and open the protected-main pull request.
 - Bottleneck: no Developer ID identity is installed, so the artifact remains ad-hoc signed and not notarized.
 - Handoff: The separate `/Users/admin/Desktop/CleanMac` project copy remains untouched and still contains version 1.0 (1) artifacts.
+
+## 2026-07-12 - TASK-037 - Live system dashboard menu bar
+
+- What changed: Rebuilt the menu-bar popover as a compact 2x2 live dashboard based on the supplied layout. CPU, memory, disk, battery, network rates, and uptime update locally only while the popover is visible; the existing scan state and last-scan summary remain available. The final styling uses adaptive macOS materials, semantic text colors, and the CleanMac accent, and explicitly injects the selected CleanMac light/dark scheme because `MenuBarExtra` ignored `preferredColorScheme` in the live app.
+- Files touched: `CleanMac/CleanMacApp.swift`, `CleanMac/Support/StatusSystemMetrics.swift`, `CleanMac/Views/StatusMenuView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `project-analysis.md`, `roadmap.md`, `contract.md`, `progress.md`, `trace.md`, `verification.md`.
+- Checks run: `swift test --package-path CleanMacCore` (28/28); localization plist lint and RU/EN key parity; `git diff --check`; Debug `xcodebuild`; repeated `./script/build_and_run.sh --verify`; live Russian light/dark popover review with screenshots `/tmp/cleanmac-task37-menu-light-final.png` and `/tmp/cleanmac-task37-menu-dark-fixed.png`.
+- Result: Passed. The live light setting renders a light system popover, the dark setting renders a dark popover matching the main window, gauges and values update without background persistence, battery degrades safely when unavailable, and no cleanup or scan was triggered.
+- Next step: Decide whether to expose a compact menu-bar refresh interval setting; the current one-second visible-only interval is intentionally fixed and lightweight.
+- Bottleneck: none. The known stale CoreSimulator warning remains non-blocking, and the generated app FinderInfo attribute required the documented build-product cleanup before the successful launch verification rerun.
+- Handoff: The user's original `light` appearance preference was restored after the dark-theme review. CleanMac remains running from the current Debug product.

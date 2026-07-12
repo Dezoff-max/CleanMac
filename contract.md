@@ -2,23 +2,23 @@
 
 ## Task
 
-- ID: TASK-036
-- Title: First-launch system onboarding
+- ID: TASK-037
+- Title: Live system dashboard menu bar
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the app has several safe cleanup and analysis workflows, but a new user is not introduced to them or to Full Disk Access.
-- Expected value: the first launch explains the product, its real capabilities, the optional permission step, and the safe starting action.
-- Main risk: onboarding must not appear on every launch, must not open privacy settings automatically, and must not show the main UI behind a second window.
-- UX constraint: follow the supplied four-screen structure while using semantic macOS colors and the current system appearance instead of a fixed dark palette.
+- Why this task now: the existing menu popover only shows disk and last scan, while the supplied reference presents a compact live system dashboard.
+- Expected value: CPU, memory, disk, battery, network, uptime, and CleanMac scan state are visible without opening the main window.
+- Main risk: frequent sampling must stay lightweight, local, and stop when the popover closes.
+- UX constraint: follow the supplied two-column card layout while using the light or dark CleanMac appearance selected by the user, preserving CleanMac branding, RU/EN text, and short menu actions.
 
 ## Builder Scope
 
 - Allowed files:
   - `CleanMac/CleanMacApp.swift`
-  - `CleanMac/Support/CleanMacPreferences.swift`
-  - `CleanMac/Views/OnboardingView.swift`
+  - `CleanMac/Support/StatusSystemMetrics.swift`
+  - `CleanMac/Views/StatusMenuView.swift`
   - `CleanMac/en.lproj/Localizable.strings`
   - `CleanMac/ru.lproj/Localizable.strings`
   - `project-analysis.md`
@@ -32,25 +32,25 @@
   - `swift test --package-path CleanMacCore`
   - Debug `xcodebuild`
   - `./script/build_and_run.sh --verify`
-  - live first-launch and relaunch UI inspection
-  - read/write only the single onboarding completion preference during verification
+  - live menu-bar visual and accessibility inspection
 - Out of scope:
-  - requesting Full Disk Access automatically;
-  - changing cleanup, scan, removal, restore, scheduling, release, signing, or GitHub behavior;
-  - dependencies or a separate persistent welcome window.
+  - background monitoring while the popover is closed;
+  - external telemetry, analytics, persistence, notifications, or cleanup behavior changes;
+  - replacing or deleting user app copies, release version changes, or new dependencies.
 - Dependencies allowed: no
 - Destructive actions allowed: no
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - A four-step localized onboarding appears when `CleanMac.onboardingCompleted` is absent or false.
-  - The screens cover welcome, only capabilities CleanMac actually has, Full Disk Access guidance, and completion.
-  - The UI follows system Light/Dark appearance independently of the saved in-app appearance until onboarding completes.
-  - Back, Next, Skip/Close, progress dots, and the default Return action work; Reduce Motion avoids animated movement.
-  - Full Disk Access is checked read-only and System Settings opens only from the explicit button.
-  - Finishing or skipping persists completion and replaces onboarding with the main UI in the same window.
-  - Relaunch after completion opens the main UI directly.
+  - The popover matches the reference structure with a header, 2x2 metric grid, network/uptime strip, system/scan card, and two bottom actions.
+  - The popover follows the selected CleanMac light/dark appearance and uses adaptive system materials instead of a fixed reference color scheme.
+  - CPU and memory are read from macOS host statistics; disk uses the active home volume; battery is shown when available and degrades gracefully on desktops.
+  - Network receive/send rates and system uptime update locally while the popover is open.
+  - Existing last-scan and scan-in-progress data remains visible in compact form.
+  - The sampling task starts on presentation, refreshes about once per second, and is cancelled automatically when the view disappears.
+  - Open focuses the existing main window and Quit terminates CleanMac as before.
+  - RU/EN labels fit the fixed popover width and accessibility exposes metric names and values.
 - Required verification:
   - `swift test --package-path CleanMacCore`
   - localization lint and RU/EN key parity
@@ -58,12 +58,12 @@
   - `./script/build_and_run.sh --verify`
   - `git diff --check`
 - Manual checks:
-  - Reset only the onboarding preference, launch in Russian, and review all four screens in the standard window.
-  - Finish onboarding, relaunch, and confirm the main window opens without onboarding.
-  - Restore the unfinished preference state for the user after verification.
+  - Open the menu popover in Russian and confirm all cards fit without clipping.
+  - Observe at least two refreshes and confirm live values change or remain valid.
+  - Confirm the main window opens through the bottom action; do not trigger scans or cleanup.
 
 ## Result
 
 - Status: complete
-- Verification result: automated checks, live four-step review, completion, skip, and relaunch checks passed.
-- Notes: the onboarding was left unfinished and visible for the user's next launch. Full Disk Access was checked read-only; System Settings was not opened during verification.
+- Verification result: passed — 28 core tests, localization/key parity, Debug build, launch verification, diff check, and live Russian light/dark menu review.
+- Notes: SwiftUI `MenuBarExtra` did not honor `preferredColorScheme`; injecting the selected scheme into the popover environment fixed the live mismatch. The local non-blocking CoreSimulator warning remains unchanged.
