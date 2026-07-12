@@ -48,7 +48,8 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - Results now lists unavailable scan areas with localized names and exact paths, distinguishes missing optional folders from read failures, and links permission-related failures to the in-app Permissions screen.
 - Cleanup planning validates paths against category roots and moves accepted items to Trash instead of permanently deleting them.
 - Applications has a separate safe uninstaller for direct third-party `.app` bundles in `/Applications` and `~/Applications`; native checkboxes support multi-selection, exact bundle-ID leftover choices remain isolated per app, one batch confirmation shows the reviewed count and size, and every app still moves first so its failed move cannot touch leftovers.
-- Results UI now has compact category groups, risk-aware item review, a selected-item detail panel, and current-session Trash history with restore actions.
+- Results UI now has compact category groups, risk-aware item review, a selected-item detail panel, and locally persisted Trash history with restore actions.
+- Cleanup history uses a versioned atomic JSON store with private permissions, unique operation IDs, a 100-record cap, fail-closed decoding, multi-window read-merge-write updates, and visible persistence errors. Persisted restores revalidate a direct child of the current user's Trash and a canonical destination inside the saved category allowlist, then open every directory component without following symlinks and use descriptor-relative exclusive rename.
 - Restore logic refuses to overwrite existing original paths and reports missing Trash/original locations without deleting anything.
 - Scan UI has all/safe/review filters plus safe/review/clear selection presets.
 - Scan UI shows a modern animated activity surface during active scans, with Reduce Motion support and selected-area chips.
@@ -71,7 +72,6 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - Permissions are live for Full Disk Access status, but the app still relies on System Settings for granting access.
 - The scanner is intentionally conservative and capped; deeper stale-file heuristics and persistent cleanup previews are future work.
 - Cleanup is intentionally Trash-based; permanent deletion is still out of scope.
-- Cleanup history is current-session only; persistent history across app launches is still future work.
 - Scheduled auto scan currently runs only while the CleanMac app process is running; launch-at-login or a privileged background agent is still future work.
 - Notification delivery depends on the macOS notification permission for CleanMac; if permission is denied, scheduled scans still complete silently.
 - Root-owned or otherwise protected third-party apps may fail to move without administrator privileges; CleanMac reports the failure and does not escalate privileges or remove leftovers.
@@ -93,6 +93,6 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 ## Recommended Next Work
 
 1. Configure Apple Developer signing secrets and cut a signed/notarized release.
-2. Persist cleanup history safely across app launches.
-3. Add launch-at-login support so scheduled scans can happen after reboot/login without manually opening CleanMac.
-4. Add read-only large-file review and deeper developer storage previews.
+2. Add launch-at-login support so scheduled scans can happen after reboot/login without manually opening CleanMac.
+3. Add read-only large-file review and deeper developer storage previews.
+4. Decide whether application removals should have a separate, equally constrained history model.

@@ -211,13 +211,18 @@
 "restore.alreadyRestored" = "This item is already restored.";
 "restore.failure.missingTrashPath" = "CleanMac does not know where this item is in Trash.";
 "restore.failure.missingTrashItem" = "This item is no longer available in Trash.";
+"restore.failure.outsideTrash" = "The saved item is not in your Trash, so CleanMac did not move it.";
+"restore.failure.symbolicLink" = "A symbolic link cannot be restored from saved history.";
+"restore.failure.outsideAllowedRoot" = "The saved original location is outside this cleanup area's allowed folders.";
 "restore.failure.destinationExists" = "The original location is already occupied, so CleanMac did not overwrite it.";
 "restore.failure.missingOriginalParent" = "The original parent folder is not available.";
+"restore.failure.moveFailed" = "macOS could not move this item back to its original location.";
 
 "history.title" = "Trash history";
-"history.subtitle" = "Items moved during this session can be restored while their Trash location is still available.";
+"history.subtitle" = "Saved locally across launches. Items can be restored while their Trash location is still available.";
 "history.count" = "%d item(s)";
 "history.empty" = "Moved items will appear here after cleanup.";
+"history.persistence.failed" = "CleanMac could not save Trash history. It will remain available only until this window closes.";
 "history.status.inTrash" = "In Trash";
 "history.status.restored" = "Restored";
 "history.status.restoreFailed" = "Needs review";

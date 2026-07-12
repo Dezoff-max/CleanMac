@@ -108,9 +108,12 @@ public struct CleanupExecutionReport: Equatable, Sendable {
     }
 }
 
-public enum CleanupRestoreFailureReason: String, Sendable {
+public enum CleanupRestoreFailureReason: String, Codable, Sendable {
     case missingTrashPath
     case missingTrashItem
+    case outsideTrash
+    case symbolicLink
+    case outsideAllowedRoot
     case destinationExists
     case missingOriginalParent
     case moveFailed

@@ -1,6 +1,6 @@
 import Foundation
 
-public enum CleanupCategory: String, CaseIterable, Identifiable, Sendable {
+public enum CleanupCategory: String, CaseIterable, Codable, Identifiable, Sendable {
     case userCaches = "user-cache"
     case browserCaches = "browser-cache"
     case nodePackageCaches = "node-cache"

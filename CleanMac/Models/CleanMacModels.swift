@@ -158,11 +158,7 @@ extension CleanupScanReason {
     }
 }
 
-enum CleanupHistoryStatus {
-    case inTrash
-    case restored
-    case restoreFailed
-
+extension CleanupHistoryStatus {
     var title: String {
         switch self {
         case .inTrash: L.t("history.status.inTrash")
@@ -180,43 +176,41 @@ enum CleanupHistoryStatus {
     }
 }
 
-struct CleanupHistoryItem: Identifiable {
-    let id: String
-    let movedItem: CleanupMovedItem
-    let movedAt: Date
-    var status: CleanupHistoryStatus
-    var restoredAt: Date?
-    var restoredPath: String?
-    var message: String?
-
-    init(movedItem: CleanupMovedItem, movedAt: Date) {
-        self.id = movedItem.id
-        self.movedItem = movedItem
-        self.movedAt = movedAt
-        self.status = .inTrash
-        self.restoredAt = nil
-        self.restoredPath = nil
-        self.message = nil
-    }
-
+extension CleanupHistoryRecord {
     var title: String {
-        movedItem.item.scanItem.displayName
+        let name = URL(fileURLWithPath: originalPath).lastPathComponent
+        return name.isEmpty ? originalPath : name
     }
 
-    var category: CleanupCategory {
-        movedItem.item.scanItem.category
-    }
-
-    var originalPath: String {
-        movedItem.item.originalPath
-    }
-
-    var trashedPath: String {
-        movedItem.trashedPath ?? L.t("history.trashPath.unknown")
+    var displayTrashedPath: String {
+        trashedPath ?? L.t("history.trashPath.unknown")
     }
 
     var size: String {
-        CleanMacFormatters.bytes(movedItem.item.scanItem.sizeBytes)
+        CleanMacFormatters.bytes(sizeBytes)
+    }
+}
+
+extension CleanupRestoreFailureReason {
+    var localizedHistoryMessage: String {
+        switch self {
+        case .missingTrashPath:
+            L.t("restore.failure.missingTrashPath")
+        case .missingTrashItem:
+            L.t("restore.failure.missingTrashItem")
+        case .outsideTrash:
+            L.t("restore.failure.outsideTrash")
+        case .symbolicLink:
+            L.t("restore.failure.symbolicLink")
+        case .outsideAllowedRoot:
+            L.t("restore.failure.outsideAllowedRoot")
+        case .destinationExists:
+            L.t("restore.failure.destinationExists")
+        case .missingOriginalParent:
+            L.t("restore.failure.missingOriginalParent")
+        case .moveFailed:
+            L.t("restore.failure.moveFailed")
+        }
     }
 }
 

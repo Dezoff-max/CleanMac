@@ -211,13 +211,18 @@
 "restore.alreadyRestored" = "Этот элемент уже восстановлен.";
 "restore.failure.missingTrashPath" = "CleanMac не знает, где этот элемент находится в Корзине.";
 "restore.failure.missingTrashItem" = "Этого элемента больше нет в Корзине.";
+"restore.failure.outsideTrash" = "Сохранённый элемент находится не в вашей Корзине, поэтому CleanMac его не перемещал.";
+"restore.failure.symbolicLink" = "Символическую ссылку нельзя восстановить из сохранённой истории.";
+"restore.failure.outsideAllowedRoot" = "Сохранённый исходный путь находится вне разрешённых папок этой области очистки.";
 "restore.failure.destinationExists" = "Исходное место уже занято, поэтому CleanMac ничего не перезаписал.";
 "restore.failure.missingOriginalParent" = "Исходная родительская папка недоступна.";
+"restore.failure.moveFailed" = "macOS не удалось вернуть этот элемент в исходное место.";
 
 "history.title" = "История Корзины";
-"history.subtitle" = "Элементы, перемещённые в этой сессии, можно восстановить, пока их путь в Корзине доступен.";
+"history.subtitle" = "История хранится локально между запусками. Элементы можно восстановить, пока они доступны в Корзине.";
 "history.count" = "Элементов: %d";
 "history.empty" = "После очистки перемещённые элементы появятся здесь.";
+"history.persistence.failed" = "CleanMac не удалось сохранить историю Корзины. Она будет доступна только до закрытия этого окна.";
 "history.status.inTrash" = "В Корзине";
 "history.status.restored" = "Восстановлено";
 "history.status.restoreFailed" = "Нужно проверить";

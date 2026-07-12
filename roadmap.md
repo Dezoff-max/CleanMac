@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-034
+  Title: Persistent cleanup history
+  Goal: Preserve Trash-based cleanup history across app launches without trusting stored paths blindly.
+  What to do: Add a versioned atomic local history store, stable per-operation IDs, a 100-record cap, and restore-time validation for both the original allowlisted location and the current user's Trash.
+  Files: `CleanMacCore/Sources/CleanMacCore/CleanupHistoryStore.swift`, cleanup restore models/service, core tests, `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/Views/ResultsView.swift`, localization, Loop docs
+  Definition of done: Successful cleanup records survive relaunch; restored/failed statuses persist; corrupt or forged history cannot crash the app or move files outside the allowed roots; repeated cleanup of one path has unique history IDs.
+  Verification: `swift test --package-path CleanMacCore`; localization lint; `./script/build_and_run.sh --verify`; non-destructive UI review
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: high impact / medium risk / medium
+
 - [x] ID: TASK-033
   Title: Custom About window and v0.2.1 release
   Goal: Replace the default About panel with a polished localized CleanMac window, then publish the verified v0.2.1 build.
