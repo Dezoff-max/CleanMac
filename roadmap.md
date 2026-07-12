@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-041
+  Title: CleanMac v0.3.0 release
+  Goal: Ship the verified disk analysis, onboarding, system dashboard, developer cleanup, and duplicate finder as the next feature release.
+  What to do: Bump version/build, merge the green feature PR, rebuild the ad-hoc arm64 distribution, verify its signature/version/checksum, and publish English GitHub release notes with ZIP and SHA-256 assets.
+  Files: Xcode version settings, release artifacts, Loop docs, GitHub PR/release metadata
+  Definition of done: main contains the feature work; `dist/CleanMac.app` reports 0.3.0 (4); the extracted ZIP passes strict ad-hoc signature verification; checksum matches; v0.3.0 is the latest GitHub release.
+  Verification: `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; `./script/package_release.sh`; bundle metadata/architecture/signature/checksum inspection; green GitHub CI; downloaded release-asset verification
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: small
+  Confidence: high
+  Score: high impact / medium risk / small
+
 - [x] ID: TASK-040
   Title: Safe duplicate finder
   Goal: Find exact duplicate files through staged SHA-256 hashing while always preserving one original and requiring explicit Trash review.

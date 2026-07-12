@@ -68,7 +68,7 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - Settings can enable read-only auto scan while the app is running; it supports daily, hourly, and every-two-hours frequencies, uses the currently selected scan areas, and updates menu bar status.
 - Settings can register the main app through `SMAppService.mainApp` to launch at login, displays the authoritative macOS enabled/disabled/approval/unavailable status, reports registration failures, and links to Login Items when user action is required. Login-style background launch keeps the main window hidden until the user activates CleanMac or chooses Open from the menu bar.
 - Scheduled auto scan can show localized macOS completion notifications when the notification toggle is enabled and system permission allows it; Settings includes a test notification button to diagnose macOS permission/delivery state. Manual scans remain silent.
-- Public GitHub Release `v0.2.1` is the latest release and includes the verified arm64 ad-hoc zip and sha256 assets.
+- Public GitHub Release `v0.3.0` is the latest release and includes the verified arm64 ad-hoc zip and sha256 assets.
 - Release packaging creates a clean unsigned/ad-hoc local zip plus sha256, strips Finder/resource-fork metadata before archiving, retries codesign when File Provider reattaches metadata between passes, strictly verifies a fresh ZIP extraction, and can optionally sign with Developer ID, enable hardened runtime, submit to Apple notary service, staple, and re-zip when credentials are configured.
 
 ## Unfinished Or Risky Parts
