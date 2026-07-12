@@ -43,13 +43,15 @@ struct MainWindowView: View {
                 .navigationTitle(selectedSection.title)
                 .toolbar {
                     ToolbarItemGroup {
-                        Button {
-                            runScan()
-                        } label: {
-                            Label(isAnyScanInProgress ? L.t("button.scanning") : L.t("button.scan"), systemImage: "magnifyingglass")
+                        if selectedSection != .diskAnalysis, selectedSection != .duplicates {
+                            Button {
+                                runScan()
+                            } label: {
+                                Label(isAnyScanInProgress ? L.t("button.scanning") : L.t("button.scan"), systemImage: "magnifyingglass")
+                            }
+                            .accessibilityLabel(isAnyScanInProgress ? L.t("button.scanning") : L.t("button.scan"))
+                            .disabled(isAnyScanInProgress || selectedAreaIDs.isEmpty)
                         }
-                        .accessibilityLabel(isAnyScanInProgress ? L.t("button.scanning") : L.t("button.scan"))
-                        .disabled(isAnyScanInProgress || selectedAreaIDs.isEmpty)
 
                         Button {
                             selectedSectionID = CleanMacSection.settings.rawValue
@@ -115,13 +117,15 @@ struct MainWindowView: View {
                 onConfirmCleanup: cleanupSelectedItems,
                 onRestoreHistoryItem: restoreHistoryItem,
                 onOpenPermissions: {
-                    selectedSectionID = CleanMacSection.permissions.rawValue
+                    selectedSectionID = CleanMacSection.settings.rawValue
                 }
             )
+        case .diskAnalysis:
+            DiskAnalysisView()
+        case .duplicates:
+            DuplicateFinderView()
         case .applications:
             ApplicationsView()
-        case .permissions:
-            PermissionsView()
         case .settings:
             SettingsView(
                 safeModeEnabled: $safeModeEnabled,

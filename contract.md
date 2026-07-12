@@ -2,81 +2,59 @@
 
 ## Task
 
-- ID: TASK-034
-- Title: Persistent cleanup history
+- ID: TASK-041
+- Title: CleanMac v0.3.0 release
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: cleanup history and restore already work, but the history is held only in SwiftUI state and disappears when CleanMac is relaunched.
-- Expected value: the user can still see and safely restore a previously trashed cleanup item after restarting the app.
-- Main risk: a modified or corrupt history file must never become authority to move an arbitrary file.
-- UX constraint: preserve the existing Results history UI and Trash-only cleanup behavior; only its lifetime and safety validation change.
+- Why this task now: the feature branch has a green CI run and contains several user-visible additions since v0.2.1.
+- Expected value: a reproducible v0.3.0 package and GitHub release that match the current app and make the new functionality available together.
+- Main risk: publishing an artifact from an unmerged or differently versioned commit, attaching stale ZIP files, or implying Apple notarization when only ad-hoc signing is available.
+- Release assumption: the new feature set warrants minor version 0.3.0 with build number 4; GitHub release copy remains English.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMacCore/Sources/CleanMacCore/CleanupModels.swift`
-  - `CleanMacCore/Sources/CleanMacCore/CleanupPlanModels.swift`
-  - `CleanMacCore/Sources/CleanMacCore/CleanupPathPolicy.swift`
-  - `CleanMacCore/Sources/CleanMacCore/CleanupRestorer.swift`
-  - `CleanMacCore/Sources/CleanMacCore/CleanupHistoryStore.swift`
-  - `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`
-  - `CleanMac/Models/CleanMacModels.swift`
-  - `CleanMac/Views/MainWindowView.swift`
-  - `CleanMac/Views/ResultsView.swift`
-  - `CleanMac/en.lproj/Localizable.strings`
-  - `CleanMac/ru.lproj/Localizable.strings`
-  - `project-analysis.md`
-  - `roadmap.md`
-  - `contract.md`
-  - `progress.md`
-  - `trace.md`
-  - `verification.md`
+  - `CleanMac.xcodeproj/project.pbxproj`
+  - generated `dist/CleanMac.app`, ZIP, and SHA-256 assets;
+  - GitHub PR/release metadata;
+  - Loop documentation files
 - Allowed commands:
-  - localization/plist lint and key-parity checks
-  - `swift test --package-path CleanMacCore`
-  - `./script/build_and_run.sh --verify`
-  - non-destructive UI inspection and screenshots
-  - focused Git/GitHub commands after verification
+  - read-only source, Git, bundle, signing, and release inspection;
+  - `swift test --package-path CleanMacCore`;
+  - Debug `xcodebuild`;
+  - `./script/build_and_run.sh --verify`;
+  - `./script/package_release.sh`;
+  - PR update/merge and GitHub Release publishing explicitly approved by the user;
+  - `git diff --check`.
 - Out of scope:
-  - new cleanup categories, permanent deletion, application-removal history, launch at login, release/version changes, signing, or notarization;
-  - adding dependencies or changing the macOS deployment target;
-  - triggering cleanup or restore against real user files during verification.
-- Dependencies allowed: no
-- Destructive actions allowed: no
+  - new product behavior, cleanup execution, permission changes, Developer ID signing, notarization, dependencies, or architecture changes.
+- Dependencies allowed: no external dependencies; system CryptoKit only
+- Destructive actions allowed: replace generated ignored `dist/` artifacts only; no user-data cleanup
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - The history is stored as a versioned JSON file under `Application Support/CleanMac` using atomic replacement.
-  - Only successful cleanup moves create records, and each operation gets a unique history ID even when the same original path is reused.
-  - The newest 100 unique records are retained.
-  - Restored and failed statuses are written back to the store.
-  - Updates from multiple app windows use read-merge-write semantics and cannot downgrade a stored restored record.
-  - Persistence failures remain visible in the current window and produce a localized warning instead of a false durability claim.
-  - Missing or corrupt JSON loads as empty history without a crash or restore attempt.
-  - A persisted record can restore only from a direct child of the configured Trash root to a strict descendant of its category allowlist; forged paths and symbolic links are rejected before the move handler runs.
-  - The default move opens every parent path component with `openat(..., O_NOFOLLOW)`, pins both directory descriptors, and uses exclusive `renameatx_np`, so a raced destination cannot follow a substituted symlink or overwrite an existing item.
-  - The existing history panel explains that records persist across launches.
+  - Debug and Release bundles both report version 0.3.0 and build 4.
+  - The feature PR is green and merged into `main` before tagging.
+  - The final arm64 ZIP is built from the tagged main commit, passes strict signature verification after fresh extraction, and has a matching SHA-256 file.
+  - GitHub Release v0.3.0 is public, latest, not prerelease, uses English notes, and contains exactly the verified ZIP and SHA-256 assets.
+  - The distribution note clearly says the build is ad-hoc signed and not Apple-notarized.
 - Required verification:
-  - `swift test --package-path CleanMacCore`
-  - localization lint and RU/EN key parity
-  - `./script/build_and_run.sh --verify`
-  - `git diff --check`
+  - `swift test --package-path CleanMacCore`;
+  - `./script/build_and_run.sh --verify`;
+  - `./script/package_release.sh`;
+  - extracted bundle version/build/architecture/signature inspection;
+  - local and downloaded SHA-256 verification;
+  - GitHub CI and release metadata inspection;
+  - `git diff --check`.
 - Manual checks:
-  - Open Results and confirm the persistent-history wording fits in Russian.
-  - Do not trigger real cleanup or restore.
-
-## Restart Signals
-
-Restart or shrink the task if:
-- persisted restoration cannot be revalidated without weakening the existing allowlist;
-- Swift concurrency makes file persistence block or race with cleanup state;
-- a history migration would require trusting an unversioned legacy format.
+  - Confirm the About metadata and packaged bundle both show 0.3.0 (4).
+  - Confirm Gatekeeper limitations are documented without recommending security bypasses.
 
 ## Result
 
-- Status: complete
-- Verification result: passed. All 23 core tests, localization lint/key parity, `git diff --check`, Debug build/launch, and read-only Russian Results inspection passed.
-- Notes: No real cleanup or restore was triggered. The focused forged-destination test initially exposed a symlink-parent gap; canonical-parent rebuilding plus descriptor-relative exclusive rename resolved it. The known stale CoreSimulator warning remains non-blocking for macOS builds.
+- Status: in progress
+- Verification result: pending final main-branch package and GitHub release validation.
+- Notes: no Developer ID identity is installed, so the release will remain transparently labeled ad-hoc signed and not notarized.

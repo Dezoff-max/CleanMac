@@ -5,8 +5,9 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
     case dashboard
     case scan
     case results
+    case diskAnalysis
+    case duplicates
     case applications
-    case permissions
     case settings
 
     var id: String { rawValue }
@@ -16,8 +17,9 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
         case .dashboard: L.t("section.dashboard")
         case .scan: L.t("section.scan")
         case .results: L.t("section.results")
+        case .diskAnalysis: L.t("section.diskAnalysis")
+        case .duplicates: L.t("section.duplicates")
         case .applications: L.t("section.applications")
-        case .permissions: L.t("section.permissions")
         case .settings: L.t("section.settings")
         }
     }
@@ -27,8 +29,9 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
         case .dashboard: "gauge.with.dots.needle.67percent"
         case .scan: "magnifyingglass"
         case .results: "checklist"
+        case .diskAnalysis: "chart.pie.fill"
+        case .duplicates: "square.on.square"
         case .applications: "app.badge.checkmark"
-        case .permissions: "lock.shield"
         case .settings: "gearshape"
         }
     }
@@ -112,6 +115,9 @@ extension CleanupScanReason {
         case .browserCache: L.t("results.reason.browserCache.title")
         case .nodePackageCache: L.t("results.reason.nodePackageCache.title")
         case .swiftPackageCache: L.t("results.reason.swiftPackageCache.title")
+        case .developerPackageCache: L.t("results.reason.developerPackageCache.title")
+        case .developerIDECache: L.t("results.reason.developerIDECache.title")
+        case .developerAITemporaryFile: L.t("results.reason.developerAITemporaryFile.title")
         case .staleLog: L.t("results.reason.staleLog.title")
         case .rotatedLog: L.t("results.reason.rotatedLog.title")
         case .staleTemporary: L.t("results.reason.staleTemporary.title")
@@ -120,6 +126,10 @@ extension CleanupScanReason {
         case .oldDownload: L.t("results.reason.oldDownload.title")
         case .installerArchive: L.t("results.reason.installerArchive.title")
         case .xcodeBuildData: L.t("results.reason.xcodeBuildData.title")
+        case .xcodeDeviceSupport: L.t("results.reason.xcodeDeviceSupport.title")
+        case .xcodePreviewData: L.t("results.reason.xcodePreviewData.title")
+        case .staleSimulatorData: L.t("results.reason.staleSimulatorData.title")
+        case .xcodeArchive: L.t("results.reason.xcodeArchive.title")
         }
     }
 
@@ -129,6 +139,9 @@ extension CleanupScanReason {
         case .browserCache: L.t("results.reason.browserCache.detail")
         case .nodePackageCache: L.t("results.reason.nodePackageCache.detail")
         case .swiftPackageCache: L.t("results.reason.swiftPackageCache.detail")
+        case .developerPackageCache: L.t("results.reason.developerPackageCache.detail")
+        case .developerIDECache: L.t("results.reason.developerIDECache.detail")
+        case .developerAITemporaryFile: L.t("results.reason.developerAITemporaryFile.detail")
         case .staleLog: L.t("results.reason.staleLog.detail")
         case .rotatedLog: L.t("results.reason.rotatedLog.detail")
         case .staleTemporary: L.t("results.reason.staleTemporary.detail")
@@ -137,6 +150,10 @@ extension CleanupScanReason {
         case .oldDownload: L.t("results.reason.oldDownload.detail")
         case .installerArchive: L.t("results.reason.installerArchive.detail")
         case .xcodeBuildData: L.t("results.reason.xcodeBuildData.detail")
+        case .xcodeDeviceSupport: L.t("results.reason.xcodeDeviceSupport.detail")
+        case .xcodePreviewData: L.t("results.reason.xcodePreviewData.detail")
+        case .staleSimulatorData: L.t("results.reason.staleSimulatorData.detail")
+        case .xcodeArchive: L.t("results.reason.xcodeArchive.detail")
         }
     }
 
@@ -146,6 +163,9 @@ extension CleanupScanReason {
         case .browserCache: "safari"
         case .nodePackageCache: "curlybraces.square"
         case .swiftPackageCache: "swift"
+        case .developerPackageCache: "shippingbox.and.arrow.backward"
+        case .developerIDECache: "curlybraces.square"
+        case .developerAITemporaryFile: "sparkles.rectangle.stack"
         case .staleLog: "doc.text.magnifyingglass"
         case .rotatedLog: "arrow.triangle.2.circlepath"
         case .staleTemporary: "clock.arrow.circlepath"
@@ -154,6 +174,10 @@ extension CleanupScanReason {
         case .oldDownload: "calendar.badge.clock"
         case .installerArchive: "opticaldiscdrive"
         case .xcodeBuildData: "hammer"
+        case .xcodeDeviceSupport: "iphone.gen3"
+        case .xcodePreviewData: "rectangle.on.rectangle.angled"
+        case .staleSimulatorData: "iphone.gen3.slash"
+        case .xcodeArchive: "archivebox"
         }
     }
 }
@@ -312,6 +336,33 @@ enum CleanMacCatalog {
                 isDefaultSelected: true
             ),
             CleanupArea(
+                category: .developerPackageCaches,
+                title: L.t("area.developerPackages.title"),
+                detail: L.t("area.developerPackages.detail"),
+                pathHint: "Homebrew, pip, ~/.cargo/registry, ~/.gradle/caches",
+                systemImage: "shippingbox.and.arrow.backward",
+                risk: .safe,
+                isDefaultSelected: true
+            ),
+            CleanupArea(
+                category: .developerIDECaches,
+                title: L.t("area.developerIDEs.title"),
+                detail: L.t("area.developerIDEs.detail"),
+                pathHint: "Cursor, Visual Studio Code — Cache only",
+                systemImage: "curlybraces.square",
+                risk: .safe,
+                isDefaultSelected: true
+            ),
+            CleanupArea(
+                category: .developerAITemporaryFiles,
+                title: L.t("area.developerAI.title"),
+                detail: L.t("area.developerAI.detail"),
+                pathHint: "~/.codex/{.tmp,tmp,cache}, ~/.claude/{cache,paste-cache}",
+                systemImage: "sparkles.rectangle.stack",
+                risk: .safe,
+                isDefaultSelected: true
+            ),
+            CleanupArea(
                 category: .logs,
                 title: L.t("area.logs.title"),
                 detail: L.t("area.logs.detail"),
@@ -364,6 +415,42 @@ enum CleanMacCatalog {
                 systemImage: "hammer",
                 risk: .review,
                 isDefaultSelected: true
+            ),
+            CleanupArea(
+                category: .xcodeDeviceSupport,
+                title: L.t("area.xcodeDeviceSupport.title"),
+                detail: L.t("area.xcodeDeviceSupport.detail"),
+                pathHint: "~/Library/Developer/Xcode/iOS DeviceSupport",
+                systemImage: "iphone.gen3",
+                risk: .review,
+                isDefaultSelected: false
+            ),
+            CleanupArea(
+                category: .xcodePreviews,
+                title: L.t("area.xcodePreviews.title"),
+                detail: L.t("area.xcodePreviews.detail"),
+                pathHint: "~/Library/Developer/Xcode/UserData/Previews",
+                systemImage: "rectangle.on.rectangle.angled",
+                risk: .safe,
+                isDefaultSelected: true
+            ),
+            CleanupArea(
+                category: .xcodeSimulatorData,
+                title: L.t("area.xcodeSimulator.title"),
+                detail: L.t("area.xcodeSimulator.detail"),
+                pathHint: "~/Library/Developer/CoreSimulator/{Devices,Profiles/Runtimes}",
+                systemImage: "iphone.gen3.slash",
+                risk: .review,
+                isDefaultSelected: false
+            ),
+            CleanupArea(
+                category: .xcodeArchives,
+                title: L.t("area.xcodeArchives.title"),
+                detail: L.t("area.xcodeArchives.detail"),
+                pathHint: "~/Library/Developer/Xcode/Archives/*.xcarchive",
+                systemImage: "archivebox",
+                risk: .review,
+                isDefaultSelected: false
             )
         ]
     }

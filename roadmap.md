@@ -1,5 +1,103 @@
 # Roadmap
 
+- [x] ID: TASK-041
+  Title: CleanMac v0.3.0 release
+  Goal: Ship the verified disk analysis, onboarding, system dashboard, developer cleanup, and duplicate finder as the next feature release.
+  What to do: Bump version/build, merge the green feature PR, rebuild the ad-hoc arm64 distribution, verify its signature/version/checksum, and publish English GitHub release notes with ZIP and SHA-256 assets.
+  Files: Xcode version settings, release artifacts, Loop docs, GitHub PR/release metadata
+  Definition of done: main contains the feature work; `dist/CleanMac.app` reports 0.3.0 (4); the extracted ZIP passes strict ad-hoc signature verification; checksum matches; v0.3.0 is the latest GitHub release.
+  Verification: `swift test --package-path CleanMacCore`; `./script/build_and_run.sh --verify`; `./script/package_release.sh`; bundle metadata/architecture/signature/checksum inspection; green GitHub CI; downloaded release-asset verification
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: small
+  Confidence: high
+  Score: high impact / medium risk / small
+
+- [x] ID: TASK-040
+  Title: Safe duplicate finder
+  Goal: Find exact duplicate files through staged SHA-256 hashing while always preserving one original and requiring explicit Trash review.
+  What to do: Add size/partial/full-hash stages, hard-link exclusion, a bounded slow mode for files over 500 MiB, a separate grouped UI, and a copy-only Trash planner/executor.
+  Files: duplicate core models/scanner/planner/tests, duplicate SwiftUI screen/workspace service, navigation/localization, Loop docs
+  Definition of done: no automatic selection; large candidates are reported or hashed in slow mode; originals cannot be selected; only unchanged validated copies can move to Trash after confirmation.
+  Verification: focused safety/performance tests; localization lint/key parity; `swift test --package-path CleanMacCore`; Debug build; `./script/build_and_run.sh --verify`; temporary-fixture UI review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: high
+  Effort: large
+  Confidence: high
+  Score: high impact / high risk / large
+
+- [x] ID: TASK-039
+  Title: Advanced developer cleanup
+  Goal: Add precise cleanup categories for package managers, IDEs, AI tools, and Xcode storage without touching developer settings, extensions, projects, history, or memory.
+  What to do: Add exact allowlist roots, localized category/reason copy, 180-day Simulator review filtering, and review-only non-default Xcode Archives.
+  Files: cleanup core models/scanner/policy/tests, app catalog/localization, Loop docs
+  Definition of done: reproducible caches are discoverable; sensitive neighboring data is excluded by tests; Simulator and Archives stay manual review; Archives is never selected by default.
+  Verification: focused safety tests; `swift test --package-path CleanMacCore`; localization lint/key parity; Debug build; `./script/build_and_run.sh --verify`; read-only Scan review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: high
+  Effort: medium
+  Confidence: high
+  Score: high impact / high risk / medium
+
+- [x] ID: TASK-038
+  Title: Settings permissions and launch at login
+  Goal: Consolidate access controls in Settings and keep scheduled CleanMac work available after macOS login without opening the main window.
+  What to do: Remove Permissions from the sidebar, embed its live controls in Settings, add `SMAppService.mainApp` registration/status/error handling, and stop forcing app activation during background launch.
+  Files: app lifecycle, section model/navigation, Settings/Permissions views, launch-at-login service, localization, Loop docs
+  Definition of done: Settings is the single configuration destination; Login Item reflects macOS truth, handles denial/approval clearly, and background launch leaves the main window closed while normal launch and menu-bar Open still work.
+  Verification: localization lint/key parity; `swift test --package-path CleanMacCore`; Debug build; `./script/build_and_run.sh --verify`; read-only Login Item status; foreground/background launch review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: high impact / medium risk / medium
+
+- [x] ID: TASK-037
+  Title: Live system dashboard menu bar
+  Goal: Rebuild the menu-bar popover as a compact live system dashboard based on the supplied Mac Sai layout.
+  What to do: Add lightweight local CPU/memory/disk/battery/network/uptime sampling, an adaptive light/dark 2x2 gauge layout, compact scan state, and reference-style bottom actions.
+  Files: `CleanMac/Support/StatusSystemMetrics.swift`, `CleanMac/Views/StatusMenuView.swift`, app scene styling, localization, Loop docs
+  Definition of done: Live metrics refresh only while open, unavailable battery degrades safely, existing scan state remains visible, actions work, and RU/EN content fits the popover.
+  Verification: localization lint/key parity; `swift test --package-path CleanMacCore`; Debug build; `./script/build_and_run.sh --verify`; live menu screenshot/accessibility review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: high impact / medium risk / medium
+
+- [x] ID: TASK-036
+  Title: First-launch system onboarding
+  Goal: Introduce CleanMac on first launch with a native four-step flow matching the supplied reference structure.
+  What to do: Add system-adaptive Welcome, capabilities, Full Disk Access, and completion pages inside the primary launch window, with persistent completion and explicit-only System Settings access.
+  Files: `CleanMac/CleanMacApp.swift`, `CleanMac/Support/CleanMacPreferences.swift`, `CleanMac/Views/OnboardingView.swift`, localization, Loop docs
+  Definition of done: Onboarding appears only before completion, follows system appearance, supports Back/Next/Skip, describes only shipped features, never requests access automatically, and a completed relaunch opens the main UI directly.
+  Verification: localization lint/key parity; `swift test --package-path CleanMacCore`; Debug build; `./script/build_and_run.sh --verify`; first-launch/relaunch visual review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: low
+  Effort: medium
+  Confidence: high
+  Score: high impact / low risk / medium
+
+- [x] ID: TASK-035
+  Title: Read-only disk analysis
+  Goal: Explain disk usage with a large-file review and an interactive radial folder map without classifying personal files as junk.
+  What to do: Add a cancellable bounded analyzer in `CleanMacCore`, whole-disk/Home/Downloads/custom-folder sources, 50 MB–1 GB filters, size/date/type sorting, Finder/Open actions, a modern animated scan indicator, and a multi-ring drill-down map inspired by the supplied reference.
+  Files: `CleanMacCore/Sources/CleanMacCore/DiskAnalyzer.swift`, focused core tests, `CleanMac/Views/DiskAnalysisView.swift`, narrow AppKit folder/workspace service, navigation/localization, Loop docs
+  Definition of done: One read-only scan powers both modes; no file is selected automatically; map sectors drill into folders and animate a localized GB tooltip on hover; analyzer results stay out of all cleanup totals, plans, history, and scheduled scans.
+  Verification: `swift test --package-path CleanMacCore`; localization lint/key parity; Debug build; `./script/build_and_run.sh --verify`; read-only visual review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: large
+  Confidence: high
+  Score: high impact / medium risk / large
+
 - [x] ID: TASK-034
   Title: Persistent cleanup history
   Goal: Preserve Trash-based cleanup history across app launches without trusting stored paths blindly.

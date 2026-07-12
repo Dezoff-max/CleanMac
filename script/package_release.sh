@@ -46,6 +46,26 @@ sanitize_app_bundle() {
   xattr -dr com.apple.ResourceFork "$app_path" 2>/dev/null || true
 }
 
+codesign_clean_bundle() {
+  local app_path="$1"
+  shift
+  local attempt
+
+  for attempt in 1 2 3; do
+    sanitize_app_bundle "$app_path"
+    if codesign "$@" "$app_path"; then
+      return 0
+    fi
+
+    if [[ "$attempt" -lt 3 ]]; then
+      echo "codesign metadata race; retrying ($attempt/3)..." >&2
+      sleep 0.2
+    fi
+  done
+
+  return 1
+}
+
 create_zip() {
   local zip_path="$1"
   local zip_root="$DIST_DIR/.ziproot"
@@ -112,16 +132,14 @@ sanitize_app_bundle "$DIST_APP"
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
   echo "Signing $DIST_APP with: $SIGN_IDENTITY"
-  codesign --force --deep --options runtime --timestamp --sign "$SIGN_IDENTITY" "$DIST_APP"
-  codesign --force --options runtime --timestamp --entitlements "$ENTITLEMENTS_PATH" --sign "$SIGN_IDENTITY" "$DIST_APP"
-  sanitize_app_bundle "$DIST_APP"
-  codesign --verify --deep --strict --verbose=2 "$DIST_APP"
+  codesign_clean_bundle "$DIST_APP" --force --deep --options runtime --timestamp --sign "$SIGN_IDENTITY"
+  codesign_clean_bundle "$DIST_APP" --force --options runtime --timestamp --entitlements "$ENTITLEMENTS_PATH" --sign "$SIGN_IDENTITY"
+  codesign_clean_bundle "$DIST_APP" --verify --deep --strict --verbose=2
 else
   echo "No CLEANMAC_SIGN_IDENTITY configured; applying ad-hoc signature for local validation."
-  codesign --force --deep --options runtime --sign - "$DIST_APP"
-  codesign --force --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign - "$DIST_APP"
-  sanitize_app_bundle "$DIST_APP"
-  codesign --verify --deep --strict --verbose=2 "$DIST_APP"
+  codesign_clean_bundle "$DIST_APP" --force --deep --options runtime --sign -
+  codesign_clean_bundle "$DIST_APP" --force --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign -
+  codesign_clean_bundle "$DIST_APP" --verify --deep --strict --verbose=2
 fi
 
 create_zip "$ZIP_PATH"

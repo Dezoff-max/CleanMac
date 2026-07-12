@@ -2,6 +2,7 @@ import CleanMacCore
 import Foundation
 
 enum CleanMacPreferenceKeys {
+    static let onboardingCompleted = "CleanMac.onboardingCompleted"
     static let selectedAreaIDs = "CleanMac.selectedAreaIDs"
     static let lastScanItemCount = "CleanMac.lastScanItemCount"
     static let lastScanBytes = "CleanMac.lastScanBytes"

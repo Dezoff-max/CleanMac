@@ -29,6 +29,31 @@ struct CleanupRootResolver {
             ]
         case .swiftPackageBuilds:
             [homeDirectory.appending(path: "Library/Caches/org.swift.swiftpm", directoryHint: .isDirectory)]
+        case .developerPackageCaches:
+            [
+                homeDirectory.appending(path: "Library/Caches/Homebrew", directoryHint: .isDirectory),
+                homeDirectory.appending(path: "Library/Caches/pip", directoryHint: .isDirectory),
+                homeDirectory.appending(path: ".cargo/registry/cache", directoryHint: .isDirectory),
+                homeDirectory.appending(path: ".cargo/registry/src", directoryHint: .isDirectory),
+                homeDirectory.appending(path: ".gradle/caches", directoryHint: .isDirectory)
+            ]
+        case .developerIDECaches:
+            electronCacheRoots(for: "Cursor")
+                + electronCacheRoots(for: "Code")
+                + [
+                    homeDirectory.appending(path: "Library/Caches/com.todesktop.230313mzl4w4u92", directoryHint: .isDirectory),
+                    homeDirectory.appending(path: "Library/Caches/com.microsoft.VSCode", directoryHint: .isDirectory)
+                ]
+        case .developerAITemporaryFiles:
+            [
+                homeDirectory.appending(path: ".codex/.tmp", directoryHint: .isDirectory),
+                homeDirectory.appending(path: ".codex/tmp", directoryHint: .isDirectory),
+                homeDirectory.appending(path: ".codex/cache", directoryHint: .isDirectory),
+                homeDirectory.appending(path: "Library/Caches/com.openai.codex", directoryHint: .isDirectory),
+                homeDirectory.appending(path: ".claude/cache", directoryHint: .isDirectory),
+                homeDirectory.appending(path: ".claude/paste-cache", directoryHint: .isDirectory),
+                homeDirectory.appending(path: "Library/Caches/com.anthropic.claudefordesktop", directoryHint: .isDirectory)
+            ]
         case .logs:
             [homeDirectory.appending(path: "Library/Logs", directoryHint: .isDirectory)]
         case .temporaryFiles:
@@ -41,7 +66,27 @@ struct CleanupRootResolver {
             [homeDirectory.appending(path: "Downloads", directoryHint: .isDirectory)]
         case .xcodeDerivedData:
             [homeDirectory.appending(path: "Library/Developer/Xcode/DerivedData", directoryHint: .isDirectory)]
+        case .xcodeDeviceSupport:
+            [homeDirectory.appending(path: "Library/Developer/Xcode/iOS DeviceSupport", directoryHint: .isDirectory)]
+        case .xcodePreviews:
+            [homeDirectory.appending(path: "Library/Developer/Xcode/UserData/Previews", directoryHint: .isDirectory)]
+        case .xcodeSimulatorData:
+            [
+                homeDirectory.appending(path: "Library/Developer/CoreSimulator/Devices", directoryHint: .isDirectory),
+                homeDirectory.appending(path: "Library/Developer/CoreSimulator/Profiles/Runtimes", directoryHint: .isDirectory)
+            ]
+        case .xcodeArchives:
+            [homeDirectory.appending(path: "Library/Developer/Xcode/Archives", directoryHint: .isDirectory)]
         }
+    }
+
+    private func electronCacheRoots(for applicationSupportName: String) -> [URL] {
+        let base = homeDirectory.appending(
+            path: "Library/Application Support/\(applicationSupportName)",
+            directoryHint: .isDirectory
+        )
+        return ["Cache", "Code Cache", "GPUCache", "CachedData", "CachedProfilesData"]
+            .map { base.appending(path: $0, directoryHint: .isDirectory) }
     }
 
     func rootURL(for category: CleanupCategory) -> URL {

@@ -1,52 +1,51 @@
 import AppKit
 import SwiftUI
 
-struct PermissionsView: View {
+struct PermissionsSettingsSection: View {
     @State private var fullDiskAccess = FullDiskAccessChecker().check()
     @State private var finderAutomationPermission: FinderAutomationPermission?
     @State private var isRequestingFinderAutomation = false
 
     var body: some View {
-        PageContainer {
-            VStack(alignment: .leading, spacing: 20) {
-                PageHeader(
-                    title: L.t("permissions.title"),
-                    subtitle: L.t("permissions.subtitle"),
-                    systemImage: "lock.shield"
-                )
+        VStack(alignment: .leading, spacing: 12) {
+            Label(L.t("permissions.title"), systemImage: "lock.shield")
+                .font(.title3.bold())
 
-                VStack(spacing: 10) {
-                    ForEach(CleanMacCatalog.permissions(
-                        fullDiskAccess: fullDiskAccess,
-                        finderAutomationPermission: finderAutomationPermission
-                    )) { permission in
-                        if permission.id == "automation" {
-                            PermissionRow(
-                                permission: permission,
-                                actionTitle: automationActionTitle,
-                                isActionInProgress: isRequestingFinderAutomation || finderAutomationPermission == nil,
-                                action: handleAutomationAction
-                            )
-                        } else {
-                            PermissionRow(permission: permission)
-                        }
+            Text(L.t("permissions.subtitle"))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            VStack(spacing: 10) {
+                ForEach(CleanMacCatalog.permissions(
+                    fullDiskAccess: fullDiskAccess,
+                    finderAutomationPermission: finderAutomationPermission
+                )) { permission in
+                    if permission.id == "automation" {
+                        PermissionRow(
+                            permission: permission,
+                            actionTitle: automationActionTitle,
+                            isActionInProgress: isRequestingFinderAutomation || finderAutomationPermission == nil,
+                            action: handleAutomationAction
+                        )
+                    } else {
+                        PermissionRow(permission: permission)
                     }
                 }
+            }
 
-                HStack {
-                    Spacer()
+            HStack {
+                Spacer()
 
-                    Button {
-                        refreshAccess()
-                    } label: {
-                        Label(L.t("button.refreshAccess"), systemImage: "arrow.clockwise")
-                    }
+                Button {
+                    refreshAccess()
+                } label: {
+                    Label(L.t("button.refreshAccess"), systemImage: "arrow.clockwise")
+                }
 
-                    Button {
-                        openPrivacySettings()
-                    } label: {
-                        Label(L.t("button.openSystemSettings"), systemImage: "gearshape")
-                    }
+                Button {
+                    openPrivacySettings()
+                } label: {
+                    Label(L.t("button.openSystemSettings"), systemImage: "gearshape")
                 }
             }
         }

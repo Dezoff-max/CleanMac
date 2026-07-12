@@ -7,6 +7,7 @@ struct CleanMacApp: App {
     @Environment(\.openWindow) private var openWindow
     @AppStorage(CleanMacAppearance.storageKey) private var appearanceMode = CleanMacAppearance.defaultCode
     @AppStorage(CleanMacLanguage.storageKey) private var languageCode = CleanMacLanguage.defaultCode
+    @AppStorage(CleanMacPreferenceKeys.onboardingCompleted) private var onboardingCompleted = false
 
     private var language: CleanMacLanguage {
         CleanMacLanguage(rawValue: languageCode) ?? .current
@@ -18,9 +19,18 @@ struct CleanMacApp: App {
 
     var body: some Scene {
         WindowGroup("CleanMac", id: "main") {
-            MainWindowView()
-                .environment(\.locale, language.locale)
-                .preferredColorScheme(appearance.colorScheme)
+            Group {
+                if onboardingCompleted {
+                    MainWindowView()
+                        .preferredColorScheme(appearance.colorScheme)
+                } else {
+                    OnboardingView {
+                        onboardingCompleted = true
+                    }
+                    .preferredColorScheme(nil)
+                }
+            }
+            .environment(\.locale, language.locale)
         }
         .defaultSize(width: 980, height: 720)
         .windowResizability(.contentMinSize)
@@ -44,7 +54,7 @@ struct CleanMacApp: App {
         MenuBarExtra("CleanMac", image: "MenuBarIcon") {
             StatusMenuView()
                 .environment(\.locale, language.locale)
-                .preferredColorScheme(appearance.colorScheme)
+                .environment(\.colorScheme, appearance.colorScheme)
         }
         .menuBarExtraStyle(.window)
     }
@@ -54,9 +64,9 @@ final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
     private let autoScanScheduler = CleanMacAutoScanScheduler()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        MainWindowController.prepareForInitialPresentation(isBackgroundLaunch: !NSApp.isActive)
         NSApp.setActivationPolicy(.regular)
         configureDockIcon()
-        NSApp.activate(ignoringOtherApps: true)
         CleanMacNotificationService.configure()
         requestNotificationAuthorizationIfUseful()
         autoScanScheduler.start()
@@ -64,6 +74,15 @@ final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
+    }
+
+    func applicationWillBecomeActive(_ notification: Notification) {
+        MainWindowController.handleReopen()
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        MainWindowController.handleReopen()
+        return true
     }
 
     func applicationWillTerminate(_ notification: Notification) {

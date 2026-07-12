@@ -1,3 +1,4 @@
+import ServiceManagement
 import SwiftUI
 
 struct SettingsView: View {
@@ -55,6 +56,9 @@ struct SettingsView: View {
                     systemImage: "gearshape"
                 )
 
+                Label(L.t("settings.general"), systemImage: "switch.2")
+                    .font(.title3.bold())
+
                 InfoPanel {
                     VStack(alignment: .leading, spacing: 14) {
                         Toggle(isOn: $safeModeEnabled) {
@@ -72,6 +76,10 @@ struct SettingsView: View {
                         Toggle(isOn: $showMenuBarStatus) {
                             Label(L.t("settings.showMenuBarStatus"), systemImage: "menubar.rectangle")
                         }
+
+                        Divider()
+
+                        LaunchAtLoginSettingsRow()
 
                         Divider()
 
@@ -155,6 +163,8 @@ struct SettingsView: View {
                         }
                     }
                 }
+
+                PermissionsSettingsSection()
             }
         }
     }
@@ -221,5 +231,143 @@ struct SettingsView: View {
         case .denied, .failed:
             return .orange
         }
+    }
+}
+
+private struct LaunchAtLoginSettingsRow: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @StateObject private var manager = LaunchAtLoginManager.shared
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle(isOn: enabledBinding) {
+                Label(L.t("settings.launchAtLogin"), systemImage: "person.crop.circle.badge.checkmark")
+            }
+            .disabled(manager.isBusy)
+
+            HStack(spacing: 8) {
+                Label(statusTitle, systemImage: statusIcon)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(statusColor)
+
+                if manager.isBusy {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+
+                Spacer()
+
+                if shouldOfferSystemSettings {
+                    Button(L.t("settings.launchAtLogin.openSystemSettings")) {
+                        manager.openSystemSettings()
+                    }
+                    .controlSize(.small)
+                }
+            }
+
+            Text(statusDetail)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let failure = manager.lastFailure {
+                Label(failureText(failure), systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .task {
+            manager.refresh(clearFailure: true)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else {
+                return
+            }
+            manager.refresh(clearFailure: true)
+        }
+    }
+
+    private var enabledBinding: Binding<Bool> {
+        Binding {
+            manager.isRequested
+        } set: { enabled in
+            Task {
+                await manager.setEnabled(enabled)
+            }
+        }
+    }
+
+    private var shouldOfferSystemSettings: Bool {
+        manager.status == .requiresApproval || manager.status == .notFound || manager.lastFailure != nil
+    }
+
+    private var statusTitle: String {
+        switch manager.status {
+        case .notRegistered:
+            L.t("settings.launchAtLogin.status.disabled")
+        case .enabled:
+            L.t("settings.launchAtLogin.status.enabled")
+        case .requiresApproval:
+            L.t("settings.launchAtLogin.status.requiresApproval")
+        case .notFound:
+            L.t("settings.launchAtLogin.status.unavailable")
+        @unknown default:
+            L.t("settings.launchAtLogin.status.unavailable")
+        }
+    }
+
+    private var statusDetail: String {
+        switch manager.status {
+        case .notRegistered:
+            L.t("settings.launchAtLogin.detail.disabled")
+        case .enabled:
+            L.t("settings.launchAtLogin.detail.enabled")
+        case .requiresApproval:
+            L.t("settings.launchAtLogin.detail.requiresApproval")
+        case .notFound:
+            L.t("settings.launchAtLogin.detail.unavailable")
+        @unknown default:
+            L.t("settings.launchAtLogin.detail.unavailable")
+        }
+    }
+
+    private var statusIcon: String {
+        switch manager.status {
+        case .enabled:
+            "checkmark.circle.fill"
+        case .requiresApproval:
+            "exclamationmark.circle.fill"
+        case .notFound:
+            "xmark.circle.fill"
+        case .notRegistered:
+            "circle"
+        @unknown default:
+            "questionmark.circle"
+        }
+    }
+
+    private var statusColor: Color {
+        switch manager.status {
+        case .enabled:
+            .green
+        case .requiresApproval:
+            .orange
+        case .notFound:
+            .red
+        case .notRegistered:
+            .secondary
+        @unknown default:
+            .secondary
+        }
+    }
+
+    private func failureText(_ failure: LaunchAtLoginManager.Failure) -> String {
+        L.f(
+            failure.enabling
+                ? "settings.launchAtLogin.error.enable"
+                : "settings.launchAtLogin.error.disable",
+            failure.systemMessage
+        )
     }
 }

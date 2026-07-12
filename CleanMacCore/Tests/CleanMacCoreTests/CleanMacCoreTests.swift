@@ -111,6 +111,189 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertEqual(itemsByCategory[.downloadedInstallers]?.first?.reasons, [.installerArchive])
     }
 
+    func testDeveloperCacheRootsAreExactAndExcludeUserData() {
+        let home = URL(fileURLWithPath: "/Users/Test")
+        let resolver = CleanupRootResolver(
+            homeDirectory: home,
+            temporaryDirectory: URL(fileURLWithPath: "/tmp/Test")
+        )
+        let paths = [
+            CleanupCategory.developerPackageCaches,
+            .developerIDECaches,
+            .developerAITemporaryFiles
+        ].flatMap { resolver.rootURLs(for: $0).map(\.path) }
+
+        let requiredSuffixes = [
+            "/Library/Caches/Homebrew",
+            "/Library/Caches/pip",
+            "/.cargo/registry/cache",
+            "/.cargo/registry/src",
+            "/.gradle/caches",
+            "/Application Support/Cursor/Cache",
+            "/Application Support/Code/Cache",
+            "/.codex/.tmp",
+            "/.codex/tmp",
+            "/.codex/cache",
+            "/.claude/cache",
+            "/.claude/paste-cache"
+        ]
+        for suffix in requiredSuffixes {
+            XCTAssertTrue(paths.contains { $0.hasSuffix(suffix) }, "Missing exact root: \(suffix)")
+        }
+
+        let forbiddenFragments = [
+            "/Cursor/User",
+            "/Code/User",
+            "/extensions",
+            "/workspaceStorage",
+            "/Backups",
+            "/.codex/sessions",
+            "/.codex/archived_sessions",
+            "/.codex/shell_snapshots",
+            "/.codex/memories",
+            "/.claude/projects",
+            "/.claude/history",
+            "/.claude/shell-snapshots"
+        ]
+        for path in paths {
+            for forbidden in forbiddenFragments {
+                XCTAssertFalse(path.contains(forbidden), "Developer cleanup must not target \(forbidden): \(path)")
+            }
+        }
+    }
+
+    func testScannerFindsDeveloperCachesButNotNeighboringUserData() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let includedRoots = [
+            "Library/Caches/Homebrew",
+            "Library/Caches/pip",
+            ".cargo/registry/cache",
+            ".cargo/registry/src",
+            ".gradle/caches",
+            "Library/Application Support/Cursor/Cache",
+            "Library/Application Support/Code/GPUCache",
+            ".codex/.tmp",
+            ".codex/tmp",
+            ".codex/cache",
+            ".claude/cache",
+            ".claude/paste-cache"
+        ]
+        var expectedCandidatePaths: Set<String> = []
+        for (index, relativeRoot) in includedRoots.enumerated() {
+            let candidate = home.appending(path: relativeRoot, directoryHint: .isDirectory)
+                .appending(path: "candidate-\(index)", directoryHint: .isDirectory)
+            try FileManager.default.createDirectory(at: candidate, withIntermediateDirectories: true)
+            try writeBytes(count: 16, to: candidate.appending(path: "cache.bin"))
+            expectedCandidatePaths.insert(canonicalPath(candidate.path))
+        }
+
+        let forbiddenFiles = [
+            ".codex/sessions/session.jsonl",
+            ".codex/memories/MEMORY.md",
+            ".claude/projects/project.json",
+            "Library/Application Support/Cursor/User/settings.json",
+            "Library/Application Support/Code/extensions/extension.bin"
+        ].map { home.appending(path: $0) }
+        for file in forbiddenFiles {
+            try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try writeBytes(count: 16, to: file)
+        }
+
+        let scanner = CleanupScanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+        let report = scanner.scan(
+            categories: [.developerPackageCaches, .developerIDECaches, .developerAITemporaryFiles],
+            options: CleanupScanOptions(maxItemsPerCategory: 40, maxDescendantsPerItem: 50)
+        )
+        let scannedPaths = Set(report.items.map { canonicalPath($0.path) })
+
+        XCTAssertTrue(expectedCandidatePaths.isSubset(of: scannedPaths))
+        XCTAssertTrue(report.items.allSatisfy { $0.risk == .safe })
+        XCTAssertFalse(report.items.contains { item in
+            forbiddenFiles.contains { canonicalPath($0.path) == canonicalPath(item.path) }
+        })
+    }
+
+    func testXcodeDeveloperStorageUsesReviewAndAgeRules() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let deviceSupport = home.appending(path: "Library/Developer/Xcode/iOS DeviceSupport/17.0", directoryHint: .isDirectory)
+        let previews = home.appending(path: "Library/Developer/Xcode/UserData/Previews/Simulator Devices", directoryHint: .isDirectory)
+        let oldDevice = home.appending(path: "Library/Developer/CoreSimulator/Devices/OLD-DEVICE", directoryHint: .isDirectory)
+        let recentDevice = home.appending(path: "Library/Developer/CoreSimulator/Devices/RECENT-DEVICE", directoryHint: .isDirectory)
+        let oldRuntime = home.appending(path: "Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 16.simruntime", directoryHint: .isDirectory)
+        let archive = home.appending(path: "Library/Developer/Xcode/Archives/2025-01-01/My App.xcarchive", directoryHint: .isDirectory)
+
+        for directory in [deviceSupport, previews, oldDevice, recentDevice, oldRuntime, archive] {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try writeBytes(count: 16, to: directory.appending(path: "data.bin"))
+        }
+        try setModificationDate(Date().addingTimeInterval(-200 * 24 * 60 * 60), for: oldDevice)
+        try setModificationDate(Date().addingTimeInterval(-10 * 24 * 60 * 60), for: recentDevice)
+        try setModificationDate(Date().addingTimeInterval(-220 * 24 * 60 * 60), for: oldRuntime)
+
+        let scanner = CleanupScanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+        let report = scanner.scan(
+            categories: [.xcodeDeviceSupport, .xcodePreviews, .xcodeSimulatorData, .xcodeArchives],
+            options: CleanupScanOptions(
+                maxItemsPerCategory: 20,
+                maxDescendantsPerItem: 50,
+                staleDeveloperDataAge: 180 * 24 * 60 * 60
+            )
+        )
+        let itemsByPath = Dictionary(uniqueKeysWithValues: report.items.map { (canonicalPath($0.path), $0) })
+
+        XCTAssertEqual(itemsByPath[canonicalPath(deviceSupport.path)]?.risk, .review)
+        XCTAssertEqual(itemsByPath[canonicalPath(previews.path)]?.risk, .safe)
+        XCTAssertEqual(itemsByPath[canonicalPath(oldDevice.path)]?.reasons, [.staleSimulatorData])
+        XCTAssertEqual(itemsByPath[canonicalPath(oldRuntime.path)]?.reasons, [.staleSimulatorData])
+        XCTAssertNil(itemsByPath[canonicalPath(recentDevice.path)])
+        XCTAssertEqual(itemsByPath[canonicalPath(archive.path)]?.risk, .review)
+        XCTAssertEqual(itemsByPath[canonicalPath(archive.path)]?.reasons, [.xcodeArchive])
+        XCTAssertFalse(report.items.contains { $0.category == .xcodeArchives && $0.risk == .safe })
+    }
+
+    func testDeveloperPlannerRejectsSensitiveNeighborsAndBroadXcodePaths() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let aiCache = home.appending(path: ".codex/tmp/job", directoryHint: .isDirectory)
+        let aiSession = home.appending(path: ".codex/sessions/session.jsonl")
+        let archive = home.appending(path: "Library/Developer/Xcode/Archives/2025-01-01/App.xcarchive", directoryHint: .isDirectory)
+        let archiveDay = archive.deletingLastPathComponent()
+        let simulatorDevice = home.appending(path: "Library/Developer/CoreSimulator/Devices/DEVICE", directoryHint: .isDirectory)
+        let simulatorNestedData = simulatorDevice.appending(path: "data/private", directoryHint: .isDirectory)
+
+        for directory in [aiCache, archive, simulatorNestedData] {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        }
+        try FileManager.default.createDirectory(at: aiSession.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try writeBytes(count: 8, to: aiSession)
+
+        let items = [
+            makeScanItem(category: .developerAITemporaryFiles, path: aiCache.path, isDirectory: true),
+            makeScanItem(category: .developerAITemporaryFiles, path: aiSession.path),
+            makeScanItem(category: .xcodeArchives, path: archive.path, isDirectory: true),
+            makeScanItem(category: .xcodeArchives, path: archiveDay.path, isDirectory: true),
+            makeScanItem(category: .xcodeSimulatorData, path: simulatorDevice.path, isDirectory: true),
+            makeScanItem(category: .xcodeSimulatorData, path: simulatorNestedData.path, isDirectory: true)
+        ]
+        let plan = CleanupPlanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+            .plan(for: items)
+
+        XCTAssertEqual(Set(plan.items.map(\.originalPath)), Set([
+            canonicalPath(aiCache.path),
+            canonicalPath(archive.path),
+            canonicalPath(simulatorDevice.path)
+        ]))
+        XCTAssertEqual(plan.rejectedItems.count, 3)
+    }
+
     func testScannerReportsCategoryProgress() throws {
         let root = try makeTemporaryRoot()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -914,7 +1097,15 @@ final class CleanMacCoreTests: XCTestCase {
     }
 
     private var reviewCategories: Set<CleanupCategory> {
-        [.downloads, .downloadedInstallers, .trash, .xcodeDerivedData]
+        [
+            .downloads,
+            .downloadedInstallers,
+            .trash,
+            .xcodeDerivedData,
+            .xcodeDeviceSupport,
+            .xcodeSimulatorData,
+            .xcodeArchives
+        ]
     }
 }
 
