@@ -24,12 +24,14 @@
   - `CleanMac/Views/SettingsView.swift`
   - `CleanMac/en.lproj/Localizable.strings`
   - `CleanMac/ru.lproj/Localizable.strings`
+  - `script/package_release.sh`
   - Loop documentation files
 - Allowed commands:
   - localization plist lint and RU/EN key parity
   - `swift test --package-path CleanMacCore`
   - Debug `xcodebuild`
   - `./script/build_and_run.sh --verify`
+  - `./script/package_release.sh`
   - read-only `SMAppService.mainApp.status` inspection
   - live Settings and foreground/background launch review
 - Out of scope:
@@ -64,5 +66,5 @@
 ## Result
 
 - Status: complete
-- Verification result: passed — 28 core tests, localization/key parity, Debug build, signed launch verification, live Settings review, and foreground/background lifecycle checks.
-- Notes: Login Item remained unchanged during verification. The current Debug copy reports `.notFound` because it runs from `Documents`; the localized UI explains installing CleanMac in Applications. Background launch produced zero main windows, while activation and menu-bar Open restored the existing window.
+- Verification result: passed — 28 core tests, localization/key parity, Debug build, signed launch verification, Release packaging, live Settings review, and foreground/background lifecycle checks.
+- Notes: Login Item remained unchanged during verification. The current Debug copy reports `.notFound` because it runs from `Documents`; the localized UI explains installing CleanMac in Applications. Background launch produced zero main windows, while activation and menu-bar Open restored the existing window. `dist` was rebuilt from commit `13fc508` and its fresh ZIP extraction passed strict codesign verification.

@@ -92,3 +92,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: initial SwiftUI window creation and macOS activation settle on different lifecycle turns, and `applicationShouldHandleReopen` is not guaranteed for the first process launch.
 - Fix: create the initial window transparent for 0.2 seconds, then show it if the app became active or order it out if the launch stayed in the background; activation, reopen, and menu-bar Open clear suppression and reveal the existing window.
 - Status: resolved; background launch has zero main windows, explicit activation shows one, and menu-bar Open restores it. The initial build also required a direct `ServiceManagement` import in `SettingsView`, and the known FinderInfo build-product attribute was cleared before the successful signed launch rerun.
+
+## 2026-07-12 - TASK-038 - File Provider metadata during Release signing
+
+- Symptom: the first local package refresh built Release successfully, but File Provider attached `com.apple.FinderInfo` after sanitization and before the second outer codesign pass.
+- Cause: sanitizing once between signing steps still leaves a narrow external metadata race on the `Documents`-backed `dist` folder.
+- Fix: wrapped every app signing and local verification pass in a bounded three-attempt sanitize-and-retry helper, preserving strict fresh-ZIP verification as the final source of truth.
+- Status: resolved for the distributable; packaging created `CleanMac-13fc508-unsigned.zip` and its fresh extraction satisfies the designated requirement. File Provider can still reattach FinderInfo later to the convenience `dist/CleanMac.app`, so the verified ZIP remains the release source of truth.
