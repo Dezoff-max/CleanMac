@@ -2,25 +2,31 @@
 
 ## Task
 
-- ID: TASK-033
-- Title: Custom About window and v0.2.1 release
+- ID: TASK-034
+- Title: Persistent cleanup history
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user asked to replace the sparse system About panel with a polished window consistent with their other macOS apps, before publishing the pending v0.2.1 release.
-- Expected value: About CleanMac clearly presents the product, exact installed version/build, local-first safety model, author, license, and project links.
-- Main risk: creating duplicate windows, hardcoding a stale version, or using macOS APIs newer than the current macOS 14 deployment target.
-- UX constraint: preserve the current RU/EN language and light/dark appearance selections; keep the window compact, fixed-size, and independently closable.
+- Why this task now: cleanup history and restore already work, but the history is held only in SwiftUI state and disappears when CleanMac is relaunched.
+- Expected value: the user can still see and safely restore a previously trashed cleanup item after restarting the app.
+- Main risk: a modified or corrupt history file must never become authority to move an arbitrary file.
+- UX constraint: preserve the existing Results history UI and Trash-only cleanup behavior; only its lifetime and safety validation change.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMac/CleanMacApp.swift`
-  - `CleanMac/Views/AboutView.swift`
+  - `CleanMacCore/Sources/CleanMacCore/CleanupModels.swift`
+  - `CleanMacCore/Sources/CleanMacCore/CleanupPlanModels.swift`
+  - `CleanMacCore/Sources/CleanMacCore/CleanupPathPolicy.swift`
+  - `CleanMacCore/Sources/CleanMacCore/CleanupRestorer.swift`
+  - `CleanMacCore/Sources/CleanMacCore/CleanupHistoryStore.swift`
+  - `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`
+  - `CleanMac/Models/CleanMacModels.swift`
+  - `CleanMac/Views/MainWindowView.swift`
+  - `CleanMac/Views/ResultsView.swift`
   - `CleanMac/en.lproj/Localizable.strings`
   - `CleanMac/ru.lproj/Localizable.strings`
-  - `CleanMac.xcodeproj/project.pbxproj`
   - `project-analysis.md`
   - `roadmap.md`
   - `contract.md`
@@ -28,49 +34,49 @@
   - `trace.md`
   - `verification.md`
 - Allowed commands:
-  - localization/plist lint
+  - localization/plist lint and key-parity checks
   - `swift test --package-path CleanMacCore`
   - `./script/build_and_run.sh --verify`
-  - `./script/package_release.sh`
   - non-destructive UI inspection and screenshots
-  - focused Git/GitHub release commands after verification
+  - focused Git/GitHub commands after verification
 - Out of scope:
-  - cleanup behavior, scanner rules, application removal, permissions, signing identity setup, or notarization;
+  - new cleanup categories, permanent deletion, application-removal history, launch at login, release/version changes, signing, or notarization;
   - adding dependencies or changing the macOS deployment target;
-  - presenting an ad-hoc package as Apple-notarized.
+  - triggering cleanup or restore against real user files during verification.
 - Dependencies allowed: no
 - Destructive actions allowed: no
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - The app menu replaces the system About action with a localized `About CleanMac` action.
-  - A singleton About scene opens centered and does not create duplicate windows.
-  - The window presents the CleanMac icon, name, localized tagline, exact bundle version/build, developer, local-first mode, MIT license, and working GitHub/Release/License links.
-  - The selected RU/EN language and light/dark appearance apply to the About window.
-  - The window has a deliberate fixed content size and normal close behavior.
-  - Version 0.2.1 build 3 is packaged and published with an honest unsigned/ad-hoc distribution note.
+  - The history is stored as a versioned JSON file under `Application Support/CleanMac` using atomic replacement.
+  - Only successful cleanup moves create records, and each operation gets a unique history ID even when the same original path is reused.
+  - The newest 100 unique records are retained.
+  - Restored and failed statuses are written back to the store.
+  - Updates from multiple app windows use read-merge-write semantics and cannot downgrade a stored restored record.
+  - Persistence failures remain visible in the current window and produce a localized warning instead of a false durability claim.
+  - Missing or corrupt JSON loads as empty history without a crash or restore attempt.
+  - A persisted record can restore only from a direct child of the configured Trash root to a strict descendant of its category allowlist; forged paths and symbolic links are rejected before the move handler runs.
+  - The default move opens every parent path component with `openat(..., O_NOFOLLOW)`, pins both directory descriptors, and uses exclusive `renameatx_np`, so a raced destination cannot follow a substituted symlink or overwrite an existing item.
+  - The existing history panel explains that records persist across launches.
 - Required verification:
-  - localization lint
   - `swift test --package-path CleanMacCore`
+  - localization lint and RU/EN key parity
   - `./script/build_and_run.sh --verify`
-  - `./script/package_release.sh`
   - `git diff --check`
 - Manual checks:
-  - Open About from the application menu and confirm its visual hierarchy in Russian.
-  - Switch to English and dark appearance and confirm the About content updates.
-  - Invoke About more than once and confirm only one About window exists.
-  - Inspect the packaged app Info.plist for version 0.2.1 build 3 and verify the ZIP checksum.
+  - Open Results and confirm the persistent-history wording fits in Russian.
+  - Do not trigger real cleanup or restore.
 
 ## Restart Signals
 
 Restart or shrink the task if:
-- the SwiftUI `Window` scene does not behave as a singleton on macOS 14;
-- replacing `.appInfo` removes required application-menu behavior;
-- visual verification reveals clipping or a fixed-size window that does not fit localized content.
+- persisted restoration cannot be revalidated without weakening the existing allowlist;
+- Swift concurrency makes file persistence block or race with cleanup state;
+- a history migration would require trusting an unversioned legacy format.
 
 ## Result
 
 - Status: complete
-- Verification result: passed. Localization lint and key parity, all 15 core tests, `git diff --check`, Debug build/launch, live RU/EN and light/dark About review, singleton Window-menu inspection, Release packaging, checksum comparison, fresh-ZIP strict signature verification, protected GitHub CI, and the tag-driven Release workflow all passed.
-- Notes: PR #6 was merged into `main`; GitHub Release `v0.2.1` is published as latest with the verified arm64 ad-hoc archive and SHA-256 attachment. Per the user's final simplification, the metadata card contains only Developer and License.
+- Verification result: passed. All 23 core tests, localization lint/key parity, `git diff --check`, Debug build/launch, and read-only Russian Results inspection passed.
+- Notes: No real cleanup or restore was triggered. The focused forged-destination test initially exposed a symlink-parent gap; canonical-parent rebuilding plus descriptor-relative exclusive rename resolved it. The known stale CoreSimulator warning remains non-blocking for macOS builds.

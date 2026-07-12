@@ -285,8 +285,8 @@ final class CleanMacCoreTests: XCTestCase {
 
         let report = CleanupRestorer().restore(movedItems: [movedItem])
 
-        XCTAssertEqual(report.restoredItems.map(\.restoredPath), [originalFolder.path])
-        XCTAssertEqual(report.failedItems.count, 0)
+        XCTAssertEqual(report.restoredItems.map(\.restoredPath), [originalFolder.canonicalPath])
+        XCTAssertEqual(report.failedItems.count, 0, report.failedItems.map(\.message).joined(separator: "\n"))
         XCTAssertTrue(FileManager.default.fileExists(atPath: originalFolder.path))
         XCTAssertFalse(FileManager.default.fileExists(atPath: trashedFolder.path))
     }
@@ -522,6 +522,313 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertEqual(forgedPlan.rejectedItems.first?.reason, .invalidLeftover)
     }
 
+    func testCleanupHistoryStoreRoundTripsStatusesAndUsesPrivatePermissions() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let fileURL = root.appending(path: "Support/CleanMac/cleanup-history.json")
+        let store = CleanupHistoryStore(fileURL: fileURL)
+        let movedAt = Date(timeIntervalSinceReferenceDate: 123_456)
+        var restoredRecord = CleanupHistoryRecord(
+            id: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!,
+            category: .userCaches,
+            originalPath: "/Users/test/Library/Caches/Example",
+            trashedPath: "/Users/test/.Trash/Example",
+            movedAt: movedAt,
+            sizeBytes: 42
+        )
+        restoredRecord.markRestored(at: movedAt.addingTimeInterval(60))
+
+        var failedRecord = CleanupHistoryRecord(
+            id: UUID(uuidString: "22222222-2222-2222-2222-222222222222")!,
+            category: .downloads,
+            originalPath: "/Users/test/Downloads/Archive.zip",
+            trashedPath: "/Users/test/.Trash/Archive.zip",
+            movedAt: movedAt.addingTimeInterval(-60),
+            sizeBytes: 84
+        )
+        failedRecord.markRestoreFailed(reason: .destinationExists)
+
+        try store.save([restoredRecord, failedRecord])
+
+        XCTAssertEqual(store.load(), [restoredRecord, failedRecord])
+        let fileAttributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+        XCTAssertEqual(fileAttributes[.posixPermissions] as? NSNumber, NSNumber(value: 0o600))
+        let directoryAttributes = try FileManager.default.attributesOfItem(
+            atPath: fileURL.deletingLastPathComponent().path
+        )
+        XCTAssertEqual(directoryAttributes[.posixPermissions] as? NSNumber, NSNumber(value: 0o700))
+    }
+
+    func testCleanupHistoryStoreCapsAndDeduplicatesRecordsWithUniqueOperationIDs() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let originalPath = "/Users/test/Library/Caches/Repeated"
+        let movedItem = makeMovedItem(
+            category: .userCaches,
+            originalPath: originalPath,
+            trashedPath: "/Users/test/.Trash/Repeated"
+        )
+        let first = CleanupHistoryRecord(movedItem: movedItem, movedAt: Date())
+        let second = CleanupHistoryRecord(movedItem: movedItem, movedAt: Date())
+        let third = CleanupHistoryRecord(
+            category: .userCaches,
+            originalPath: "/Users/test/Library/Caches/Third",
+            trashedPath: "/Users/test/.Trash/Third",
+            movedAt: Date(),
+            sizeBytes: 1
+        )
+        XCTAssertNotEqual(first.id, second.id)
+
+        let store = CleanupHistoryStore(
+            fileURL: root.appending(path: "cleanup-history.json"),
+            maximumRecordCount: 2
+        )
+        try store.save([first, first, second, third])
+
+        XCTAssertEqual(store.load().map(\.id), [first.id, second.id])
+    }
+
+    func testCleanupHistoryStoreUpsertMergesWindowSnapshotsWithoutDowngradingRestoredState() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let store = CleanupHistoryStore(fileURL: root.appending(path: "cleanup-history.json"))
+        let first = CleanupHistoryRecord(
+            category: .userCaches,
+            originalPath: "/Users/test/Library/Caches/First",
+            trashedPath: "/Users/test/.Trash/First",
+            movedAt: Date(),
+            sizeBytes: 1
+        )
+        let second = CleanupHistoryRecord(
+            category: .downloads,
+            originalPath: "/Users/test/Downloads/Second.zip",
+            trashedPath: "/Users/test/.Trash/Second.zip",
+            movedAt: Date(),
+            sizeBytes: 2
+        )
+
+        XCTAssertEqual(try store.upserting([first]).map(\.id), [first.id])
+        XCTAssertEqual(try store.upserting([second]).map(\.id), [second.id, first.id])
+
+        var restoredFirst = first
+        restoredFirst.markRestored(at: Date())
+        let merged = try store.upserting([restoredFirst])
+        XCTAssertEqual(merged.map(\.id), [second.id, first.id])
+        XCTAssertEqual(merged.last?.status, .restored)
+
+        var staleFailedFirst = first
+        staleFailedFirst.markRestoreFailed(reason: .missingTrashItem)
+        let protectedState = try store.upserting([staleFailedFirst])
+        XCTAssertEqual(protectedState.last?.status, .restored)
+    }
+
+    func testCleanupHistoryStoreFailsClosedForCorruptUnknownOrOversizedFiles() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let fileURL = root.appending(path: "cleanup-history.json")
+        let store = CleanupHistoryStore(fileURL: fileURL)
+
+        try Data("{not-json".utf8).write(to: fileURL)
+        XCTAssertTrue(store.load().isEmpty)
+
+        try Data("{\"schemaVersion\":999,\"records\":[]}".utf8).write(to: fileURL)
+        XCTAssertTrue(store.load().isEmpty)
+
+        try Data(repeating: 1, count: 1_048_577).write(to: fileURL)
+        XCTAssertTrue(store.load().isEmpty)
+    }
+
+    func testPersistedCleanupHistoryRestoresOnlyValidatedCanonicalPaths() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let temp = root.appending(path: "Temp", directoryHint: .isDirectory)
+        let cacheRoot = home.appending(path: "Library/Caches", directoryHint: .isDirectory)
+        let trash = home.appending(path: ".Trash", directoryHint: .isDirectory)
+        let original = cacheRoot.appending(path: "Example", directoryHint: .isDirectory)
+        let trashed = trash.appending(path: "Example", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: cacheRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: trashed, withIntermediateDirectories: true)
+        try writeBytes(count: 16, to: trashed.appending(path: "cache.bin"))
+
+        let record = CleanupHistoryRecord(
+            category: .userCaches,
+            originalPath: original.path,
+            trashedPath: trashed.path,
+            movedAt: Date(),
+            sizeBytes: 16
+        )
+        let store = CleanupHistoryStore(fileURL: root.appending(path: "cleanup-history.json"))
+        try store.save([record])
+
+        let report = CleanupRestorer(
+            homeDirectory: home,
+            temporaryDirectory: temp,
+            trashDirectory: trash
+        ).restore(historyRecords: store.load())
+
+        XCTAssertEqual(report.restoredItems.map(\.restoredPath), [original.canonicalPath])
+        XCTAssertTrue(report.failedItems.isEmpty, report.failedItems.map(\.message).joined(separator: "\n"))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: original.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: trashed.path))
+
+        let repeatedReport = CleanupRestorer(
+            homeDirectory: home,
+            temporaryDirectory: temp,
+            trashDirectory: trash
+        ).restore(historyRecords: store.load())
+        XCTAssertEqual(repeatedReport.failedItems.first?.reason, .missingTrashItem)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: original.path))
+    }
+
+    func testPersistedCleanupHistoryRejectsSourcesOutsideDirectTrashChildren() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let temp = root.appending(path: "Temp", directoryHint: .isDirectory)
+        let cacheRoot = home.appending(path: "Library/Caches", directoryHint: .isDirectory)
+        let trash = home.appending(path: ".Trash", directoryHint: .isDirectory)
+        let nestedTrash = trash.appending(path: "Folder", directoryHint: .isDirectory)
+        let outside = root.appending(path: "Outside", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: cacheRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: nestedTrash, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: outside, withIntermediateDirectories: true)
+
+        let outsideItem = outside.appending(path: "outside.bin")
+        let nestedItem = nestedTrash.appending(path: "nested.bin")
+        let directItem = trash.appending(path: "direct.bin")
+        try writeBytes(count: 1, to: outsideItem)
+        try writeBytes(count: 1, to: nestedItem)
+        try writeBytes(count: 1, to: directItem)
+        let symbolicLink = trash.appending(path: "alias.bin")
+        try FileManager.default.createSymbolicLink(at: symbolicLink, withDestinationURL: outsideItem)
+        let parentAlias = trash.appending(path: "ParentAlias", directoryHint: .isDirectory)
+        try FileManager.default.createSymbolicLink(at: parentAlias, withDestinationURL: trash)
+        let aliasedParentItem = parentAlias.appending(path: directItem.lastPathComponent)
+
+        let destination = cacheRoot.appending(path: "Restored.bin").path
+        let records = [outsideItem, nestedItem, symbolicLink, aliasedParentItem].map {
+            CleanupHistoryRecord(
+                category: .userCaches,
+                originalPath: destination,
+                trashedPath: $0.path,
+                movedAt: Date(),
+                sizeBytes: 1
+            )
+        }
+        var moveCount = 0
+        let report = CleanupRestorer(
+            homeDirectory: home,
+            temporaryDirectory: temp,
+            trashDirectory: trash,
+            moveHandler: { _, _ in moveCount += 1 }
+        ).restore(historyRecords: records)
+
+        XCTAssertEqual(moveCount, 0)
+        XCTAssertEqual(
+            report.failedItems.map(\.reason),
+            [.outsideTrash, .outsideTrash, .symbolicLink, .outsideTrash]
+        )
+        XCTAssertTrue(FileManager.default.fileExists(atPath: outsideItem.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: nestedItem.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: directItem.path))
+    }
+
+    func testPersistedCleanupHistoryRejectsForgedDestinationsBeforeMove() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let temp = root.appending(path: "Temp", directoryHint: .isDirectory)
+        let cacheRoot = home.appending(path: "Library/Caches", directoryHint: .isDirectory)
+        let trash = home.appending(path: ".Trash", directoryHint: .isDirectory)
+        let outside = root.appending(path: "Outside", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: cacheRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: trash, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: outside, withIntermediateDirectories: true)
+        let trashedItem = trash.appending(path: "Stored.bin")
+        try writeBytes(count: 1, to: trashedItem)
+
+        let linkedParent = cacheRoot.appending(path: "Linked", directoryHint: .isDirectory)
+        try FileManager.default.createSymbolicLink(at: linkedParent, withDestinationURL: outside)
+        let forgedPaths = [
+            outside.appending(path: "Outside.bin").path,
+            home.appending(path: "Library/Caches-Evil/Prefix.bin").path,
+            cacheRoot.path,
+            linkedParent.appending(path: "Escaped.bin").path,
+            cacheRoot.appending(path: "WrongCategory.bin").path
+        ]
+        let records = forgedPaths.enumerated().map { index, path in
+            CleanupHistoryRecord(
+                category: index == forgedPaths.count - 1 ? .downloads : .userCaches,
+                originalPath: path,
+                trashedPath: trashedItem.path,
+                movedAt: Date(),
+                sizeBytes: 1
+            )
+        }
+        var moveCount = 0
+        let report = CleanupRestorer(
+            homeDirectory: home,
+            temporaryDirectory: temp,
+            trashDirectory: trash,
+            moveHandler: { _, _ in moveCount += 1 }
+        ).restore(historyRecords: records)
+
+        XCTAssertEqual(moveCount, 0)
+        XCTAssertEqual(
+            report.failedItems.map(\.reason),
+            [
+                .outsideAllowedRoot,
+                .missingOriginalParent,
+                .outsideAllowedRoot,
+                .outsideAllowedRoot,
+                .outsideAllowedRoot
+            ]
+        )
+        XCTAssertTrue(FileManager.default.fileExists(atPath: trashedItem.path))
+    }
+
+    func testSecureRestoreMoveRejectsSymlinkInIntermediateParentComponent() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let trash = root.appending(path: "Trash", directoryHint: .isDirectory)
+        let allowed = root.appending(path: "Allowed", directoryHint: .isDirectory)
+        let destinationParent = allowed.appending(path: "Nested", directoryHint: .isDirectory)
+        let outside = root.appending(path: "Outside", directoryHint: .isDirectory)
+        let outsideParent = outside.appending(path: "Nested", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: trash, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: destinationParent, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: outsideParent, withIntermediateDirectories: true)
+
+        let source = trash.appending(path: "Stored.bin")
+        let destination = destinationParent.appending(path: "Stored.bin")
+        try writeBytes(count: 1, to: source)
+        let canonicalSource = URL(fileURLWithPath: source.canonicalPath)
+        let canonicalDestination = URL(fileURLWithPath: destinationParent.canonicalPath)
+            .appending(path: destination.lastPathComponent)
+
+        let originalAllowed = root.appending(path: "OriginalAllowed", directoryHint: .isDirectory)
+        try FileManager.default.moveItem(at: allowed, to: originalAllowed)
+        try FileManager.default.createSymbolicLink(at: allowed, withDestinationURL: outside)
+
+        XCTAssertThrowsError(
+            try CleanupRestorer.secureMove(
+                source: canonicalSource,
+                destination: canonicalDestination
+            )
+        )
+        XCTAssertTrue(FileManager.default.fileExists(atPath: source.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: outsideParent.appending(path: "Stored.bin").path))
+    }
+
     private func makeTemporaryRoot() throws -> URL {
         let root = FileManager.default.temporaryDirectory
             .appending(path: "CleanMacCoreTests-\(UUID().uuidString)", directoryHint: .isDirectory)
@@ -566,7 +873,7 @@ final class CleanMacCoreTests: XCTestCase {
     }
 
     private func canonicalPath(_ path: String) -> String {
-        URL(fileURLWithPath: path).resolvingSymlinksInPath().path
+        URL(fileURLWithPath: path).canonicalPath
     }
 
     private func makeScanItem(

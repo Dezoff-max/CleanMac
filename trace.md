@@ -36,3 +36,17 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: the bespoke label/value row did not receive a stable native macOS layout under the fixed auxiliary window, even after contrast and height adjustments.
 - Fix: replaced the custom row layout with native `LabeledContent`, kept the compact fixed-size scene, and rechecked both languages and appearances in the running app.
 - Status: resolved; the live Russian/light and English/dark passes rendered every remaining metadata value before the user simplified the final card to Developer and License only.
+
+## 2026-07-12 - TASK-034 - Symlinked restore parent
+
+- Symptom: the first forged-destination test reached the injected move handler when the missing destination's parent was a symlink from an allowed cache root to an outside folder.
+- Cause: resolving symlinks on the complete destination URL did not reliably resolve an existing symlink ancestor when the final destination did not exist.
+- Fix: require the original parent to exist as a directory, canonicalize that parent first, append only the final path component, and then enforce the category allowlist on the rebuilt destination.
+- Status: resolved; the focused regression and all 23 `CleanMacCore` tests pass, and the forged destination never reaches the move handler.
+
+## 2026-07-12 - TASK-034 - Independent persistence and restore review
+
+- Symptom: independent review found that separate `WindowGroup` snapshots could overwrite newer history, failed saves were suppressed, and string validation still left a narrow validation-to-move race.
+- Cause: each window saved its complete local array with `try?`, while the default restore ended in path-based `FileManager.moveItem` after canonical checks.
+- Fix: history writes now read, merge, and atomically replace records while preserving terminal restored state; the UI reports write failures; the production move walks every source/destination directory component through `openat(..., O_NOFOLLOW)`, pins the resulting descriptors, and uses `renameatx_np(RENAME_EXCL)`.
+- Status: resolved; the multi-window merge regression, direct/nested/symlink Trash fixtures, intermediate-component regression, exclusive no-overwrite restore tests, all 23 core tests, and the app build/launch pass.

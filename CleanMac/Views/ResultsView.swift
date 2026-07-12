@@ -14,9 +14,9 @@ struct ResultsView: View {
     let cleanupProblemMessage: String?
     let restoreStatusMessage: String?
     let restoreProblemMessage: String?
-    let cleanupHistory: [CleanupHistoryItem]
+    let cleanupHistory: [CleanupHistoryRecord]
     let onConfirmCleanup: () -> Void
-    let onRestoreHistoryItem: (String) -> Void
+    let onRestoreHistoryItem: (UUID) -> Void
     let onOpenPermissions: () -> Void
 
     @State private var isShowingCleanupConfirmation = false
@@ -440,7 +440,7 @@ struct ResultsView: View {
                                     onRestoreHistoryItem(item.id)
                                 },
                                 onReveal: {
-                                    reveal(item.status == .restored ? item.originalPath : item.trashedPath)
+                                    reveal(item.status == .restored ? item.originalPath : item.displayTrashedPath)
                                 }
                             )
                         }
@@ -912,7 +912,7 @@ private struct DetailRow: View {
 }
 
 private struct CleanupHistoryRow: View {
-    let item: CleanupHistoryItem
+    let item: CleanupHistoryRecord
     let isRestoring: Bool
     let onRestore: () -> Void
     let onReveal: () -> Void
@@ -950,8 +950,8 @@ private struct CleanupHistoryRow: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    if let message = item.message {
-                        Text(message)
+                    if let failureReason = item.failureReason {
+                        Text(failureReason.localizedHistoryMessage)
                             .font(.caption)
                             .foregroundStyle(.orange)
                     }

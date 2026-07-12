@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 struct CleanupRootResolver {
@@ -58,6 +59,20 @@ struct CleanupRootResolver {
 
 extension URL {
     var canonicalPath: String {
-        resolvingSymlinksInPath().standardizedFileURL.path
+        let sourcePath = path
+        if let resolvedPath = sourcePath.withCString({ realpath($0, nil) }) {
+            defer { free(resolvedPath) }
+            return String(cString: resolvedPath)
+        }
+
+        let parentURL = deletingLastPathComponent()
+        if let resolvedParentPath = parentURL.path.withCString({ realpath($0, nil) }) {
+            defer { free(resolvedParentPath) }
+            return URL(fileURLWithPath: String(cString: resolvedParentPath))
+                .appending(path: lastPathComponent)
+                .path
+        }
+
+        return resolvingSymlinksInPath().standardizedFileURL.path
     }
 }

@@ -10,7 +10,7 @@ struct MainWindowView: View {
     @State private var scanProgress: CleanupScanProgress?
     @State private var scanError: String?
     @State private var selectedResultIDs = Set<String>()
-    @State private var cleanupHistory: [CleanupHistoryItem] = []
+    @State private var cleanupHistory = CleanupHistoryStore().load()
     @State private var cleanupStatusMessage: String?
     @State private var cleanupProblemMessage: String?
     @State private var restoreStatusMessage: String?
@@ -25,6 +25,7 @@ struct MainWindowView: View {
     @AppStorage(CleanMacPreferenceKeys.scanInProgress) private var scanInProgress = false
 
     private let minimumScanAnimationDuration: TimeInterval = 1.15
+    private let cleanupHistoryStore = CleanupHistoryStore()
 
     private var selectedSection: CleanMacSection {
         CleanMacSection(rawValue: selectedSectionID ?? CleanMacSection.dashboard.rawValue) ?? .dashboard
@@ -246,11 +247,18 @@ struct MainWindowView: View {
             selectedResultIDs.subtract(movedIDs)
             isCleaning = false
 
+            var historySaveFailed = false
             if !report.movedItems.isEmpty {
                 let historyItems = report.movedItems.map {
-                    CleanupHistoryItem(movedItem: $0, movedAt: report.completedAt)
+                    CleanupHistoryRecord(movedItem: $0, movedAt: report.completedAt)
                 }
-                cleanupHistory.insert(contentsOf: historyItems, at: 0)
+                historySaveFailed = !persistCleanupHistoryChanges(historyItems)
+                if historySaveFailed {
+                    cleanupHistory.insert(contentsOf: historyItems, at: 0)
+                    cleanupHistory = Array(
+                        cleanupHistory.prefix(CleanupHistoryStore.defaultMaximumRecordCount)
+                    )
+                }
                 cleanupStatusMessage = L.f(
                     "cleanup.success",
                     report.movedItems.count,
@@ -258,13 +266,18 @@ struct MainWindowView: View {
                 )
             }
 
+            var problemMessages: [String] = []
             if report.hasProblems {
-                cleanupProblemMessage = L.f(
+                problemMessages.append(L.f(
                     "cleanup.problems",
                     report.failedItems.count,
                     report.rejectedItems.count
-                )
+                ))
             }
+            if historySaveFailed {
+                problemMessages.append(L.t("history.persistence.failed"))
+            }
+            cleanupProblemMessage = problemMessages.isEmpty ? nil : problemMessages.joined(separator: " ")
         }
     }
 
@@ -273,7 +286,7 @@ struct MainWindowView: View {
         selectedResultIDs.formIntersection(safeItemIDs)
     }
 
-    private func restoreHistoryItem(_ historyID: String) {
+    private func restoreHistoryItem(_ historyID: UUID) {
         guard !isRestoring else {
             return
         }
@@ -289,30 +302,44 @@ struct MainWindowView: View {
         isRestoring = true
         restoreStatusMessage = nil
         restoreProblemMessage = nil
-        let movedItem = cleanupHistory[historyIndex].movedItem
+        let historyRecord = cleanupHistory[historyIndex]
 
         Task {
             let report = await Task.detached(priority: .userInitiated) {
-                CleanupRestorer().restore(movedItems: [movedItem])
+                CleanupRestorer().restore(historyRecords: [historyRecord])
             }.value
 
             isRestoring = false
 
             if let restoredItem = report.restoredItems.first,
                let updatedIndex = cleanupHistory.firstIndex(where: { $0.id == historyID }) {
-                cleanupHistory[updatedIndex].status = .restored
-                cleanupHistory[updatedIndex].restoredAt = report.completedAt
-                cleanupHistory[updatedIndex].restoredPath = restoredItem.restoredPath
-                cleanupHistory[updatedIndex].message = nil
+                cleanupHistory[updatedIndex].markRestored(at: report.completedAt)
+                let updatedRecord = cleanupHistory[updatedIndex]
+                if !persistCleanupHistoryChanges([updatedRecord]) {
+                    restoreProblemMessage = L.t("history.persistence.failed")
+                }
                 restoreStatusMessage = L.f("restore.success", restoredItem.movedItem.item.scanItem.displayName)
             }
 
             if let failedItem = report.failedItems.first,
                let updatedIndex = cleanupHistory.firstIndex(where: { $0.id == historyID }) {
-                cleanupHistory[updatedIndex].status = .restoreFailed
-                cleanupHistory[updatedIndex].message = restoreMessage(for: failedItem)
-                restoreProblemMessage = cleanupHistory[updatedIndex].message
+                cleanupHistory[updatedIndex].markRestoreFailed(reason: failedItem.reason)
+                let updatedRecord = cleanupHistory[updatedIndex]
+                let messages = [
+                    restoreMessage(for: failedItem),
+                    persistCleanupHistoryChanges([updatedRecord]) ? nil : L.t("history.persistence.failed")
+                ].compactMap { $0 }
+                restoreProblemMessage = messages.joined(separator: " ")
             }
+        }
+    }
+
+    private func persistCleanupHistoryChanges(_ records: [CleanupHistoryRecord]) -> Bool {
+        do {
+            cleanupHistory = try cleanupHistoryStore.upserting(records)
+            return true
+        } catch {
+            return false
         }
     }
 
@@ -322,6 +349,12 @@ struct MainWindowView: View {
             L.t("restore.failure.missingTrashPath")
         case .missingTrashItem:
             L.t("restore.failure.missingTrashItem")
+        case .outsideTrash:
+            L.t("restore.failure.outsideTrash")
+        case .symbolicLink:
+            L.t("restore.failure.symbolicLink")
+        case .outsideAllowedRoot:
+            L.t("restore.failure.outsideAllowedRoot")
         case .destinationExists:
             L.t("restore.failure.destinationExists")
         case .missingOriginalParent:
