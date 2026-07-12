@@ -64,9 +64,9 @@ final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
     private let autoScanScheduler = CleanMacAutoScanScheduler()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        MainWindowController.prepareForInitialPresentation(isBackgroundLaunch: !NSApp.isActive)
         NSApp.setActivationPolicy(.regular)
         configureDockIcon()
-        NSApp.activate(ignoringOtherApps: true)
         CleanMacNotificationService.configure()
         requestNotificationAuthorizationIfUseful()
         autoScanScheduler.start()
@@ -74,6 +74,15 @@ final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
+    }
+
+    func applicationWillBecomeActive(_ notification: Notification) {
+        MainWindowController.handleReopen()
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        MainWindowController.handleReopen()
+        return true
     }
 
     func applicationWillTerminate(_ notification: Notification) {

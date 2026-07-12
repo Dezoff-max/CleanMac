@@ -85,3 +85,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: the `.window` `MenuBarExtra` presentation did not honor `preferredColorScheme`, so its SwiftUI environment remained light even though the stored CleanMac appearance was dark.
 - Fix: removed the fixed reference palette, used adaptive system materials/semantic colors, and injected `CleanMacAppearance.colorScheme` directly into the menu popover environment.
 - Status: resolved; live Russian screenshots confirm distinct light and dark popovers, and the original light preference was restored after review.
+
+## 2026-07-12 - TASK-038 - Background launch window lifecycle
+
+- Symptom: removing unconditional `NSApp.activate` stopped forced foreground activation, but SwiftUI still created a main window during background launch; the first immediate suppression also hid the initial window during a normal test launch because `NSApp.isActive` was still false in `didFinishLaunching`.
+- Cause: initial SwiftUI window creation and macOS activation settle on different lifecycle turns, and `applicationShouldHandleReopen` is not guaranteed for the first process launch.
+- Fix: create the initial window transparent for 0.2 seconds, then show it if the app became active or order it out if the launch stayed in the background; activation, reopen, and menu-bar Open clear suppression and reveal the existing window.
+- Status: resolved; background launch has zero main windows, explicit activation shows one, and menu-bar Open restores it. The initial build also required a direct `ServiceManagement` import in `SettingsView`, and the known FinderInfo build-product attribute was cleared before the successful signed launch rerun.

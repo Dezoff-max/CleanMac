@@ -117,15 +117,13 @@ struct MainWindowView: View {
                 onConfirmCleanup: cleanupSelectedItems,
                 onRestoreHistoryItem: restoreHistoryItem,
                 onOpenPermissions: {
-                    selectedSectionID = CleanMacSection.permissions.rawValue
+                    selectedSectionID = CleanMacSection.settings.rawValue
                 }
             )
         case .diskAnalysis:
             DiskAnalysisView()
         case .applications:
             ApplicationsView()
-        case .permissions:
-            PermissionsView()
         case .settings:
             SettingsView(
                 safeModeEnabled: $safeModeEnabled,

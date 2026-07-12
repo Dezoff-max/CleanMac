@@ -7,7 +7,6 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
     case results
     case diskAnalysis
     case applications
-    case permissions
     case settings
 
     var id: String { rawValue }
@@ -19,7 +18,6 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
         case .results: L.t("section.results")
         case .diskAnalysis: L.t("section.diskAnalysis")
         case .applications: L.t("section.applications")
-        case .permissions: L.t("section.permissions")
         case .settings: L.t("section.settings")
         }
     }
@@ -31,7 +29,6 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
         case .results: "checklist"
         case .diskAnalysis: "chart.pie.fill"
         case .applications: "app.badge.checkmark"
-        case .permissions: "lock.shield"
         case .settings: "gearshape"
         }
     }

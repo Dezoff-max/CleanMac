@@ -269,10 +269,23 @@
 "permission.state.checking" = "Checking";
 
 "settings.title" = "Settings";
-"settings.subtitle" = "Cleanup behavior and app controls";
+"settings.subtitle" = "Behavior, startup, and app permissions";
+"settings.general" = "General";
 "settings.safeMode" = "Safe Mode";
 "settings.confirmBeforeCleanup" = "Confirm Before Cleanup";
 "settings.showMenuBarStatus" = "Show Menu Bar Status";
+"settings.launchAtLogin" = "Launch CleanMac at login";
+"settings.launchAtLogin.status.disabled" = "Disabled in macOS";
+"settings.launchAtLogin.status.enabled" = "Enabled in macOS";
+"settings.launchAtLogin.status.requiresApproval" = "macOS approval required";
+"settings.launchAtLogin.status.unavailable" = "Unavailable";
+"settings.launchAtLogin.detail.disabled" = "CleanMac does not start automatically. Scheduled scans work only after you launch the app manually.";
+"settings.launchAtLogin.detail.enabled" = "CleanMac starts after you log in to macOS without forcing the main window to open.";
+"settings.launchAtLogin.detail.requiresApproval" = "Registration exists, but macOS is waiting for approval in Login Items & Extensions.";
+"settings.launchAtLogin.detail.unavailable" = "macOS could not find a login service for this copy of CleanMac. Move the app to Applications and try again.";
+"settings.launchAtLogin.openSystemSettings" = "Open Login Items";
+"settings.launchAtLogin.error.enable" = "macOS rejected launch-at-login registration: %@";
+"settings.launchAtLogin.error.disable" = "Could not disable launch at login: %@";
 "settings.autoScan" = "Scheduled auto scan";
 "settings.autoScanFrequency" = "Frequency";
 "settings.autoScanFrequency.daily" = "Daily";

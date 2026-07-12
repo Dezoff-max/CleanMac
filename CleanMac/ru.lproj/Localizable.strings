@@ -269,10 +269,23 @@
 "permission.state.checking" = "Проверка";
 
 "settings.title" = "Настройки";
-"settings.subtitle" = "Поведение очистки и управление приложением";
+"settings.subtitle" = "Поведение, автозапуск и доступы приложения";
+"settings.general" = "Основные";
 "settings.safeMode" = "Безопасный режим";
 "settings.confirmBeforeCleanup" = "Подтверждать перед очисткой";
 "settings.showMenuBarStatus" = "Показывать статус в меню";
+"settings.launchAtLogin" = "Запускать CleanMac при входе";
+"settings.launchAtLogin.status.disabled" = "Выключено в macOS";
+"settings.launchAtLogin.status.enabled" = "Включено в macOS";
+"settings.launchAtLogin.status.requiresApproval" = "Требуется одобрение macOS";
+"settings.launchAtLogin.status.unavailable" = "Недоступно";
+"settings.launchAtLogin.detail.disabled" = "CleanMac не запускается автоматически. Автосканирование работает только после ручного запуска приложения.";
+"settings.launchAtLogin.detail.enabled" = "CleanMac запускается после входа в macOS без принудительного открытия главного окна.";
+"settings.launchAtLogin.detail.requiresApproval" = "Регистрация создана, но macOS ждёт подтверждения в разделе «Объекты входа и расширения».";
+"settings.launchAtLogin.detail.unavailable" = "macOS не нашла службу запуска для этой копии CleanMac. Перемести приложение в «Программы» и повтори попытку.";
+"settings.launchAtLogin.openSystemSettings" = "Открыть объекты входа";
+"settings.launchAtLogin.error.enable" = "macOS отклонила регистрацию запуска при входе: %@";
+"settings.launchAtLogin.error.disable" = "Не удалось отключить запуск при входе: %@";
 "settings.autoScan" = "Автосканирование по расписанию";
 "settings.autoScanFrequency" = "Периодичность";
 "settings.autoScanFrequency.daily" = "Каждый день";

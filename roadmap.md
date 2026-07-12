@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-038
+  Title: Settings permissions and launch at login
+  Goal: Consolidate access controls in Settings and keep scheduled CleanMac work available after macOS login without opening the main window.
+  What to do: Remove Permissions from the sidebar, embed its live controls in Settings, add `SMAppService.mainApp` registration/status/error handling, and stop forcing app activation during background launch.
+  Files: app lifecycle, section model/navigation, Settings/Permissions views, launch-at-login service, localization, Loop docs
+  Definition of done: Settings is the single configuration destination; Login Item reflects macOS truth, handles denial/approval clearly, and background launch leaves the main window closed while normal launch and menu-bar Open still work.
+  Verification: localization lint/key parity; `swift test --package-path CleanMacCore`; Debug build; `./script/build_and_run.sh --verify`; read-only Login Item status; foreground/background launch review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: high impact / medium risk / medium
+
 - [x] ID: TASK-037
   Title: Live system dashboard menu bar
   Goal: Rebuild the menu-bar popover as a compact live system dashboard based on the supplied Mac Sai layout.

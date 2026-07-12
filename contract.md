@@ -2,55 +2,54 @@
 
 ## Task
 
-- ID: TASK-037
-- Title: Live system dashboard menu bar
+- ID: TASK-038
+- Title: Settings permissions and launch at login
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the existing menu popover only shows disk and last scan, while the supplied reference presents a compact live system dashboard.
-- Expected value: CPU, memory, disk, battery, network, uptime, and CleanMac scan state are visible without opening the main window.
-- Main risk: frequent sampling must stay lightweight, local, and stop when the popover closes.
-- UX constraint: follow the supplied two-column card layout while using the light or dark CleanMac appearance selected by the user, preserving CleanMac branding, RU/EN text, and short menu actions.
+- Why this task now: Permissions is a separate sidebar destination even though it is configuration, and scheduled scans stop when CleanMac is not running.
+- Expected value: one coherent Settings page controls access and lets the user keep CleanMac available after login without opening the main window.
+- Main risk: Login Item registration is system-controlled and can be denied or require approval; the UI must show the real `SMAppService.mainApp.status` rather than a stale preference.
+- UX constraint: keep the existing adaptive CleanMac settings style, preserve explicit-only permission prompts, and do not enable Login Item during verification.
 
 ## Builder Scope
 
 - Allowed files:
   - `CleanMac/CleanMacApp.swift`
-  - `CleanMac/Support/StatusSystemMetrics.swift`
-  - `CleanMac/Views/StatusMenuView.swift`
+  - `CleanMac/Models/CleanMacModels.swift`
+  - `CleanMac/Support/LaunchAtLoginManager.swift`
+  - `CleanMac/Views/MainWindowView.swift`
+  - `CleanMac/Views/PermissionsView.swift`
+  - `CleanMac/Views/SettingsView.swift`
   - `CleanMac/en.lproj/Localizable.strings`
   - `CleanMac/ru.lproj/Localizable.strings`
-  - `project-analysis.md`
-  - `roadmap.md`
-  - `contract.md`
-  - `progress.md`
-  - `trace.md`
-  - `verification.md`
+  - Loop documentation files
 - Allowed commands:
-  - localization plist lint and RU/EN key-parity checks
+  - localization plist lint and RU/EN key parity
   - `swift test --package-path CleanMacCore`
   - Debug `xcodebuild`
   - `./script/build_and_run.sh --verify`
-  - live menu-bar visual and accessibility inspection
+  - read-only `SMAppService.mainApp.status` inspection
+  - live Settings and foreground/background launch review
 - Out of scope:
-  - background monitoring while the popover is closed;
-  - external telemetry, analytics, persistence, notifications, or cleanup behavior changes;
-  - replacing or deleting user app copies, release version changes, or new dependencies.
+  - enabling or disabling the user's Login Item during verification;
+  - a separate helper app, LaunchAgent, privileged service, or new dependency;
+  - changing scan schedules, cleanup behavior, notification permission, signing, or release version.
 - Dependencies allowed: no
 - Destructive actions allowed: no
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - The popover matches the reference structure with a header, 2x2 metric grid, network/uptime strip, system/scan card, and two bottom actions.
-  - The popover follows the selected CleanMac light/dark appearance and uses adaptive system materials instead of a fixed reference color scheme.
-  - CPU and memory are read from macOS host statistics; disk uses the active home volume; battery is shown when available and degrades gracefully on desktops.
-  - Network receive/send rates and system uptime update locally while the popover is open.
-  - Existing last-scan and scan-in-progress data remains visible in compact form.
-  - The sampling task starts on presentation, refreshes about once per second, and is cancelled automatically when the view disappears.
-  - Open focuses the existing main window and Quit terminates CleanMac as before.
-  - RU/EN labels fit the fixed popover width and accessibility exposes metric names and values.
+  - The separate Permissions sidebar item is removed and its complete live content appears inside Settings.
+  - Results permission guidance routes to Settings.
+  - Settings provides a localized “Launch CleanMac at login” toggle backed by `SMAppService.mainApp.register()` and `unregister()`.
+  - The UI shows enabled, disabled, approval-required, and unavailable macOS states and exposes Login Items System Settings when action is required.
+  - Registration failures show a clear localized message plus the system error detail.
+  - Login Item operations run off the main actor and the control shows progress.
+  - A normal user launch still presents the main window; a background/login-style launch does not force activation or open the main window.
+  - Menu-bar Open still focuses or creates the main window.
 - Required verification:
   - `swift test --package-path CleanMacCore`
   - localization lint and RU/EN key parity
@@ -58,12 +57,12 @@
   - `./script/build_and_run.sh --verify`
   - `git diff --check`
 - Manual checks:
-  - Open the menu popover in Russian and confirm all cards fit without clipping.
-  - Observe at least two refreshes and confirm live values change or remain valid.
-  - Confirm the main window opens through the bottom action; do not trigger scans or cleanup.
+  - Open Settings in Russian and confirm launch status plus all permission rows fit and refresh.
+  - Do not toggle Login Item; inspect the current system status read-only.
+  - Compare normal `open` with background `open -g`, then use the menu-bar action to restore the window.
 
 ## Result
 
 - Status: complete
-- Verification result: passed — 28 core tests, localization/key parity, Debug build, launch verification, diff check, and live Russian light/dark menu review.
-- Notes: SwiftUI `MenuBarExtra` did not honor `preferredColorScheme`; injecting the selected scheme into the popover environment fixed the live mismatch. The local non-blocking CoreSimulator warning remains unchanged.
+- Verification result: passed — 28 core tests, localization/key parity, Debug build, signed launch verification, live Settings review, and foreground/background lifecycle checks.
+- Notes: Login Item remained unchanged during verification. The current Debug copy reports `.notFound` because it runs from `Documents`; the localized UI explains installing CleanMac in Applications. Background launch produced zero main windows, while activation and menu-bar Open restored the existing window.
