@@ -28,9 +28,14 @@ CleanMac is a native SwiftUI utility that scans selected macOS locations, explai
   <img src="docs/screenshots/overview.png" alt="CleanMac dashboard" width="100%">
 </p>
 
-| Scan area selection | Multi-select application removal |
+| Scan area selection | Application review |
 | --- | --- |
-| <img src="docs/screenshots/scan-areas.png" alt="CleanMac scan areas"> | <img src="docs/screenshots/applications-multiselect.png" alt="Selecting multiple applications in CleanMac"> |
+| <img src="docs/screenshots/scan-areas.png" alt="CleanMac scan areas"> | <img src="docs/screenshots/applications-multiselect.png" alt="Reviewing installed applications in CleanMac"> |
+
+<p align="center">
+  <strong>Smart Shredder</strong><br>
+  <img src="docs/screenshots/shredder.png" alt="CleanMac Smart Shredder in dark appearance" width="100%">
+</p>
 
 ## Features
 

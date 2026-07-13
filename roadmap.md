@@ -1,5 +1,19 @@
 # Roadmap
 
+- [ ] ID: TASK-047
+  Title: CleanMac v0.4.0 release
+  Goal: Publish the verified thermal optimization and Smart Shredder as the next feature release.
+  What to do: Bump version/build to 0.4.0 (5), verify core/Debug/Release artifacts, merge the version commit, tag main, publish accurate notes, and validate downloaded assets.
+  Files: Xcode version settings, release/Loop documentation, generated release assets
+  Definition of done: main contains version 0.4.0 (5); v0.4.0 points to the verified commit; GitHub Release contains a ZIP and checksum that validate after a clean download; signing/notarization wording matches the artifact.
+  Verification: full SwiftPM tests; Debug build/launch; local packaging; bundle metadata/architecture/signature/checksum; release workflow; clean downloaded asset verification
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: small
+  Confidence: high
+  Score: high impact / medium risk / small
+
 - [x] ID: TASK-046
   Title: Smart irreversible file shredder
   Goal: Add an isolated hacker-style workflow for explicit best-effort overwrite and direct deletion of reviewed files.
