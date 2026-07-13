@@ -197,3 +197,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: the Finder `.icns` contains eight point/scale representations, and passing that multi-representation `NSImage` through the resizable template path did not select one stable bitmap.
 - Fix: select the exact 36×36 Retina representation, create a single 18-point `NSImage`, mark it as a template, and tint it with the existing selected/unselected icon color.
 - Status: resolved; live screenshots show one crisp gray mark when unselected and the same mark in white when selected.
+
+## 2026-07-13 - TASK-056 - Shredder animation clipped in the standard window
+
+- Symptom: the first live destruction-animation pass started below the static Shredder header, warning, and queue controls, so the lower fragments, progress, and completion state were clipped in the standard window.
+- Cause: the normal workspace panels remained mounted while an irreversible operation was running, leaving too little vertical space for the complete focused animation scene.
+- Fix: while an animation session exists, replace the normal Shredder content with one stable focused operation view that contains the Quick Look preview, mechanism, falling strips, real progress, and final state.
+- Status: resolved; disposable-file screenshots show the complete scene at the 98% finalizing state and at the 100% post-unlink success state without clipping.

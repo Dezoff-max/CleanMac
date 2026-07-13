@@ -625,6 +625,21 @@
 "shredder.error.changed" = "Файл изменился или был заменён после проверки.";
 "shredder.error.busy" = "Файл занят или заблокирован другим процессом.";
 "shredder.error.io" = "Перезапись или прямое удаление завершились ошибкой; файл не отмечен как удалённый.";
+"shredder.animation.machine" = "БЕЗОПАСНЫЙ ШРЕДЕР";
+"shredder.animation.position" = "Файл %d из %d";
+"shredder.animation.accessibility" = "%@: выполнено %d процентов";
+"shredder.animation.preparing" = "Подготовка превью";
+"shredder.animation.feeding" = "Файл втягивается";
+"shredder.animation.overwriting" = "Перезапись данных";
+"shredder.animation.finalizing" = "Завершение удаления";
+"shredder.animation.success" = "Файл удалён";
+"shredder.animation.failure" = "Удаление остановлено";
+"shredder.animation.detail.preparing" = "Создание локального Quick Look-превью";
+"shredder.animation.detail.feeding" = "Файл поступает в режущий механизм";
+"shredder.animation.detail.overwriting" = "В файл записываются случайные данные";
+"shredder.animation.detail.finalizing" = "Синхронизация, обнуление и удаление записи";
+"shredder.animation.detail.success" = "Прямое удаление успешно завершено";
+"shredder.animation.detail.failure" = "Файл не отмечен как удалённый";
 
 "onboarding.appTitle" = "Знакомство с CleanMac";
 "onboarding.skip" = "Пропустить знакомство";

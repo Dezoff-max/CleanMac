@@ -625,6 +625,21 @@
 "shredder.error.changed" = "The file changed or was replaced after review.";
 "shredder.error.busy" = "The file is busy or locked by another process.";
 "shredder.error.io" = "The overwrite or direct removal failed; the file was not reported as removed.";
+"shredder.animation.machine" = "SECURE SHREDDER";
+"shredder.animation.position" = "File %d of %d";
+"shredder.animation.accessibility" = "%@, %d percent complete";
+"shredder.animation.preparing" = "Preparing preview";
+"shredder.animation.feeding" = "Feeding file";
+"shredder.animation.overwriting" = "Overwriting data";
+"shredder.animation.finalizing" = "Finalizing deletion";
+"shredder.animation.success" = "File removed";
+"shredder.animation.failure" = "Deletion stopped";
+"shredder.animation.detail.preparing" = "Creating a local Quick Look preview";
+"shredder.animation.detail.feeding" = "The file is entering the cutting mechanism";
+"shredder.animation.detail.overwriting" = "Random data is being written to the file";
+"shredder.animation.detail.finalizing" = "Syncing, truncating, and unlinking the file";
+"shredder.animation.detail.success" = "Direct removal completed successfully";
+"shredder.animation.detail.failure" = "The file was not reported as removed";
 
 "onboarding.appTitle" = "Meet CleanMac";
 "onboarding.skip" = "Skip introduction";

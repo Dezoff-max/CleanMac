@@ -518,3 +518,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Review and merge the updated draft PR #17, then publish a release only when requested.
 - Bottleneck: public distribution remains ad-hoc signed and not notarized until Developer ID credentials are configured. The CoreSimulator warning remains unrelated and non-blocking.
 - Handoff: `dist/` contains `CleanMac.app`, `CleanMac.dmg`, `CleanMac.dmg.sha256`, the fallback ZIP, and its checksum. No cleanup, removal, Shredder, RAM purge, DNS flush, permission, or system setting was changed.
+
+## 2026-07-13 - TASK-056 - Real Smart Shredder destruction animation
+
+- What changed: Added a focused Reduce Motion-aware destruction scene driven by the real secure-deletion lifecycle. CleanMac loads a real Quick Look preview with a workspace-icon fallback, feeds it through the mechanism, reveals 20 clipped strips from the same preview, and lets them fall into the bin while actual completed overwrite bytes drive progress. Finalizing remains below 100%; green success appears only after the core successfully unlinks the file. A failed final removal never emits completion, keeps the file queued, and shows a visible failure state instead of masking the error.
+- Files touched: `CleanMacCore/Sources/CleanMacCore/SecureFileShredder.swift`, `CleanMacCore/Tests/CleanMacCoreTests/SecureFileShredderTests.swift`, `CleanMac/Views/ShredderView.swift`, `CleanMac/Views/ShredderAnimationView.swift`, both localization files, and the Loop documentation.
+- Checks run: focused `SecureFileShredderTests` (5/5); full `swift test --package-path CleanMacCore` (51/51); RU/EN localization plist lint and 657-key parity; `./script/build_and_run.sh --verify`; disposable live runs using approximately 722 KB, 68.2 MB, and 34.6 MB fixtures under `/private/tmp`; visual review of feeding, falling strips, 98% finalizing, and 100% success; `./script/package_release.sh`; DMG and ZIP checksum verification; `git diff --check`.
+- Result: Passed. The entire animation fits the standard window, actual progress remains truthful, and each disposable fixture was confirmed absent only after the success state.
+- Next step: Review draft PR #17 and merge or release only after explicit approval.
+- Bottleneck: public distribution remains ad-hoc signed and not notarized until Developer ID credentials are configured. The known stale CoreSimulator warning remains unrelated and non-blocking.
+- Handoff: No real user file was selected or removed. Only agent-created disposable copies under `/private/tmp` were securely deleted during live verification.

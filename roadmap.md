@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-056
+  Title: Real Smart Shredder destruction animation
+  Goal: Make irreversible deletion visibly follow the real overwrite and unlink operation instead of a decorative timer.
+  What to do: Emit byte progress from the secure core, load a Quick Look preview, feed it into a focused shredder scene, split it into 20 falling strips, preserve Reduce Motion, and show success only after actual unlink.
+  Files: secure shredder core/tests, `ShredderView`, `ShredderAnimationView`, localization, Loop docs
+  Definition of done: progress reflects bytes written; finalizing stays below 100%; failed removal never reports complete and remains queued; the whole animation fits the standard window; RU/EN and Reduce Motion paths remain usable.
+  Verification: five focused Shredder tests; full 51-test suite; localization lint/key parity; Debug build/launch; live disposable-file feed/fragment/success screenshots; release packaging/checksums; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: high
+  Effort: medium
+  Confidence: high
+  Score: high impact / high risk / medium
+
 - [x] ID: TASK-055
   Title: Monochrome Retina Applications sidebar icon
   Goal: Keep the Applications mark recognizable without making it the only colored or visually broken sidebar icon.
