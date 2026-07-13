@@ -62,7 +62,7 @@ struct ShredderView: View {
         NeoShredderPanel(palette: palette, isGlowing: true) {
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 18) {
-                    terminalMark
+                    shredderMark
                     headerCopy
                     Spacer(minLength: 12)
                     stateStack
@@ -70,7 +70,7 @@ struct ShredderView: View {
 
                 VStack(alignment: .leading, spacing: 14) {
                     HStack(spacing: 14) {
-                        terminalMark
+                        shredderMark
                         headerCopy
                     }
                     stateStack
@@ -79,7 +79,7 @@ struct ShredderView: View {
         }
     }
 
-    private var terminalMark: some View {
+    private var shredderMark: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 15, style: .continuous)
                 .fill(palette.inset)
@@ -89,7 +89,7 @@ struct ShredderView: View {
                 }
                 .shadow(color: palette.glow.opacity(0.8), radius: 16)
 
-            Image(systemName: "terminal.fill")
+            Image(systemName: CleanMacSection.shredder.systemImage)
                 .font(.system(size: 26, weight: .bold))
                 .foregroundStyle(palette.cyan)
         }

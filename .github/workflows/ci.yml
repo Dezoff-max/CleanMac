@@ -55,7 +55,7 @@ jobs:
             CODE_SIGN_IDENTITY=""
 
   release-artifact:
-    name: Build unsigned release zip
+    name: Build unsigned release package
     runs-on: macos-26
     timeout-minutes: 30
     needs: test
@@ -73,6 +73,7 @@ jobs:
         with:
           name: CleanMac-unsigned-${{ github.sha }}
           path: |
+            dist/*.dmg
             dist/*.zip
             dist/*.sha256
           if-no-files-found: error

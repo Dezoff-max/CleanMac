@@ -29,7 +29,7 @@ struct ScanActivityView: View {
 
     private var horizontalLayout: some View {
         HStack(alignment: .center, spacing: 18) {
-            ScanOrbitalIndicator(progress: progressFraction)
+            activityIndicator
 
             content
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -43,7 +43,7 @@ struct ScanActivityView: View {
     private var verticalLayout: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 14) {
-                ScanOrbitalIndicator(progress: progressFraction)
+                activityIndicator
                 header
             }
 
@@ -61,6 +61,15 @@ struct ScanActivityView: View {
             scanMetrics
             areaRail
         }
+    }
+
+    private var activityIndicator: some View {
+        ModernScanProgressIndicator(
+            systemImage: "magnifyingglass",
+            accessibilityLabel: L.t("scan.animation.title"),
+            progress: progressFraction,
+            size: 82
+        )
     }
 
     private var header: some View {
@@ -87,29 +96,10 @@ struct ScanActivityView: View {
     }
 
     private var progressTrack: some View {
-        GeometryReader { proxy in
-            let trackWidth = proxy.size.width
-            let filledWidth = max(8, trackWidth * progressFraction)
-
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(.quaternary)
-
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [.blue, .cyan, .green.opacity(0.82)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(width: filledWidth)
-                    .clipShape(Capsule())
-                    .animation(.easeOut(duration: 0.2), value: progressFraction)
-            }
-        }
-        .frame(height: 8)
-        .accessibilityLabel(L.f("scan.animation.percent", progressPercent))
+        AnimatedScanProgressTrack(
+            progress: progressFraction,
+            accessibilityLabel: L.f("scan.animation.percent", progressPercent)
+        )
     }
 
     private var scanMetrics: some View {
@@ -255,49 +245,75 @@ struct ScanActivityView: View {
         let name = URL(fileURLWithPath: path).lastPathComponent
         return name.isEmpty ? path : name
     }
-
 }
 
-private struct ScanOrbitalIndicator: View {
+private struct AnimatedScanProgressTrack: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let progress: Double
+    let accessibilityLabel: String
+
+    @State private var isShimmering = false
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(.blue.opacity(0.10))
-                .frame(width: 76, height: 76)
+        GeometryReader { proxy in
+            let trackWidth = proxy.size.width
+            let filledWidth = max(8, trackWidth * min(max(progress, 0), 1))
 
-            Circle()
-                .stroke(.blue.opacity(0.13), lineWidth: 12)
-                .frame(width: 60, height: 60)
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(.quaternary)
 
-            Circle()
-                .trim(from: 0, to: max(0.04, progress))
-                .stroke(
-                    LinearGradient(
-                        colors: [.blue, .cyan, .green.opacity(0.82)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    style: StrokeStyle(lineWidth: 5, lineCap: .round)
-                )
-                .frame(width: 64, height: 64)
-                .rotationEffect(.degrees(-90))
-                .animation(.easeOut(duration: 0.2), value: progress)
-
-            ProgressView()
-                .controlSize(.small)
-                .tint(.blue)
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [.blue, .cyan, .mint],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: filledWidth)
+                    .overlay(alignment: .leading) {
+                        if !reduceMotion {
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.clear, .white.opacity(0.46), .clear],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: 48)
+                                .offset(x: isShimmering ? filledWidth : -48)
+                                .animation(
+                                    .linear(duration: 1.5).repeatForever(autoreverses: false),
+                                    value: isShimmering
+                                )
+                        }
+                    }
+                    .clipShape(Capsule())
+                    .animation(.easeOut(duration: 0.24), value: progress)
+            }
         }
-        .frame(width: 82, height: 82)
-        .accessibilityHidden(true)
+        .frame(height: 8)
+        .accessibilityLabel(accessibilityLabel)
+        .onAppear {
+            isShimmering = !reduceMotion
+        }
+        .onChange(of: reduceMotion) { _, _ in
+            isShimmering = !reduceMotion
+        }
     }
 }
 
 private struct ScanSignalBars: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let progress: Double
 
     private let barCount = 5
+
+    @State private var isAnimating = false
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 5) {
@@ -305,17 +321,35 @@ private struct ScanSignalBars: View {
                 RoundedRectangle(cornerRadius: 3, style: .continuous)
                     .fill(barColor(for: index))
                     .frame(width: 8, height: barHeight(for: index))
-                    .animation(.easeOut(duration: 0.2), value: progress)
+                    .animation(
+                        reduceMotion
+                            ? .easeOut(duration: 0.2)
+                            : .easeInOut(duration: 0.7 + Double(index) * 0.08)
+                                .repeatForever(autoreverses: true)
+                                .delay(Double(index) * 0.06),
+                        value: isAnimating
+                    )
             }
         }
         .frame(height: 44, alignment: .bottom)
         .accessibilityHidden(true)
+        .onAppear {
+            isAnimating = !reduceMotion
+        }
+        .onChange(of: reduceMotion) { _, _ in
+            isAnimating = !reduceMotion
+        }
     }
 
     private func barHeight(for index: Int) -> CGFloat {
         let clampedProgress = min(max(progress, 0.08), 1)
         let step = Double(index + 1) / Double(barCount)
-        return CGFloat(12 + 28 * clampedProgress * step)
+        let base = CGFloat(12 + 18 * clampedProgress * step)
+        guard !reduceMotion else {
+            return base
+        }
+        let amplitude = CGFloat(7 + index * 2)
+        return isAnimating ? min(44, base + amplitude) : max(10, base - amplitude * 0.45)
     }
 
     private func barColor(for index: Int) -> Color {

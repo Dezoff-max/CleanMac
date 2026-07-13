@@ -440,3 +440,63 @@ Append-only history. Do not erase previous entries.
 - Next step: Configure Developer ID and notarization secrets before a future trusted-distribution release.
 - Bottleneck: the release remains ad-hoc signed and not notarized because no Developer ID certificate/notary credentials are configured; Gatekeeper may reject it. The known stale CoreSimulator warning remains unrelated and non-blocking for macOS builds.
 - Handoff: Tag `v0.4.0` points to `125e528`. Release assets and verification copies are preserved under the task diagnostics folder. No user file was deleted and no destructive Shredder action was accepted.
+
+## 2026-07-13 - TASK-048 - Application removal modes
+
+- What changed: Added a two-mode Applications uninstaller. Trash mode remains the default and moves selected apps plus chosen leftovers to Trash. Permanent mode is an explicit segmented choice that auto-includes every shown exact bundle-ID leftover and directly deletes without Trash or CleanMac restore history. Exact leftover discovery now covers cache, preferences, saved state, logs, Application Support, Containers, Group Containers, HTTPStorages, WebKit, cookies, Application Scripts, and LaunchAgents. The Debug run script now retries signing verification if local Finder/File Provider metadata is reattached.
+- Files touched: `CleanMacCore/Sources/CleanMacCore/ApplicationUninstaller.swift`, `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`, `CleanMac/Views/ApplicationsView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `script/build_and_run.sh`, `README.md`, `contract.md`, `project-analysis.md`, `roadmap.md`, `trace.md`, `verification.md`, `progress.md`.
+- Checks run: `swift test --package-path CleanMacCore` (48/48); `plutil -lint CleanMac/en.lproj/Localizable.strings CleanMac/ru.lproj/Localizable.strings`; RU/EN localization key parity; Debug `xcodebuild`; `./script/build_and_run.sh --verify` after metadata-race hardening; `git diff --check`.
+- Result: Passed. Disposable app-removal fixtures prove the default Trash path and the permanent delete path, and prove the app is removed before any leftovers. The live Debug app builds, signs, launches, and is running.
+- Next step: Review the Applications screen visually and decide whether permanent mode needs a typed phrase like Smart Shredder before it can execute.
+- Bottleneck: direct deletion is intentionally irreversible and unprivileged; root-owned apps may still fail without administrator privileges, and CleanMac does not escalate.
+- Handoff: No real installed app or user leftover was removed. Permanent deletion was exercised only inside temporary SwiftPM fixtures.
+
+## 2026-07-13 - TASK-049 - Shredder icon polish
+
+- What changed: Replaced the Shredder section icon from the terminal symbol to the system `scissors` symbol and reused that same section icon in the Shredder header mark so the feature reads as a shredding tool instead of a console.
+- Files touched: `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Views/ShredderView.swift`, `contract.md`, `roadmap.md`, `progress.md`.
+- Checks run: `swift test --package-path CleanMacCore` (48/48); `./script/build_and_run.sh --verify`; `git diff --check`.
+- Result: Passed. The Debug app builds, signs after the existing metadata retry, and launches.
+- Next step: Visually review the Shredder sidebar row in the running app and decide whether a custom sidebar-only asset is needed later.
+- Bottleneck: none. The known CoreSimulator warning and FinderInfo retry remain non-blocking for this macOS Debug build.
+- Handoff: UI-only change. No scan, cleanup, app removal, Shredder confirmation, package, release, or remote repository state was changed.
+
+## 2026-07-13 - TASK-050 - System maintenance actions
+
+- What changed: Added a new System sidebar workspace with two explicit maintenance actions: Free Memory runs only `/usr/sbin/purge`, and Flush DNS runs `/usr/bin/dscacheutil -flushcache` followed by `/usr/bin/killall -HUP mDNSResponder`. Commands are launched through `Process` with fixed absolute paths, no shell, no sudo, no scheduling, and visible running/success/partial/failure/unavailable states.
+- Files touched: `CleanMac/Support/SystemMaintenanceService.swift`, `CleanMac/Views/SystemMaintenanceView.swift`, `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Views/MainWindowView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `README.md`, `contract.md`, `project-analysis.md`, `roadmap.md`, `verification.md`, `progress.md`.
+- Checks run: command existence checks for `/usr/sbin/purge`, `/usr/bin/dscacheutil`, and `/usr/bin/killall`; `swift test --package-path CleanMacCore` (48/48); localization plist lint and RU/EN key parity; repeated `./script/build_and_run.sh --verify`; `git diff --check`.
+- Result: Passed. The Debug app builds, signs, launches, and includes the new System section.
+- Next step: Visually review the System screen and decide whether RAM/DNS actions should also appear in the menu-bar popover.
+- Bottleneck: DNS refresh can partially fail if macOS denies signalling `mDNSResponder`; CleanMac reports that state and does not elevate privileges.
+- Handoff: The RAM and DNS maintenance buttons were not clicked during verification, so no memory purge or DNS cache flush was executed. No scan, cleanup, app removal, Shredder confirmation, package, release, or remote repository state was changed.
+
+## 2026-07-13 - TASK-051 - Administrator-backed system maintenance
+
+- What changed: Changed System maintenance actions from normal user `Process` execution to fixed macOS administrator-authorized scripts. Free Memory now asks macOS for authorization and runs only `/usr/sbin/purge`; Flush DNS asks macOS for authorization and runs `/usr/bin/dscacheutil -flushcache` plus `/usr/bin/killall -HUP mDNSResponder`. The UI warns about the admin prompt and marks results as authorized by macOS.
+- Files touched: `CleanMac/Support/SystemMaintenanceService.swift`, `CleanMac/Views/SystemMaintenanceView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `README.md`, `contract.md`, `project-analysis.md`, `roadmap.md`, `verification.md`, `progress.md`.
+- Checks run: command existence checks for `/usr/sbin/purge`, `/usr/bin/dscacheutil`, `/usr/bin/killall`, and `/usr/bin/osascript`; `swift test --package-path CleanMacCore` (48/48); localization plist lint and RU/EN key parity; `./script/build_and_run.sh --verify`; `git diff --check`.
+- Result: Passed. The Debug app builds, signs, launches, and the System actions are wired to macOS administrator authorization instead of failing as an unprivileged process.
+- Next step: Manually click Free Memory in the app and confirm the macOS password prompt appears, then verify it reports success.
+- Bottleneck: Actual RAM/DNS execution was not performed during automated verification to avoid changing system state without an explicit user click. If the user cancels the macOS administrator prompt, CleanMac reports a failure.
+- Handoff: No RAM purge or DNS cache flush was executed by Codex. No scan, cleanup, app removal, Shredder confirmation, package, release, or remote repository state was changed.
+
+## 2026-07-13 - TASK-052 - Visible memory cleanup result
+
+- What changed: Added a shared read-only `StatusMemorySnapshot` so the menu bar and System screen use the same VM memory calculation. The Free Memory card now shows a live circular memory gauge before action, records memory before and after `/usr/sbin/purge`, and labels the result as freed, no visible drop, or memory rose again.
+- Files touched: `CleanMac/Support/StatusSystemMetrics.swift`, `CleanMac/Support/SystemMaintenanceService.swift`, `CleanMac/Views/SystemMaintenanceView.swift`, `CleanMac/en.lproj/Localizable.strings`, `CleanMac/ru.lproj/Localizable.strings`, `README.md`, `contract.md`, `project-analysis.md`, `roadmap.md`, `verification.md`, `progress.md`.
+- Checks run: Debug `xcodebuild`; `swift test --package-path CleanMacCore` (48/48); localization plist lint and RU/EN key parity; `./script/build_and_run.sh --verify`; `pgrep -fl CleanMac`; safe System window list check; `git diff --check`.
+- Result: Passed. The Debug app builds, signs, launches, and the System window opens with the new memory result UI compiled in.
+- Next step: Click Free Memory manually and confirm the UI shows a before/after percentage plus the freed/no-change/rose-again label after the macOS administrator prompt.
+- Bottleneck: Automated verification did not click Free Memory, so it did not produce a real before/after purge result. macOS can refill RAM quickly, so a successful command may still show no visible drop or a small increase.
+- Handoff: No RAM purge or DNS cache flush was executed by Codex. No scan, cleanup, app removal, Shredder confirmation, package, release, or remote repository state was changed.
+
+## 2026-07-13 - TASK-053 - Modern scan progress and drag-to-Applications DMG
+
+- What changed: Replaced the gray scan-only system spinners with a shared orbit-style SwiftUI indicator across standard cleanup scanning, Disk Analysis, Duplicate Finder, and Applications scanning. Restored rotating arcs, soft pulse, shimmer, and signal motion through small state-driven animations with Reduce Motion support and no `TimelineView`. Release packaging now creates `dist/CleanMac.dmg` beside `dist/CleanMac.app`; the image contains `CleanMac.app` and an `Applications -> /Applications` shortcut, while CI and tag Release workflows publish the DMG alongside the fallback ZIP and checksums.
+- Files touched: `CleanMac/Views/DiskAnalysisProgressIndicator.swift`, `CleanMac/Views/ScanActivityView.swift`, `CleanMac/Views/DiskAnalysisView.swift`, `CleanMac/Views/DuplicateFinderView.swift`, `CleanMac/Views/ApplicationsView.swift`, `script/package_release.sh`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `README.md`, `docs/signing-notarization.md`, `contract.md`, `project-analysis.md`, `roadmap.md`, `progress.md`, `trace.md`, `verification.md`.
+- Checks run: Debug `xcodebuild`; `bash -n script/package_release.sh`; full `swift test --package-path CleanMacCore` (48/48); localization plist lint and RU/EN key parity; `./script/build_and_run.sh --verify`; two `./script/package_release.sh` passes while hardening DMG staging; `hdiutil verify`; read-only DMG mount with shortcut and strict app signature inspection; `zsh -lc 'cd dist && shasum -a 256 -c *.sha256'`; source check confirming no scan-progress `TimelineView`; live standard scan and cancellable Home Disk Analysis review; six CPU samples; `git diff --check`.
+- Result: Passed. The live standard scan showed the modern 70% orbital/progress surface, Disk Analysis showed the compact modern indicator, and the test analysis was cancelled with the app confirming that files were unchanged. The DMG and ZIP checksums pass, and the app inside the mounted DMG satisfies strict ad-hoc signature verification.
+- Next step: Push only after resolving the repository visibility choice, then let CI validate the DMG artifact on GitHub.
+- Bottleneck: `Dezoff-max/CleanMac` currently reports `PUBLIC`, which conflicts with the earlier private-repository requirement. This Mac still has no Developer ID identity, so the local DMG is ad-hoc signed and not notarized.
+- Handoff: `dist/` contains `CleanMac.app`, `CleanMac.dmg`, `CleanMac.dmg.sha256`, the fallback ZIP, and its checksum. No cleanup, removal, Shredder, RAM purge, DNS flush, permission, or system setting was changed.

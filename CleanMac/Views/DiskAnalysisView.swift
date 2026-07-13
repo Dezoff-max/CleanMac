@@ -219,7 +219,10 @@ struct DiskAnalysisView: View {
     private var scanningPanel: some View {
         InfoPanel {
             HStack(spacing: 14) {
-                DiskAnalysisProgressIndicator()
+                ModernScanProgressIndicator(
+                    systemImage: "chart.pie.fill",
+                    accessibilityLabel: L.t("disk.scanning.title")
+                )
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text(L.t("disk.scanning.title"))

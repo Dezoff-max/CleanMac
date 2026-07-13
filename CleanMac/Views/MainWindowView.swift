@@ -46,6 +46,7 @@ struct MainWindowView: View {
                     ToolbarItemGroup {
                         if selectedSection != .diskAnalysis,
                            selectedSection != .duplicates,
+                           selectedSection != .systemMaintenance,
                            selectedSection != .shredder {
                             Button {
                                 runScan()
@@ -132,6 +133,8 @@ struct MainWindowView: View {
             )
         case .diskAnalysis:
             DiskAnalysisView()
+        case .systemMaintenance:
+            SystemMaintenanceView()
         case .duplicates:
             DuplicateFinderView()
         case .shredder:

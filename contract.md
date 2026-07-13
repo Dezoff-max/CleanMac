@@ -2,60 +2,67 @@
 
 ## Task
 
-- ID: TASK-047
-- Title: CleanMac v0.4.0 release
+- ID: TASK-053
+- Title: Modern scan progress and drag-to-Applications DMG
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user explicitly requested that the release be updated after the thermal optimization and Smart Shredder feature were pushed.
-- Expected value: publish the verified feature set as the next minor release with reproducible archive and checksum assets.
-- Main risk: tagging an unverified commit or presenting an ad-hoc build as notarized.
-- Release choice: bump `0.3.0 (4)` to `0.4.0 (5)` because the release adds a user-facing feature; keep the existing ad-hoc/unsigned distribution wording unless signing secrets produce a genuinely signed/notarized artifact in CI.
+- Why this task now: performance work replaced the custom scan motion with system spinners, and local release packaging did not provide the standard macOS drag-install image.
+- Expected value: every real scan surface uses one coherent modern indicator, while `dist/` contains both `CleanMac.app` and an easy-to-install `CleanMac.dmg`.
+- Main risk: restoring frame-driven animation could reintroduce the previous high-CPU layout loop; DMG staging inside the Desktop-backed repository can also inherit File Provider metadata and invalidate the app signature.
+- Safety choice: use isolated state-driven layer animations with Reduce Motion support and no `TimelineView`; build the DMG from a sanitized `/private/tmp` staging copy and verify a fresh mounted image.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMac.xcodeproj/project.pbxproj`;
-  - `README.md` and `docs/screenshots/`;
-  - release and Loop documentation files.
+  - scan progress views and their call sites;
+  - `script/package_release.sh`;
+  - CI and Release workflows;
+  - release documentation and Loop documentation.
 - Allowed commands:
-  - source/version inspection;
+  - source and history inspection;
+  - Debug and Release builds;
   - full SwiftPM tests;
-  - Debug build/launch verification;
-  - local Release packaging and fresh-extraction validation;
-  - non-destructive app navigation and screenshot capture without accepting cleanup or shredder actions;
-  - git branch/commit/push and GitHub PR merge;
-  - create and push tag `v0.4.0`;
-  - inspect/edit the corresponding GitHub Release and verify its downloaded assets.
+  - localization lint and key parity checks;
+  - app launch verification;
+  - DMG creation, read-only mount, signature and checksum checks;
+  - git diff checks and approved GitHub publication.
 - Out of scope:
-  - new feature code, changing deployment targets/dependencies, inventing signing credentials, disabling security, deleting user files, or claiming notarization without evidence.
+  - starting destructive cleanup, application removal, Shredder, RAM purge, or DNS flush;
+  - Developer ID signing or notarization without credentials;
+  - changing scanner rules, results, or deletion behavior;
+  - changing repository visibility without confirmation.
 - Dependencies allowed: none
-- Destructive actions allowed: generated build/dist artifacts only
+- Destructive actions allowed: replacing generated ignored `dist/` artifacts only
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - bundle reports version `0.4.0` and build `5`;
-  - all core tests and Debug launch verification pass on the release commit;
-  - local Release ZIP extracts with a valid strict ad-hoc signature and matching SHA-256;
-  - release version commit is merged into `main` before tagging;
-  - tag `v0.4.0` points to that verified `main` commit;
-  - GitHub Release is published with ZIP and `.sha256` assets and accurate notes/limitations;
-  - downloaded assets pass checksum and fresh-extraction signature/version inspection.
+  - standard cleanup scan, Disk Analysis, Duplicate Finder, and Applications scanning use the shared modern indicator;
+  - the old gray system spinner is absent from those scan surfaces;
+  - motion stops or becomes static when Reduce Motion is enabled;
+  - scan progress does not use `TimelineView` or invalidate the whole page on a display-frame schedule;
+  - `dist/CleanMac.dmg` sits beside `dist/CleanMac.app`;
+  - the mounted DMG contains `CleanMac.app` and an `Applications -> /Applications` shortcut;
+  - the app inside the mounted DMG passes strict signature verification;
+  - DMG and ZIP checksums validate;
+  - GitHub CI and tag Release workflows include the DMG artifact.
 - Required verification:
+  - `bash -n script/package_release.sh`;
   - `swift test --package-path CleanMacCore`;
+  - localization plist lint and RU/EN key parity;
   - `./script/build_and_run.sh --verify`;
   - `./script/package_release.sh`;
-  - bundle version, architecture, signature, and checksum inspection;
-  - GitHub CI/Release workflow and clean asset download verification;
+  - `zsh -lc 'cd dist && shasum -a 256 -c *.sha256'`;
+  - read-only DMG mount, shortcut inspection, and strict `codesign` verification;
   - `git diff --check`.
 - Manual checks:
-  - Keep release publication separate from commit/push and tag creation.
-  - Do not claim Developer ID signing or notarization unless the published asset proves it.
+  - review at least one active scan surface without accepting cleanup or removal actions;
+  - do not execute RAM/DNS maintenance during verification.
 
 ## Result
 
 - Status: complete
-- Verification result: PR #14 and PR #15 core/macOS CI passed; 47/47 core tests; Debug build/sign/launch passed; local Release packaging and clean extraction passed; published workflow run `29220077936` passed; downloaded ZIP checksum, version `0.4.0` build `5`, `arm64` architecture, and strict ad-hoc signature all passed.
-- Notes: `v0.4.0` points to merge commit `125e528` and is published as the latest GitHub Release with ZIP and SHA-256 assets. Developer ID certificate and notary key steps were skipped because those secrets are not configured; the notes accurately label the asset ad-hoc signed and not notarized.
+- Verification result: passed. The Debug and Release app builds succeeded; all 48 SwiftPM tests passed; localization lint and RU/EN parity passed; launch verification passed; packaging produced and verified the app, DMG, ZIP, and both checksums; live standard scan and Disk Analysis showed the modern indicator; the read-only analysis was cancelled; source checks found no scan-progress `TimelineView`; `git diff --check` passed.
+- Notes: the brief CPU sample had one scan-worker spike, then settled near 11% while analysis remained active, rather than sustaining the old 111–124% layout baseline. No cleanup, application removal, Shredder action, RAM purge, or DNS flush ran.

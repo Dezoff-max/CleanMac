@@ -155,3 +155,24 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: File Provider can mutate the Documents-backed convenience copy after the packaging script sanitizes and signs it.
 - Fix: treated the fresh ZIP extraction as the distribution source of truth, matching the packaging contract, and repeated checksum, version, architecture, and strict signature verification on both a clean local extraction and a clean GitHub asset download.
 - Status: resolved for the release artifact; both fresh extractions are valid, while the mutable convenience app is not used as release evidence.
+
+## 2026-07-13 - TASK-048 - Debug launch signing metadata race
+
+- Symptom: the first `./script/build_and_run.sh --verify` pass built Debug successfully, then strict ad-hoc signature verification rejected `com.apple.FinderInfo` on the generated app bundle.
+- Cause: the same local Finder/File Provider metadata race documented for release packaging can reattach Finder metadata between bundle sanitization, signing, and verification.
+- Fix: hardened `script/build_and_run.sh` with the same bounded sanitize-and-retry wrapper used by release packaging, including `SetFile -a bc` when available.
+- Status: resolved; the repeated `./script/build_and_run.sh --verify` pass produced a valid signed Debug app and launched CleanMac.
+
+## 2026-07-13 - TASK-051 - System maintenance permission denial
+
+- Symptom: Free Memory reported `/usr/sbin/purge` exit code 1 with `Operation not permitted`; Flush DNS could partially fail when signalling `mDNSResponder`.
+- Cause: modern macOS can deny these maintenance commands to a normal app process even though the paths exist.
+- Fix: System maintenance now runs only fixed absolute scripts through the macOS administrator authorization prompt after the user clicks a button, with no stored credentials, privileged helper, scheduling, or user-provided shell input.
+- Status: resolved in code and verified by build/test checks; the actual RAM purge and DNS flush were intentionally not executed during automated verification.
+
+## 2026-07-13 - TASK-053 - DMG inherited File Provider metadata
+
+- Symptom: the first DMG was created, but strict verification of `CleanMac.app` inside the mounted image rejected `com.apple.FinderInfo`, so checksum generation correctly did not run.
+- Cause: the first DMG staging folder lived under the Desktop-backed repository `dist/`, where File Provider could reattach metadata between sanitization and image creation.
+- Fix: stage the DMG in `/private/tmp`, copy without resource forks or extended attributes, sanitize there, then create and verify the read-only image from that isolated copy.
+- Status: resolved; the repeated package run verifies the DMG checksum, mounted app signature, and `/Applications` shortcut before writing release checksums.
