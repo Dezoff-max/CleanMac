@@ -2,63 +2,60 @@
 
 ## Task
 
-- ID: TASK-046
-- Title: Smart irreversible file shredder
+- ID: TASK-047
+- Title: CleanMac v0.4.0 release
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the user explicitly requested a separate hacker-style tool for deleting selected files without the Trash or CleanMac restore path.
-- Expected value: a deliberately isolated destructive workflow with review, clear limitations, strong confirmation, and fail-closed path validation.
-- Main risk: per-file overwrite cannot guarantee physical media erasure on SSD/APFS because copy-on-write, clones, snapshots, asynchronous TRIM, and flash wear leveling may preserve older blocks.
-- Safety choice: describe the operation as best-effort irreversible direct deletion; accept only explicitly selected regular files; reject directories, symlinks, hard links, packages, protected system roots, and files changed after review; use descriptor-based overwrite plus identity revalidation and direct unlink.
+- Why this task now: the user explicitly requested that the release be updated after the thermal optimization and Smart Shredder feature were pushed.
+- Expected value: publish the verified feature set as the next minor release with reproducible archive and checksum assets.
+- Main risk: tagging an unverified commit or presenting an ad-hoc build as notarized.
+- Release choice: bump `0.3.0 (4)` to `0.4.0 (5)` because the release adds a user-facing feature; keep the existing ad-hoc/unsigned distribution wording unless signing secrets produce a genuinely signed/notarized artifact in CI.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMacCore/Sources/CleanMacCore/SecureFileShredder.swift`;
-  - focused `CleanMacCore` tests;
-  - `CleanMac/Models/CleanMacModels.swift`;
-  - `CleanMac/Support/ShredderWorkspaceService.swift`;
-  - `CleanMac/Views/ShredderView.swift`;
-  - `CleanMac/Views/MainWindowView.swift`;
-  - RU/EN localization;
-  - `README.md`;
-  - Loop documentation files.
+  - `CleanMac.xcodeproj/project.pbxproj`;
+  - `README.md` and `docs/screenshots/`;
+  - release and Loop documentation files.
 - Allowed commands:
-  - source inspection;
-  - direct deletion only inside disposable test fixture directories;
-  - `swift test --package-path CleanMacCore`;
-  - Debug build and `./script/build_and_run.sh --verify`;
-  - localization and Git diff checks;
-  - non-destructive UI review up to, but not accepting, the final destructive confirmation.
+  - source/version inspection;
+  - full SwiftPM tests;
+  - Debug build/launch verification;
+  - local Release packaging and fresh-extraction validation;
+  - non-destructive app navigation and screenshot capture without accepting cleanup or shredder actions;
+  - git branch/commit/push and GitHub PR merge;
+  - create and push tag `v0.4.0`;
+  - inspect/edit the corresponding GitHub Release and verify its downloaded assets.
 - Out of scope:
-  - deleting any real user file during verification, directories, application bundles, privileged/system files, background shredding, scheduled shredding, dependencies, release/version/package changes, signing, or publication.
+  - new feature code, changing deployment targets/dependencies, inventing signing credentials, disabling security, deleting user files, or claiming notarization without evidence.
 - Dependencies allowed: none
-- Destructive actions allowed: disposable test fixtures only
+- Destructive actions allowed: generated build/dist artifacts only
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - Shredder is a separate sidebar destination and does not reuse normal cleanup, Trash, restore, or scheduled scan flows.
-  - Review accepts only explicitly selected regular files and records device/inode/size/mtime identity.
-  - Execution opens without following symlinks, verifies the same single-link regular file, overwrites through the file descriptor, syncs, truncates, revalidates identity, and unlinks directly.
-  - Protected roots, directories, symlinks, hard links, packages, and changed/replaced files fail closed.
-  - Final action requires both an acknowledgement and an exact typed phrase; no cancellation is offered after execution starts.
-  - UI clearly states that SSD/APFS physical recovery cannot be guaranteed and recommends FileVault for future protection.
-  - Neo-glow styling is concentrated on armed/danger states and supports both app appearances.
+  - bundle reports version `0.4.0` and build `5`;
+  - all core tests and Debug launch verification pass on the release commit;
+  - local Release ZIP extracts with a valid strict ad-hoc signature and matching SHA-256;
+  - release version commit is merged into `main` before tagging;
+  - tag `v0.4.0` points to that verified `main` commit;
+  - GitHub Release is published with ZIP and `.sha256` assets and accurate notes/limitations;
+  - downloaded assets pass checksum and fresh-extraction signature/version inspection.
 - Required verification:
-  - focused shredder tests and full `swift test --package-path CleanMacCore`;
-  - localization lint/key parity;
-  - Debug build and signed launch verification;
-  - live RU/EN layout and confirmation review without accepting deletion;
+  - `swift test --package-path CleanMacCore`;
+  - `./script/build_and_run.sh --verify`;
+  - `./script/package_release.sh`;
+  - bundle version, architecture, signature, and checksum inspection;
+  - GitHub CI/Release workflow and clean asset download verification;
   - `git diff --check`.
 - Manual checks:
-  - Never select or delete a real user file during automated verification.
-  - Confirm normal cleanup and restore behavior remain unchanged.
+  - Keep release publication separate from commit/push and tag creation.
+  - Do not claim Developer ID signing or notarization unless the published asset proves it.
 
 ## Result
 
-- Status: complete
-- Verification result: focused shredder tests 4/4; full `CleanMacCore` suite 47/47; EN/RU localization lint and 583-key parity; Debug build, ad-hoc signature, and launch verification; live EN/light and RU/dark UI review; exact-phrase gating review; `git diff --check`.
-- Notes: The production path was not exercised against a real user file. Only disposable SwiftPM fixtures were shredded; the UI fixture was preserved. Apple documents that secure erase options are unavailable for SSDs, so the UI explicitly describes this as best-effort direct deletion rather than guaranteed physical-media erasure.
+- Status: in progress
+- Verification result: pending.
+- Notes: PR #14 is merged and green; release versioning/package publication remains.
