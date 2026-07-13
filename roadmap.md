@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] ID: TASK-047
+- [x] ID: TASK-047
   Title: CleanMac v0.4.0 release
   Goal: Publish the verified thermal optimization and Smart Shredder as the next feature release.
   What to do: Bump version/build to 0.4.0 (5), verify core/Debug/Release artifacts, merge the version commit, tag main, publish accurate notes, and validate downloaded assets.

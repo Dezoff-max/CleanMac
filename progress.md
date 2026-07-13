@@ -430,3 +430,13 @@ Append-only history. Do not erase previous entries.
 - Next step: Commit and push the feature only when explicitly requested; package or publish a release separately when approved.
 - Bottleneck: physical-media erasure cannot be guaranteed on SSD/APFS; the known stale CoreSimulator warning remains non-blocking for macOS builds.
 - Handoff: The current Debug app builds, signs, and launches. CleanMac preferences were restored to English/light after RU/dark review. No real user file, setting, permission, package, release, or remote repository state was changed.
+
+## 2026-07-13 - TASK-047 - CleanMac v0.4.0 release
+
+- What changed: Merged the thermal optimization and Smart Shredder in PR #14, bumped the app from `0.3.0 (4)` to `0.4.0 (5)` in PR #15, refreshed the Dashboard/Scan/Applications screenshots, added a dark Smart Shredder screenshot and README coverage, tagged verified `main` as `v0.4.0`, and published accurate feature, safety, checksum, architecture, signing, and notarization notes.
+- Files touched: `CleanMac.xcodeproj/project.pbxproj`, `README.md`, `docs/screenshots/overview.png`, `docs/screenshots/scan-areas.png`, `docs/screenshots/applications-multiselect.png`, `docs/screenshots/shredder.png`, `contract.md`, `project-analysis.md`, `roadmap.md`, `progress.md`, `trace.md`.
+- Checks run: PR #14 core/macOS CI; PR #15 core/macOS CI; `swift test --package-path CleanMacCore` (47/47); `./script/build_and_run.sh --verify`; `./script/package_release.sh`; local and downloaded SHA-256 verification; clean ZIP extraction; `CFBundleShortVersionString`/`CFBundleVersion`; `lipo -archs`; strict `codesign`; Release workflow run `29220077936`; live English/light and English/dark screenshot review without starting a scan or accepting any removal action; `git diff --check`.
+- Result: Passed. GitHub Release `v0.4.0` is published as latest with `CleanMac-125e528-unsigned.zip` and its `.sha256`; a clean download reports version `0.4.0`, build `5`, `arm64`, matching checksum, and a valid strict ad-hoc signature.
+- Next step: Configure Developer ID and notarization secrets before a future trusted-distribution release.
+- Bottleneck: the release remains ad-hoc signed and not notarized because no Developer ID certificate/notary credentials are configured; Gatekeeper may reject it. The known stale CoreSimulator warning remains unrelated and non-blocking for macOS builds.
+- Handoff: Tag `v0.4.0` points to `125e528`. Release assets and verification copies are preserved under the task diagnostics folder. No user file was deleted and no destructive Shredder action was accepted.
