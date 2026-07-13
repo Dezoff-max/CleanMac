@@ -5,8 +5,6 @@ struct ScanActivityView: View {
     let selectedAreas: [CleanupArea]
     let progress: CleanupScanProgress?
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     private var visibleAreas: [CleanupArea] {
         Array(selectedAreas.prefix(5))
     }
@@ -20,70 +18,58 @@ struct ScanActivityView: View {
     }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: reduceMotion ? 1 : 1.0 / 30.0)) { timeline in
-            let elapsed = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
-
-            InfoPanel {
-                ViewThatFits(in: .horizontal) {
-                    horizontalLayout(elapsed: elapsed)
-                    verticalLayout(elapsed: elapsed)
-                }
+        InfoPanel {
+            ViewThatFits(in: .horizontal) {
+                horizontalLayout
+                verticalLayout
             }
-            .transition(.opacity.combined(with: .scale(scale: 0.98)))
         }
+        .transition(.opacity.combined(with: .scale(scale: 0.98)))
     }
 
-    private func horizontalLayout(elapsed: TimeInterval) -> some View {
+    private var horizontalLayout: some View {
         HStack(alignment: .center, spacing: 18) {
-            ScanOrbitalIndicator(
-                elapsed: elapsed,
-                reduceMotion: reduceMotion,
-                progress: progressFraction
-            )
+            ScanOrbitalIndicator(progress: progressFraction)
 
-            content(elapsed: elapsed)
+            content
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            ScanSignalBars(elapsed: elapsed, reduceMotion: reduceMotion)
+            ScanSignalBars(progress: progressFraction)
                 .frame(width: 76)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func verticalLayout(elapsed: TimeInterval) -> some View {
+    private var verticalLayout: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 14) {
-                ScanOrbitalIndicator(
-                    elapsed: elapsed,
-                    reduceMotion: reduceMotion,
-                    progress: progressFraction
-                )
-                header(elapsed: elapsed)
+                ScanOrbitalIndicator(progress: progressFraction)
+                header
             }
 
-            progressTrack(elapsed: elapsed)
+            progressTrack
             scanMetrics
             areaRail
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func content(elapsed: TimeInterval) -> some View {
+    private var content: some View {
         VStack(alignment: .leading, spacing: 12) {
-            header(elapsed: elapsed)
-            progressTrack(elapsed: elapsed)
+            header
+            progressTrack
             scanMetrics
             areaRail
         }
     }
 
-    private func header(elapsed: TimeInterval) -> some View {
+    private var header: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Label(L.t("scan.animation.title"), systemImage: "sparkles")
                     .font(.headline)
 
-                Text(phaseText(elapsed: elapsed))
+                Text(phaseText)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -100,7 +86,7 @@ struct ScanActivityView: View {
         }
     }
 
-    private func progressTrack(elapsed: TimeInterval) -> some View {
+    private var progressTrack: some View {
         GeometryReader { proxy in
             let trackWidth = proxy.size.width
             let filledWidth = max(8, trackWidth * progressFraction)
@@ -118,21 +104,8 @@ struct ScanActivityView: View {
                         )
                     )
                     .frame(width: filledWidth)
-                    .overlay(alignment: .leading) {
-                        if !reduceMotion {
-                            Capsule()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.clear, .white.opacity(0.34), .clear],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(width: 54)
-                                .offset(x: shimmerOffset(elapsed: elapsed, width: filledWidth))
-                        }
-                    }
                     .clipShape(Capsule())
+                    .animation(.easeOut(duration: 0.2), value: progressFraction)
             }
         }
         .frame(height: 8)
@@ -233,16 +206,9 @@ struct ScanActivityView: View {
         return L.f("scan.animation.areaProgress", currentNumber, progress.totalCategoryCount)
     }
 
-    private func phaseText(elapsed: TimeInterval) -> String {
+    private var phaseText: String {
         guard let progress else {
-            let phases = [
-                L.t("scan.animation.phase.metadata"),
-                L.t("scan.animation.phase.sizes"),
-                L.t("scan.animation.phase.risks"),
-                L.t("scan.animation.phase.summary")
-            ]
-            let index = Int(elapsed / 1.15) % phases.count
-            return phases[index]
+            return L.t("scan.animation.phase.metadata")
         }
 
         switch progress.phase {
@@ -290,34 +256,10 @@ struct ScanActivityView: View {
         return name.isEmpty ? path : name
     }
 
-    private func shimmerOffset(elapsed: TimeInterval, width: CGFloat) -> CGFloat {
-        guard width > 54 else {
-            return 0
-        }
-        let cycle = elapsed.truncatingRemainder(dividingBy: 1.45) / 1.45
-        return CGFloat(cycle) * (width + 54) - 54
-    }
 }
 
 private struct ScanOrbitalIndicator: View {
-    let elapsed: TimeInterval
-    let reduceMotion: Bool
     let progress: Double
-
-    private var rotation: Angle {
-        .degrees(reduceMotion ? 28 : elapsed * 135)
-    }
-
-    private var reverseRotation: Angle {
-        .degrees(reduceMotion ? -16 : -elapsed * 82)
-    }
-
-    private var pulse: CGFloat {
-        guard !reduceMotion else {
-            return 1
-        }
-        return 1 + CGFloat((sin(elapsed * 2.2) + 1) * 0.035)
-    }
 
     var body: some View {
         ZStack {
@@ -328,7 +270,6 @@ private struct ScanOrbitalIndicator: View {
             Circle()
                 .stroke(.blue.opacity(0.13), lineWidth: 12)
                 .frame(width: 60, height: 60)
-                .scaleEffect(pulse)
 
             Circle()
                 .trim(from: 0, to: max(0.04, progress))
@@ -342,29 +283,11 @@ private struct ScanOrbitalIndicator: View {
                 )
                 .frame(width: 64, height: 64)
                 .rotationEffect(.degrees(-90))
+                .animation(.easeOut(duration: 0.2), value: progress)
 
-            Circle()
-                .trim(from: 0.04, to: 0.38)
-                .stroke(
-                    AngularGradient(
-                        colors: [.blue.opacity(0.12), .cyan, .green.opacity(0.82)],
-                        center: .center
-                    ),
-                    style: StrokeStyle(lineWidth: 3, lineCap: .round)
-                )
-                .frame(width: 54, height: 54)
-                .rotationEffect(rotation)
-
-            Circle()
-                .trim(from: 0.62, to: 0.78)
-                .stroke(.blue.opacity(0.34), style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                .frame(width: 44, height: 44)
-                .rotationEffect(reverseRotation)
-
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(.blue)
-                .symbolRenderingMode(.hierarchical)
+            ProgressView()
+                .controlSize(.small)
+                .tint(.blue)
         }
         .frame(width: 82, height: 82)
         .accessibilityHidden(true)
@@ -372,8 +295,7 @@ private struct ScanOrbitalIndicator: View {
 }
 
 private struct ScanSignalBars: View {
-    let elapsed: TimeInterval
-    let reduceMotion: Bool
+    let progress: Double
 
     private let barCount = 5
 
@@ -383,6 +305,7 @@ private struct ScanSignalBars: View {
                 RoundedRectangle(cornerRadius: 3, style: .continuous)
                     .fill(barColor(for: index))
                     .frame(width: 8, height: barHeight(for: index))
+                    .animation(.easeOut(duration: 0.2), value: progress)
             }
         }
         .frame(height: 44, alignment: .bottom)
@@ -390,11 +313,9 @@ private struct ScanSignalBars: View {
     }
 
     private func barHeight(for index: Int) -> CGFloat {
-        guard !reduceMotion else {
-            return CGFloat(16 + index * 4)
-        }
-        let wave = (sin(elapsed * 3.4 + Double(index) * 0.82) + 1) / 2
-        return CGFloat(12 + wave * 28)
+        let clampedProgress = min(max(progress, 0.08), 1)
+        let step = Double(index + 1) / Double(barCount)
+        return CGFloat(12 + 28 * clampedProgress * step)
     }
 
     private func barColor(for index: Int) -> Color {

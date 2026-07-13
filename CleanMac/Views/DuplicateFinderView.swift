@@ -490,8 +490,11 @@ struct DuplicateFinderView: View {
         )
 
         let mode: DuplicateScanMode = includeLargeFiles ? .includeLargeFiles : .standard
-        let progressChannel = AsyncStream.makeStream(of: DuplicateScanProgress.self)
-        let worker = Task.detached(priority: .userInitiated) {
+        let progressChannel = AsyncStream.makeStream(
+            of: DuplicateScanProgress.self,
+            bufferingPolicy: .bufferingNewest(1)
+        )
+        let worker = Task.detached(priority: .utility) {
             defer { progressChannel.continuation.finish() }
             return try await DuplicateFinder().scan(
                 root: rootURL,

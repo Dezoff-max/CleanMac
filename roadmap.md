@@ -1,5 +1,33 @@
 # Roadmap
 
+- [x] ID: TASK-046
+  Title: Smart irreversible file shredder
+  Goal: Add an isolated hacker-style workflow for explicit best-effort overwrite and direct deletion of reviewed files.
+  What to do: Implement fail-closed descriptor-based shredding, disposable-fixture tests, multi-file review, exact typed confirmation, SSD/APFS limitation copy, and a dual-theme neo-glow sidebar destination.
+  Files: shredder core/tests, Shredder view/workspace service, navigation/localization, Loop docs
+  Definition of done: only unchanged single-link regular files can be processed; folders/symlinks/hard links/packages/system roots are rejected; no Trash/restore path exists; confirmation is explicit; UI never promises guaranteed SSD physical erasure.
+  Verification: focused and full SwiftPM tests; localization parity; Debug build/launch; non-destructive RU/EN UI review; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: high
+  Effort: medium
+  Confidence: high
+  Score: high impact / high risk / medium
+
+- [x] ID: TASK-045
+  Title: Reduce scan thermal load
+  Goal: Prevent Disk Analysis and scan progress UI from sustaining excessive CPU and heating the Mac.
+  What to do: Replace frame-driven progress visuals with event-driven/system animation, bound progress streams to the newest event, and run long read-only analysis workers at utility priority.
+  Files: scan progress views, Disk Analysis/Duplicate Finder/MainWindow progress coordination, Loop docs
+  Definition of done: progress remains responsive and cancellable; stale progress cannot queue unboundedly; no continuous TimelineView invalidates the main layout; the same Home benchmark is materially below the 111–124% baseline.
+  Verification: full SwiftPM tests; Debug build/launch; before/after CPU and stack samples; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: high impact / low risk / small
+
 - [x] ID: TASK-044
   Title: Low disk space warning
   Goal: Warn when available disk space falls below 10% without spamming or starting cleanup automatically.
