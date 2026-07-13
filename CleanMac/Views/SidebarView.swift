@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct SidebarView: View {
@@ -51,10 +52,7 @@ private struct SidebarSectionButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 10) {
-                Image(systemName: section.systemImage)
-                    .font(.system(size: 14, weight: isSelected ? .semibold : .medium))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(iconColor)
+                sectionIcon
                     .frame(width: 18, height: 18)
                     .scaleEffect(iconScale)
 
@@ -88,6 +86,25 @@ private struct SidebarSectionButton: View {
         .animation(rowAnimation, value: isSelected)
         .animation(rowAnimation, value: isHovered)
         .animation(rowAnimation, value: isKeyboardFocused)
+    }
+
+    @ViewBuilder
+    private var sectionIcon: some View {
+        if section == .applications {
+            Image(nsImage: SidebarApplicationIcon.image)
+                .resizable()
+                .renderingMode(.template)
+                .interpolation(.high)
+                .antialiased(true)
+                .aspectRatio(contentMode: .fit)
+                .foregroundStyle(iconColor)
+                .padding(0.25)
+        } else {
+            Image(systemName: section.systemImage)
+                .font(.system(size: 14, weight: isSelected ? .semibold : .medium))
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(iconColor)
+        }
     }
 
     private var rowBackground: some View {
@@ -181,6 +198,29 @@ private struct SidebarSectionButton: View {
     private var rowAnimation: Animation? {
         reduceMotion ? nil : .easeOut(duration: 0.16)
     }
+}
+
+private enum SidebarApplicationIcon {
+    static let image: NSImage = {
+        let resourcePath = "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/SidebarApplicationsFolder.icns"
+        if let source = NSImage(contentsOfFile: resourcePath),
+           let bitmap = source.representations
+            .compactMap({ $0 as? NSBitmapImageRep })
+            .first(where: { $0.pixelsWide == 36 && $0.pixelsHigh == 36 }),
+           let cgImage = bitmap.cgImage {
+            let image = NSImage(
+                cgImage: cgImage,
+                size: NSSize(width: 18, height: 18)
+            )
+            image.isTemplate = true
+            return image
+        }
+
+        return NSImage(
+            systemSymbolName: "square.stack.3d.up.fill",
+            accessibilityDescription: L.t("section.applications")
+        ) ?? NSImage(size: NSSize(width: 18, height: 18))
+    }()
 }
 
 private struct SidebarPressButtonStyle: ButtonStyle {

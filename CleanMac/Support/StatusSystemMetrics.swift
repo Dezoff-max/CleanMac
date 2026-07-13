@@ -5,24 +5,81 @@ import CleanMacCore
 
 struct StatusSystemSnapshot: Equatable {
     let cpuFraction: Double
-    let memoryFraction: Double
-    let memoryUsedBytes: Int64
+    let memory: StatusMemorySnapshot
     let disk: StatusDiskSnapshot
     let battery: StatusBatterySnapshot?
     let downloadBytesPerSecond: Int64
     let uploadBytesPerSecond: Int64
     let uptime: TimeInterval
 
+    var memoryFraction: Double {
+        memory.fraction
+    }
+
+    var memoryUsedBytes: Int64 {
+        memory.usedBytes
+    }
+
     static var initial: StatusSystemSnapshot {
         StatusSystemSnapshot(
             cpuFraction: 0,
-            memoryFraction: 0,
-            memoryUsedBytes: 0,
+            memory: .unavailable,
             disk: .current(),
             battery: StatusBatterySnapshot.current(),
             downloadBytesPerSecond: 0,
             uploadBytesPerSecond: 0,
             uptime: ProcessInfo.processInfo.systemUptime
+        )
+    }
+}
+
+struct StatusMemorySnapshot: Equatable, Sendable {
+    let fraction: Double
+    let usedBytes: Int64
+    let totalBytes: Int64
+
+    var freeBytes: Int64 {
+        max(totalBytes - usedBytes, 0)
+    }
+
+    nonisolated static var unavailable: StatusMemorySnapshot {
+        StatusMemorySnapshot(fraction: 0, usedBytes: 0, totalBytes: 0)
+    }
+
+    nonisolated static func current() -> StatusMemorySnapshot {
+        var statistics = vm_statistics64()
+        var count = mach_msg_type_number_t(
+            MemoryLayout<vm_statistics64_data_t>.stride / MemoryLayout<integer_t>.stride
+        )
+
+        let result = withUnsafeMutablePointer(to: &statistics) { pointer in
+            pointer.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { reboundPointer in
+                host_statistics64(mach_host_self(), HOST_VM_INFO64, reboundPointer, &count)
+            }
+        }
+
+        let totalBytes = ProcessInfo.processInfo.physicalMemory
+        guard result == KERN_SUCCESS, totalBytes > 0 else {
+            return .unavailable
+        }
+
+        var pageSize: vm_size_t = 0
+        host_page_size(mach_host_self(), &pageSize)
+        let pageBytes = UInt64(pageSize)
+        guard pageBytes > 0 else {
+            return .unavailable
+        }
+
+        let usedPages = UInt64(statistics.active_count)
+            + UInt64(statistics.wire_count)
+            + UInt64(statistics.compressor_page_count)
+        let cappedPages = min(usedPages, totalBytes / pageBytes)
+        let usedBytes = cappedPages * pageBytes
+
+        return StatusMemorySnapshot(
+            fraction: min(max(Double(usedBytes) / Double(totalBytes), 0), 1),
+            usedBytes: Int64(clamping: usedBytes),
+            totalBytes: Int64(clamping: totalBytes)
         )
     }
 }
@@ -152,15 +209,14 @@ struct StatusSystemSampler {
         let cpuFraction = cpuUsage(current: currentCPU, previous: previousCPU)
         previousCPU = currentCPU
 
-        let memory = readMemory()
+        let memory = StatusMemorySnapshot.current()
         let currentNetwork = readNetworkCounters()
         let networkRates = networkRates(current: currentNetwork, at: now, previous: previousNetwork)
         previousNetwork = (now, currentNetwork)
 
         return StatusSystemSnapshot(
             cpuFraction: cpuFraction,
-            memoryFraction: memory.fraction,
-            memoryUsedBytes: memory.usedBytes,
+            memory: memory,
             disk: .current(),
             battery: StatusBatterySnapshot.current(),
             downloadBytesPerSecond: networkRates.received,
@@ -205,36 +261,6 @@ struct StatusSystemSampler {
         }
 
         return min(max(Double(busyDelta) / Double(totalDelta), 0), 1)
-    }
-
-    private func readMemory() -> (fraction: Double, usedBytes: Int64) {
-        var statistics = vm_statistics64()
-        var count = mach_msg_type_number_t(
-            MemoryLayout<vm_statistics64_data_t>.stride / MemoryLayout<integer_t>.stride
-        )
-
-        let result = withUnsafeMutablePointer(to: &statistics) { pointer in
-            pointer.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { reboundPointer in
-                host_statistics64(mach_host_self(), HOST_VM_INFO64, reboundPointer, &count)
-            }
-        }
-
-        let totalBytes = ProcessInfo.processInfo.physicalMemory
-        guard result == KERN_SUCCESS, totalBytes > 0 else {
-            return (0, 0)
-        }
-
-        var pageSize: vm_size_t = 0
-        host_page_size(mach_host_self(), &pageSize)
-        let usedPages = UInt64(statistics.active_count)
-            + UInt64(statistics.wire_count)
-            + UInt64(statistics.compressor_page_count)
-        let usedBytes = min(usedPages * UInt64(pageSize), totalBytes)
-
-        return (
-            min(max(Double(usedBytes) / Double(totalBytes), 0), 1),
-            Int64(clamping: usedBytes)
-        )
     }
 
     private func readNetworkCounters() -> NetworkCounters {

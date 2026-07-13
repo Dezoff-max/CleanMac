@@ -31,6 +31,14 @@ struct ResultsView: View {
         selectedResults.reduce(0) { $0 + $1.sizeBytes }
     }
 
+    private var containsStaleCodexRuntimeInstallers: Bool {
+        results.contains { $0.category == .staleCodexRuntimeInstallers }
+    }
+
+    private var selectedStaleCodexRuntimeInstallers: Bool {
+        selectedResults.contains { $0.category == .staleCodexRuntimeInstallers }
+    }
+
     private var visibleResults: [ScanResult] {
         guard let selectedCategory else {
             return results
@@ -131,6 +139,15 @@ struct ResultsView: View {
                 }
 
                 statusBanners
+
+                if containsStaleCodexRuntimeInstallers {
+                    StatusBanner(
+                        title: L.t("results.codexRuntimes.title"),
+                        message: L.t("results.codexRuntimes.message"),
+                        systemImage: "shippingbox.and.arrow.backward.fill",
+                        tint: .orange
+                    )
+                }
 
                 if safeModeEnabled, results.contains(where: { $0.risk == .review }) {
                     StatusBanner(
@@ -452,7 +469,9 @@ struct ResultsView: View {
 
     private var cleanupConfirmationMessage: String {
         L.f(
-            "cleanup.confirm.message",
+            selectedStaleCodexRuntimeInstallers
+                ? "cleanup.confirm.codexRuntime.message"
+                : "cleanup.confirm.message",
             selectedResults.count,
             CleanMacFormatters.bytes(selectedSizeBytes)
         )

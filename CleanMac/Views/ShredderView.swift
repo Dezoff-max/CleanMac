@@ -1,8 +1,14 @@
 import CleanMacCore
 import SwiftUI
 
+private enum ShredderExecutionResult: Sendable {
+    case success(Int64)
+    case failure(SecureDeletionError?)
+}
+
 struct ShredderView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var candidates: [SecureDeletionCandidate] = []
     @State private var isChoosingFiles = false
@@ -13,6 +19,7 @@ struct ShredderView: View {
     @State private var showingConfirmation = false
     @State private var confirmationText = ""
     @State private var acknowledgedLimitations = false
+    @State private var animationSession: ShredderAnimationSession?
 
     private var palette: NeoShredderPalette {
         NeoShredderPalette(colorScheme: colorScheme)
@@ -33,10 +40,18 @@ struct ShredderView: View {
     var body: some View {
         PageContainer {
             VStack(alignment: .leading, spacing: 16) {
-                hackerHeader
-                limitationPanel
-                queueControls
-                queuePanel
+                if let animationSession {
+                    ShredderAnimationView(
+                        session: animationSession,
+                        palette: palette
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: reduceMotion ? 1 : 0.98)))
+                } else {
+                    hackerHeader
+                    limitationPanel
+                    queueControls
+                    queuePanel
+                }
 
                 if let statusMessage {
                     feedbackPanel(message: statusMessage, isProblem: false)
@@ -62,7 +77,7 @@ struct ShredderView: View {
         NeoShredderPanel(palette: palette, isGlowing: true) {
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 18) {
-                    terminalMark
+                    shredderMark
                     headerCopy
                     Spacer(minLength: 12)
                     stateStack
@@ -70,7 +85,7 @@ struct ShredderView: View {
 
                 VStack(alignment: .leading, spacing: 14) {
                     HStack(spacing: 14) {
-                        terminalMark
+                        shredderMark
                         headerCopy
                     }
                     stateStack
@@ -79,7 +94,7 @@ struct ShredderView: View {
         }
     }
 
-    private var terminalMark: some View {
+    private var shredderMark: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 15, style: .continuous)
                 .fill(palette.inset)
@@ -89,7 +104,7 @@ struct ShredderView: View {
                 }
                 .shadow(color: palette.glow.opacity(0.8), radius: 16)
 
-            Image(systemName: "terminal.fill")
+            Image(systemName: CleanMacSection.shredder.systemImage)
                 .font(.system(size: 26, weight: .bold))
                 .foregroundStyle(palette.cyan)
         }
@@ -415,28 +430,54 @@ struct ShredderView: View {
         statusMessage = nil
         problemMessage = nil
 
-        Task {
+        Task { @MainActor in
             var removedBytes: Int64 = 0
             var removedIDs = Set<String>()
             var failures: [String] = []
 
-            for candidate in reviewedCandidates {
-                do {
-                    let bytes = try await Task.detached(priority: .utility) {
-                        try SecureFileShredder().shred(candidate)
-                    }.value
+            for (offset, candidate) in reviewedCandidates.enumerated() {
+                let thumbnail = await ShredderPreviewService.preview(for: candidate)
+                animationSession = ShredderAnimationSession(
+                    candidateID: candidate.id,
+                    fileName: candidate.name,
+                    thumbnail: thumbnail,
+                    currentIndex: offset + 1,
+                    totalCount: reviewedCandidates.count,
+                    phase: .preparing,
+                    progress: 0
+                )
+
+                try? await Task.sleep(for: .milliseconds(reduceMotion ? 80 : 140))
+                animationSession?.phase = .feeding
+                try? await Task.sleep(for: .milliseconds(reduceMotion ? 180 : 720))
+                animationSession?.phase = .overwriting
+
+                let minimumVisualDuration = Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(reduceMotion ? 180 : 1_150))
+                }
+                let result = await shredWithProgress(candidate)
+                await minimumVisualDuration.value
+
+                switch result {
+                case .success(let bytes):
                     removedBytes += bytes
                     removedIDs.insert(candidate.id)
-                } catch {
+                    animationSession?.progress = 1
+                    animationSession?.phase = .success
+                    try? await Task.sleep(for: .milliseconds(reduceMotion ? 240 : 760))
+                case .failure(let error):
                     failures.append(L.f(
                         "shredder.error.file",
                         candidate.name,
-                        errorReason(error)
+                        error.map(errorReason) ?? L.t("shredder.error.generic")
                     ))
+                    animationSession?.phase = .failure
+                    try? await Task.sleep(for: .milliseconds(reduceMotion ? 320 : 980))
                 }
                 completedCount += 1
             }
 
+            animationSession = nil
             candidates.removeAll { removedIDs.contains($0.id) }
             isShredding = false
             statusMessage = L.f(
@@ -448,6 +489,43 @@ struct ShredderView: View {
                 problemMessage = failures.prefix(3).joined(separator: "\n")
             }
         }
+    }
+
+    private func shredWithProgress(
+        _ candidate: SecureDeletionCandidate
+    ) async -> ShredderExecutionResult {
+        let (stream, continuation) = AsyncStream.makeStream(
+            of: SecureDeletionProgress.self,
+            bufferingPolicy: .bufferingNewest(1)
+        )
+        let worker = Task.detached(priority: .utility) {
+            defer { continuation.finish() }
+            do {
+                let bytes = try SecureFileShredder().shred(candidate) { progress in
+                    continuation.yield(progress)
+                }
+                return ShredderExecutionResult.success(bytes)
+            } catch {
+                return ShredderExecutionResult.failure(error as? SecureDeletionError)
+            }
+        }
+
+        for await progress in stream {
+            guard animationSession?.candidateID == candidate.id else { continue }
+            switch progress.stage {
+            case .overwriting:
+                animationSession?.phase = .overwriting
+                animationSession?.progress = progress.fractionCompleted * 0.9
+            case .finalizing:
+                animationSession?.phase = .finalizing
+                animationSession?.progress = 0.95
+            case .complete:
+                animationSession?.phase = .finalizing
+                animationSession?.progress = 0.98
+            }
+        }
+
+        return await worker.value
     }
 
     private func errorReason(_ error: Error) -> String {
@@ -561,7 +639,7 @@ private struct NeoShredderButtonStyle: ButtonStyle {
     }
 }
 
-private struct NeoShredderPalette {
+struct NeoShredderPalette {
     let surface: Color
     let inset: Color
     let textPrimary: Color

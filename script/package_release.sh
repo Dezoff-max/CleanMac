@@ -37,6 +37,7 @@ if [[ "$NOTARIZE" == "1" || "$NOTARIZE" == "true" ]]; then
 fi
 
 ZIP_PATH="$DIST_DIR/$APP_NAME-$BUILD_ID-$ZIP_KIND.zip"
+DMG_PATH="$DIST_DIR/$APP_NAME.dmg"
 NOTARY_ARGS=()
 
 sanitize_app_bundle() {
@@ -87,6 +88,64 @@ verify_zip() (
 
   ditto -x -k "$zip_path" "$verify_root"
   codesign --verify --deep --strict --verbose=2 "$verify_root/$APP_NAME.app"
+)
+
+create_dmg() (
+  local dmg_path="$1"
+  local dmg_root
+  dmg_root="$(mktemp -d "/private/tmp/cleanmac-dmg-root.XXXXXX")"
+  local dmg_app="$dmg_root/$APP_NAME.app"
+
+  trap 'rm -rf "$dmg_root"' EXIT
+
+  rm -f "$dmg_path" "$dmg_path.sha256"
+  COPYFILE_DISABLE=1 ditto --norsrc --noextattr "$DIST_APP" "$dmg_app"
+  sanitize_app_bundle "$dmg_app"
+  ln -s /Applications "$dmg_root/Applications"
+
+  hdiutil create \
+    -volname "$APP_NAME" \
+    -srcfolder "$dmg_root" \
+    -ov \
+    -format UDZO \
+    "$dmg_path" >/dev/null
+
+)
+
+verify_dmg() (
+  local dmg_path="$1"
+  local mount_dir
+  local mounted=0
+
+  mount_dir="$(mktemp -d "/private/tmp/cleanmac-dmg-verify.XXXXXX")"
+
+  cleanup() {
+    if [[ "$mounted" == "1" ]]; then
+      hdiutil detach "$mount_dir" -force >/dev/null 2>&1 || true
+    fi
+    rm -rf "$mount_dir"
+  }
+  trap cleanup EXIT
+
+  hdiutil verify "$dmg_path" >/dev/null
+  hdiutil attach "$dmg_path" -readonly -nobrowse -mountpoint "$mount_dir" >/dev/null
+  mounted=1
+
+  if [[ ! -d "$mount_dir/$APP_NAME.app" ]]; then
+    echo "error: DMG does not contain $APP_NAME.app" >&2
+    exit 1
+  fi
+
+  if [[ ! -L "$mount_dir/Applications" || "$(readlink "$mount_dir/Applications")" != "/Applications" ]]; then
+    echo "error: DMG does not contain the Applications shortcut" >&2
+    exit 1
+  fi
+
+  codesign --verify --deep --strict --verbose=2 "$mount_dir/$APP_NAME.app"
+  hdiutil detach "$mount_dir" >/dev/null
+  mounted=0
+  rmdir "$mount_dir"
+  trap - EXIT
 )
 
 build_notary_args() {
@@ -168,13 +227,22 @@ fi
 # distributable ZIP from a fresh extraction below.
 sanitize_app_bundle "$DIST_APP"
 verify_zip "$ZIP_PATH"
+create_dmg "$DMG_PATH"
+verify_dmg "$DMG_PATH"
 
 (
   cd "$(dirname "$ZIP_PATH")"
   shasum -a 256 "$(basename "$ZIP_PATH")"
 ) > "$ZIP_PATH.sha256"
 
+(
+  cd "$(dirname "$DMG_PATH")"
+  shasum -a 256 "$(basename "$DMG_PATH")"
+) > "$DMG_PATH.sha256"
+
 echo "Created:"
 echo "  $DIST_APP"
+echo "  $DMG_PATH"
+echo "  $DMG_PATH.sha256"
 echo "  $ZIP_PATH"
 echo "  $ZIP_PATH.sha256"

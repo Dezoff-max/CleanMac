@@ -16,12 +16,12 @@ public struct CleanupPlanner {
         )
     }
 
-    public func plan(for items: [CleanupScanItem]) -> CleanupPlan {
+    public func plan(for items: [CleanupScanItem], referenceDate: Date = Date()) -> CleanupPlan {
         var acceptedItems: [CleanupPlanItem] = []
         var rejectedItems: [CleanupRejectedItem] = []
 
         for item in items {
-            switch validate(item) {
+            switch validate(item, referenceDate: referenceDate) {
             case .accepted(let planItem):
                 acceptedItems.append(planItem)
             case .rejected(let rejectedItem):
@@ -41,7 +41,7 @@ public struct CleanupPlanner {
         case rejected(CleanupRejectedItem)
     }
 
-    private func validate(_ item: CleanupScanItem) -> ValidationResult {
+    private func validate(_ item: CleanupScanItem, referenceDate: Date) -> ValidationResult {
         let url = URL(fileURLWithPath: item.path)
 
         guard fileManager.fileExists(atPath: url.path) else {
@@ -80,6 +80,7 @@ public struct CleanupPlanner {
         }
 
         let directChildCategories: Set<CleanupCategory> = [
+            .staleCodexRuntimeInstallers,
             .xcodeDeviceSupport,
             .xcodePreviews,
             .xcodeSimulatorData
@@ -102,6 +103,23 @@ public struct CleanupPlanner {
                 reason: .symbolicLink,
                 message: "Symbolic links require manual review."
             ))
+        }
+
+        if item.category == .staleCodexRuntimeInstallers {
+            let runtimeValues = try? url.resourceValues(forKeys: [
+                .isDirectoryKey,
+                .contentModificationDateKey
+            ])
+            guard runtimeValues?.isDirectory == true,
+                  CleanupPathRules.isCodexRuntimeInstallerName(url.lastPathComponent),
+                  let modifiedAt = runtimeValues?.contentModificationDate,
+                  referenceDate.timeIntervalSince(modifiedAt) >= CleanupScanOptions.defaultStaleCodexRuntimeAge else {
+                return .rejected(rejection(
+                    for: item,
+                    reason: .outsideAllowedRoot,
+                    message: "Only stale Codex runtime installer directories can be cleaned."
+                ))
+            }
         }
 
         return .accepted(CleanupPlanItem(scanItem: item, originalPath: canonicalPath))

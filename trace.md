@@ -155,3 +155,52 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: File Provider can mutate the Documents-backed convenience copy after the packaging script sanitizes and signs it.
 - Fix: treated the fresh ZIP extraction as the distribution source of truth, matching the packaging contract, and repeated checksum, version, architecture, and strict signature verification on both a clean local extraction and a clean GitHub asset download.
 - Status: resolved for the release artifact; both fresh extractions are valid, while the mutable convenience app is not used as release evidence.
+
+## 2026-07-13 - TASK-048 - Debug launch signing metadata race
+
+- Symptom: the first `./script/build_and_run.sh --verify` pass built Debug successfully, then strict ad-hoc signature verification rejected `com.apple.FinderInfo` on the generated app bundle.
+- Cause: the same local Finder/File Provider metadata race documented for release packaging can reattach Finder metadata between bundle sanitization, signing, and verification.
+- Fix: hardened `script/build_and_run.sh` with the same bounded sanitize-and-retry wrapper used by release packaging, including `SetFile -a bc` when available.
+- Status: resolved; the repeated `./script/build_and_run.sh --verify` pass produced a valid signed Debug app and launched CleanMac.
+
+## 2026-07-13 - TASK-051 - System maintenance permission denial
+
+- Symptom: Free Memory reported `/usr/sbin/purge` exit code 1 with `Operation not permitted`; Flush DNS could partially fail when signalling `mDNSResponder`.
+- Cause: modern macOS can deny these maintenance commands to a normal app process even though the paths exist.
+- Fix: System maintenance now runs only fixed absolute scripts through the macOS administrator authorization prompt after the user clicks a button, with no stored credentials, privileged helper, scheduling, or user-provided shell input.
+- Status: resolved in code and verified by build/test checks; the actual RAM purge and DNS flush were intentionally not executed during automated verification.
+
+## 2026-07-13 - TASK-053 - DMG inherited File Provider metadata
+
+- Symptom: the first DMG was created, but strict verification of `CleanMac.app` inside the mounted image rejected `com.apple.FinderInfo`, so checksum generation correctly did not run.
+- Cause: the first DMG staging folder lived under the Desktop-backed repository `dist/`, where File Provider could reattach metadata between sanitization and image creation.
+- Fix: stage the DMG in `/private/tmp`, copy without resource forks or extended attributes, sanitize there, then create and verify the read-only image from that isolated copy.
+- Status: resolved; the repeated package run verifies the DMG checksum, mounted app signature, and `/Applications` shortcut before writing release checksums.
+
+## 2026-07-13 - TASK-054 - Unavailable App Store SF Symbol
+
+- Symptom: the Applications sidebar icon was blank with `appstore`, while letter-based and hand-drawn substitutes did not resemble the native App Store artwork.
+- Cause: `appstore` is not available as an SF Symbol on the current macOS, so `NSImage(systemSymbolName:)` returns `nil`.
+- Fix: load the installed App Store application icon through `NSWorkspace`, render the Retina `NSImage` directly in SwiftUI, and keep `square.stack.3d.up.fill` only as a fallback when App Store is unavailable.
+- Status: resolved; live selected and unselected sidebar screenshots show the native App Store icon clearly.
+
+## 2026-07-13 - TASK-054 - Runtime package descendants were undercounted
+
+- Symptom: the first stale-runtime probe measured less space than `du` for an old Codex installer directory.
+- Cause: the shared scanner skipped package descendants, but Codex runtimes contain package-shaped directories whose contents still consume disk space.
+- Fix: enumerate package descendants only for the narrowly scoped stale-runtime category and raise its dedicated safety cap to 100,000 descendants while preserving the existing cap and package behavior for every other category.
+- Status: resolved; the real read-only probe reports two eligible directories totaling 1,772,158,976 bytes and excludes `codex-primary-runtime`.
+
+## 2026-07-13 - TASK-055 - Finder Applications icon rendered as stripes
+
+- Symptom: the full App Store icon was the only colored sidebar item; replacing it with the complete system `SidebarApplicationsFolder.icns` made SwiftUI composite several bitmap representations into a striped mark.
+- Cause: the Finder `.icns` contains eight point/scale representations, and passing that multi-representation `NSImage` through the resizable template path did not select one stable bitmap.
+- Fix: select the exact 36×36 Retina representation, create a single 18-point `NSImage`, mark it as a template, and tint it with the existing selected/unselected icon color.
+- Status: resolved; live screenshots show one crisp gray mark when unselected and the same mark in white when selected.
+
+## 2026-07-13 - TASK-056 - Shredder animation clipped in the standard window
+
+- Symptom: the first live destruction-animation pass started below the static Shredder header, warning, and queue controls, so the lower fragments, progress, and completion state were clipped in the standard window.
+- Cause: the normal workspace panels remained mounted while an irreversible operation was running, leaving too little vertical space for the complete focused animation scene.
+- Fix: while an animation session exists, replace the normal Shredder content with one stable focused operation view that contains the Quick Look preview, mechanism, falling strips, real progress, and final state.
+- Status: resolved; disposable-file screenshots show the complete scene at the 98% finalizing state and at the 100% post-unlink success state without clipping.

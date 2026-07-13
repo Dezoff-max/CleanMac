@@ -4,6 +4,7 @@ import Foundation
 enum CleanMacPreferenceKeys {
     static let onboardingCompleted = "CleanMac.onboardingCompleted"
     static let selectedAreaIDs = "CleanMac.selectedAreaIDs"
+    static let selectedAreaSchemaVersion = "CleanMac.selectedAreaSchemaVersion"
     static let lastScanItemCount = "CleanMac.lastScanItemCount"
     static let lastScanBytes = "CleanMac.lastScanBytes"
     static let lastScanTimestamp = "CleanMac.lastScanTimestamp"
@@ -57,6 +58,8 @@ enum CleanMacAutoScanFrequency: String, CaseIterable, Identifiable {
 }
 
 enum CleanMacScanPreferences {
+    private static let currentAreaSchemaVersion = 1
+
     static var defaultSelectedAreaIDs: Set<String> {
         Set(CleanMacCatalog.cleanupAreas.filter(\.isDefaultSelected).map(\.id))
     }
@@ -68,15 +71,23 @@ enum CleanMacScanPreferences {
     static func selectedAreaIDs(defaults: UserDefaults = .standard) -> Set<String> {
         let rawValue = defaults.string(forKey: CleanMacPreferenceKeys.selectedAreaIDs)
         guard let rawValue else {
+            defaults.set(currentAreaSchemaVersion, forKey: CleanMacPreferenceKeys.selectedAreaSchemaVersion)
             return defaultSelectedAreaIDs
         }
         guard !rawValue.isEmpty else {
+            defaults.set(currentAreaSchemaVersion, forKey: CleanMacPreferenceKeys.selectedAreaSchemaVersion)
             return []
         }
 
         let validIDs = Set(CleanMacCatalog.cleanupAreas.map(\.id))
-        let decodedIDs = Set(rawValue.split(separator: ",").map(String.init))
+        var decodedIDs = Set(rawValue.split(separator: ",").map(String.init))
             .intersection(validIDs)
+
+        if defaults.integer(forKey: CleanMacPreferenceKeys.selectedAreaSchemaVersion) < currentAreaSchemaVersion {
+            decodedIDs.insert(CleanupCategory.staleCodexRuntimeInstallers.rawValue)
+            defaults.set(encodeAreaIDs(decodedIDs), forKey: CleanMacPreferenceKeys.selectedAreaIDs)
+            defaults.set(currentAreaSchemaVersion, forKey: CleanMacPreferenceKeys.selectedAreaSchemaVersion)
+        }
 
         return decodedIDs.isEmpty ? defaultSelectedAreaIDs : decodedIDs
     }
@@ -90,6 +101,7 @@ enum CleanMacScanPreferences {
 
     static func storeSelectedAreaIDs(_ areaIDs: Set<String>, defaults: UserDefaults = .standard) {
         defaults.set(encodeAreaIDs(areaIDs), forKey: CleanMacPreferenceKeys.selectedAreaIDs)
+        defaults.set(currentAreaSchemaVersion, forKey: CleanMacPreferenceKeys.selectedAreaSchemaVersion)
     }
 
     static func storeLastScan(_ report: CleanupScanReport, source: CleanMacScanSource, defaults: UserDefaults = .standard) {

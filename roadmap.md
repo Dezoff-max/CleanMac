@@ -1,5 +1,131 @@
 # Roadmap
 
+- [x] ID: TASK-056
+  Title: Real Smart Shredder destruction animation
+  Goal: Make irreversible deletion visibly follow the real overwrite and unlink operation instead of a decorative timer.
+  What to do: Emit byte progress from the secure core, load a Quick Look preview, feed it into a focused shredder scene, split it into 20 falling strips, preserve Reduce Motion, and show success only after actual unlink.
+  Files: secure shredder core/tests, `ShredderView`, `ShredderAnimationView`, localization, Loop docs
+  Definition of done: progress reflects bytes written; finalizing stays below 100%; failed removal never reports complete and remains queued; the whole animation fits the standard window; RU/EN and Reduce Motion paths remain usable.
+  Verification: five focused Shredder tests; full 51-test suite; localization lint/key parity; Debug build/launch; live disposable-file feed/fragment/success screenshots; release packaging/checksums; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: high
+  Effort: medium
+  Confidence: high
+  Score: high impact / high risk / medium
+
+- [x] ID: TASK-055
+  Title: Monochrome Retina Applications sidebar icon
+  Goal: Keep the Applications mark recognizable without making it the only colored or visually broken sidebar icon.
+  What to do: Load Finder's system Applications icon, isolate its 36-pixel Retina representation as one 18-point template, tint it with the existing sidebar state color, and retain a monochrome fallback.
+  Files: `CleanMac/Views/SidebarView.swift`, Loop docs
+  Definition of done: one crisp App Store-style mark renders gray when unselected and white when selected; no stacked `.icns` variants, colored app icon, copied Apple asset, or blank fallback remains.
+  Verification: Debug build/launch; selected and unselected screenshots; full SwiftPM tests; release packaging/checksums; `git diff --check`
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small
+
+- [x] ID: TASK-054
+  Title: Safe stale Codex runtime review and native Applications icon
+  Goal: Explain the large `~/.cache` usage through a narrowly scoped cleanup preview and make Applications instantly recognizable in the sidebar.
+  What to do: Scan only old exact Codex installer runtime directories, protect the active runtime, revalidate before Trash, add review-only warnings and confirmation, migrate selected scan areas once, and render the installed system App Store icon through `NSWorkspace`.
+  Files: cleanup core models/policy/scanner/planner/tests, scan preferences, Results UI, Sidebar UI, localizations, Loop docs
+  Definition of done: only direct exact installer runtimes older than seven days are reported; the current runtime and unsafe variants are excluded; results remain unselected and confirmation-gated; measured size is accurate; the sidebar shows the real Retina App Store icon with a fallback.
+  Verification: full SwiftPM tests; real read-only runtime probe; localization lint/key parity; Debug build/launch; selected/unselected sidebar review; release packaging/checksums; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: high impact / medium risk / medium
+
+- [x] ID: TASK-053
+  Title: Modern scan progress and drag-to-Applications DMG
+  Goal: Restore polished scan motion everywhere and ship a standard macOS drag-install image beside the app.
+  What to do: Replace scan-only system spinners with one Reduce Motion-aware state-driven indicator, keep scan pages free of `TimelineView`, create and verify `dist/CleanMac.dmg` with `CleanMac.app` plus an `/Applications` shortcut, and include the DMG in CI/tag releases.
+  Files: scan progress views, `script/package_release.sh`, GitHub workflows, release docs, Loop docs
+  Definition of done: all four scan surfaces share the modern indicator without frame-driven page invalidation; the mounted DMG contains a strictly valid app and working Applications shortcut; DMG/ZIP checksums pass.
+  Verification: full SwiftPM tests; localization lint/key parity; Debug build/launch; release packaging; mounted-DMG structure/signature; checksums; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: high impact / medium risk / medium
+
+- [x] ID: TASK-052
+  Title: Visible memory cleanup result
+  Goal: Make Free Memory visibly explain whether memory usage changed, not just report an exit code.
+  What to do: Share the menu-bar VM memory metric with the System screen, show a live memory gauge, capture before/after snapshots around `/usr/sbin/purge`, and label freed/no-change/rose-again outcomes.
+  Files: `CleanMac/Support/StatusSystemMetrics.swift`, `CleanMac/Support/SystemMaintenanceService.swift`, `CleanMac/Views/SystemMaintenanceView.swift`, localization files, Loop docs
+  Definition of done: the memory card shows live usage before action; Free Memory reports before/after percentages; the result explicitly says whether memory visibly dropped, stayed roughly the same, or rose; automated verification does not execute RAM/DNS commands.
+  Verification: Debug build; full SwiftPM tests; localization lint/key parity; `./script/build_and_run.sh --verify`; `git diff --check`
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small
+
+- [x] ID: TASK-050
+  Title: System maintenance actions
+  Goal: Add manual RAM and DNS cache maintenance without mixing it into automatic cleanup.
+  What to do: Add a System sidebar section, a fixed-path command service, buttons for `/usr/sbin/purge` and DNS cache flushing, localized status output, and documentation.
+  Files: `CleanMac/Support/SystemMaintenanceService.swift`, `CleanMac/Views/SystemMaintenanceView.swift`, navigation/localization files, README, Loop docs
+  Definition of done: initial commands run only from explicit buttons, fixed paths, and normal user execution; UI reports success, partial success, unavailable commands, and failures; no RAM/DNS command is executed during verification. Administrator-backed execution is tracked separately in TASK-051.
+  Verification: full SwiftPM tests; localization lint/key parity; Debug build/launch; `git diff --check`
+  Priority: high
+  Impact: medium
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: medium impact / medium risk / medium
+
+- [x] ID: TASK-051
+  Title: Administrator-backed system maintenance
+  Goal: Make RAM purge and DNS cache flush work on modern macOS when normal user execution is denied.
+  What to do: Switch the two System actions to fixed administrator-authorized scripts through the macOS password prompt, update status/UI copy, and keep verification non-destructive.
+  Files: `CleanMac/Support/SystemMaintenanceService.swift`, `CleanMac/Views/SystemMaintenanceView.swift`, localization files, README, Loop docs
+  Definition of done: `/usr/sbin/purge` and DNS flush commands are still explicit-only and fixed; macOS owns the admin prompt; no credentials are stored; cancellation/failure is reported; no RAM/DNS command is executed during automated verification.
+  Verification: Debug build; full SwiftPM tests; localization lint/key parity; `./script/build_and_run.sh --verify`; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: small
+  Confidence: high
+  Score: high impact / medium risk / small
+
+- [x] ID: TASK-049
+  Title: Shredder icon polish
+  Goal: Make the Shredder sidebar item read as a file-shredding tool instead of a terminal.
+  What to do: Replace the terminal SF Symbol with a system scissors icon in navigation and reuse it in the Shredder header mark.
+  Files: `CleanMac/Models/CleanMacModels.swift`, `CleanMac/Views/ShredderView.swift`, Loop docs
+  Definition of done: the sidebar and Shredder header no longer use `terminal.fill`; the app builds and launches; no deletion behavior changes.
+  Verification: full SwiftPM tests; `./script/build_and_run.sh --verify`; `git diff --check`
+  Priority: medium
+  Impact: low
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: low impact / low risk / small
+
+- [x] ID: TASK-048
+  Title: Application removal modes
+  Goal: Let the user choose between recoverable Trash removal and direct permanent removal for reviewed applications.
+  What to do: Add a core removal mode, expand exact bundle-ID leftovers, add a segmented mode selector in Applications, auto-include shown leftovers in permanent mode, localize the irreversible confirmation, and test the direct-delete path with disposable fixtures.
+  Files: `CleanMacCore/Sources/CleanMacCore/ApplicationUninstaller.swift`, `CleanMacCore/Tests/CleanMacCoreTests/CleanMacCoreTests.swift`, `CleanMac/Views/ApplicationsView.swift`, `CleanMac/*/Localizable.strings`, Loop docs
+  Definition of done: Trash mode remains default; permanent mode bypasses Trash only after explicit selection and confirmation; app removal still happens before leftovers; failed app removal leaves leftovers untouched; expanded leftover paths are exact bundle-ID paths only; no real app is removed during verification.
+  Verification: focused app-removal tests; full SwiftPM tests; localization lint/key parity; Debug build; `./script/build_and_run.sh --verify`; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: high
+  Effort: medium
+  Confidence: high
+  Score: high impact / high risk / medium
+
 - [x] ID: TASK-047
   Title: CleanMac v0.4.0 release
   Goal: Publish the verified thermal optimization and Smart Shredder as the next feature release.

@@ -8,6 +8,7 @@ public enum CleanupCategory: String, CaseIterable, Codable, Identifiable, Sendab
     case developerPackageCaches = "developer-package-cache"
     case developerIDECaches = "developer-ide-cache"
     case developerAITemporaryFiles = "developer-ai-temp"
+    case staleCodexRuntimeInstallers = "codex-runtime-installers"
     case logs
     case temporaryFiles = "temp"
     case trash
@@ -35,6 +36,7 @@ public enum CleanupScanReason: String, Equatable, Sendable {
     case developerPackageCache
     case developerIDECache
     case developerAITemporaryFile
+    case staleCodexRuntimeInstaller
     case staleLog
     case rotatedLog
     case staleTemporary
@@ -50,30 +52,38 @@ public enum CleanupScanReason: String, Equatable, Sendable {
 }
 
 public struct CleanupScanOptions: Equatable, Sendable {
+    public static let defaultStaleCodexRuntimeAge: TimeInterval = 7 * 24 * 60 * 60
+
     public var maxItemsPerCategory: Int
     public var maxDescendantsPerItem: Int
+    public var maxStaleCodexRuntimeDescendants: Int
     public var largeDownloadThresholdBytes: Int64
     public var staleDownloadAge: TimeInterval
     public var staleLogAge: TimeInterval
     public var staleTemporaryAge: TimeInterval
     public var staleDeveloperDataAge: TimeInterval
+    public var staleCodexRuntimeAge: TimeInterval
 
     public init(
         maxItemsPerCategory: Int = 80,
         maxDescendantsPerItem: Int = 2_000,
+        maxStaleCodexRuntimeDescendants: Int = 100_000,
         largeDownloadThresholdBytes: Int64 = 100 * 1024 * 1024,
         staleDownloadAge: TimeInterval = 30 * 24 * 60 * 60,
         staleLogAge: TimeInterval = 7 * 24 * 60 * 60,
         staleTemporaryAge: TimeInterval = 24 * 60 * 60,
-        staleDeveloperDataAge: TimeInterval = 180 * 24 * 60 * 60
+        staleDeveloperDataAge: TimeInterval = 180 * 24 * 60 * 60,
+        staleCodexRuntimeAge: TimeInterval = CleanupScanOptions.defaultStaleCodexRuntimeAge
     ) {
         self.maxItemsPerCategory = max(1, maxItemsPerCategory)
         self.maxDescendantsPerItem = max(1, maxDescendantsPerItem)
+        self.maxStaleCodexRuntimeDescendants = max(1, maxStaleCodexRuntimeDescendants)
         self.largeDownloadThresholdBytes = max(1, largeDownloadThresholdBytes)
         self.staleDownloadAge = max(0, staleDownloadAge)
         self.staleLogAge = max(0, staleLogAge)
         self.staleTemporaryAge = max(0, staleTemporaryAge)
         self.staleDeveloperDataAge = max(0, staleDeveloperDataAge)
+        self.staleCodexRuntimeAge = max(CleanupScanOptions.defaultStaleCodexRuntimeAge, staleCodexRuntimeAge)
     }
 }
 

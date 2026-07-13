@@ -46,6 +46,31 @@ public enum SecureDeletionError: Error, Equatable, Sendable {
     case removeFailed(Int32)
 }
 
+public struct SecureDeletionProgress: Equatable, Sendable {
+    public enum Stage: Equatable, Sendable {
+        case overwriting
+        case finalizing
+        case complete
+    }
+
+    public let stage: Stage
+    public let completedBytes: Int64
+    public let totalBytes: Int64
+
+    public init(stage: Stage, completedBytes: Int64, totalBytes: Int64) {
+        self.stage = stage
+        self.completedBytes = max(0, completedBytes)
+        self.totalBytes = max(0, totalBytes)
+    }
+
+    public var fractionCompleted: Double {
+        guard totalBytes > 0 else {
+            return stage == .overwriting ? 0 : 1
+        }
+        return min(1, Double(completedBytes) / Double(totalBytes))
+    }
+}
+
 public struct SecureFileShredder: Sendable {
     private static let bufferSize = 1024 * 1024
 
@@ -126,7 +151,10 @@ public struct SecureFileShredder: Sendable {
     }
 
     @discardableResult
-    public func shred(_ candidate: SecureDeletionCandidate) throws -> Int64 {
+    public func shred(
+        _ candidate: SecureDeletionCandidate,
+        progress: (@Sendable (SecureDeletionProgress) -> Void)? = nil
+    ) throws -> Int64 {
         let candidateURL = URL(fileURLWithPath: candidate.path).standardizedFileURL
         let canonicalURL = candidateURL.resolvingSymlinksInPath().standardizedFileURL
         guard !Self.isProtected(path: candidate.path), !Self.isProtected(path: canonicalURL.path) else {
@@ -155,12 +183,28 @@ public struct SecureFileShredder: Sendable {
         }
         try validate(candidate: candidate, metadata: openedMetadata, includeMutableMetadata: true)
 
+        progress?(SecureDeletionProgress(
+            stage: .overwriting,
+            completedBytes: 0,
+            totalBytes: candidate.sizeBytes
+        ))
+
         if candidate.sizeBytes > 0 {
-            try overwrite(descriptor: descriptor, byteCount: candidate.sizeBytes)
+            try overwrite(
+                descriptor: descriptor,
+                byteCount: candidate.sizeBytes,
+                progress: progress
+            )
             guard Darwin.fsync(descriptor) == 0 else {
                 throw SecureDeletionError.syncFailed(errno)
             }
         }
+
+        progress?(SecureDeletionProgress(
+            stage: .finalizing,
+            completedBytes: candidate.sizeBytes,
+            totalBytes: candidate.sizeBytes
+        ))
 
         try beforeUnlink(candidate.path)
 
@@ -181,16 +225,28 @@ public struct SecureFileShredder: Sendable {
             throw SecureDeletionError.removeFailed(errno)
         }
 
+        progress?(SecureDeletionProgress(
+            stage: .complete,
+            completedBytes: candidate.sizeBytes,
+            totalBytes: candidate.sizeBytes
+        ))
+
         return candidate.sizeBytes
     }
 
-    private func overwrite(descriptor: Int32, byteCount: Int64) throws {
+    private func overwrite(
+        descriptor: Int32,
+        byteCount: Int64,
+        progress: (@Sendable (SecureDeletionProgress) -> Void)?
+    ) throws {
         guard Darwin.lseek(descriptor, 0, SEEK_SET) >= 0 else {
             throw SecureDeletionError.writeFailed(errno)
         }
 
         var remaining = byteCount
         var buffer = [UInt8](repeating: 0, count: Self.bufferSize)
+        let reportStep = max(Int64(Self.bufferSize), max(1, byteCount / 100))
+        var nextReportAt = min(byteCount, reportStep)
 
         while remaining > 0 {
             let chunkSize = min(Int64(buffer.count), remaining)
@@ -223,6 +279,15 @@ public struct SecureFileShredder: Sendable {
             }
 
             remaining -= chunkSize
+            let completedBytes = byteCount - remaining
+            if completedBytes >= nextReportAt || remaining == 0 {
+                progress?(SecureDeletionProgress(
+                    stage: .overwriting,
+                    completedBytes: completedBytes,
+                    totalBytes: byteCount
+                ))
+                nextReportAt = min(byteCount, completedBytes + reportStep)
+            }
         }
     }
 

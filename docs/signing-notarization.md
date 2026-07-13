@@ -10,21 +10,22 @@ Check available identities:
 security find-identity -p codesigning -v
 ```
 
-Build a local unsigned zip. The script still applies an ad-hoc signature so the
-bundle can be verified locally, but Gatekeeper distribution still requires a
-Developer ID certificate and notarization.
+Build a local unsigned app, drag-to-Applications DMG, and fallback ZIP. The
+script still applies an ad-hoc signature so the bundle can be verified locally,
+but Gatekeeper distribution still requires a Developer ID certificate and
+notarization.
 
 ```sh
 ./script/package_release.sh
 ```
 
-Build a Developer ID signed zip:
+Build Developer ID signed app, DMG, and ZIP artifacts:
 
 ```sh
 CLEANMAC_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./script/package_release.sh
 ```
 
-Build, notarize, staple, and re-zip:
+Build, notarize, staple, and recreate the DMG and ZIP:
 
 ```sh
 CLEANMAC_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
@@ -54,7 +55,7 @@ For GitHub Releases, add these private repository secrets when signing is ready:
 - `CLEANMAC_NOTARY_KEY_ID`: App Store Connect API key id.
 - `CLEANMAC_NOTARY_ISSUER`: App Store Connect issuer UUID.
 
-If these secrets are absent, the Release workflow keeps producing an unsigned zip and checksum.
+If these secrets are absent, the Release workflow keeps producing an ad-hoc signed DMG and ZIP with checksums.
 
 ## Validation
 

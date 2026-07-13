@@ -14,14 +14,49 @@ final class SecureFileShredderTests: XCTestCase {
 
         let candidate = try SecureFileShredder().inspect(url: file)
         let probe = ShredOverwriteProbe(original: original)
+        let progressProbe = ShredProgressProbe()
         let shredder = SecureFileShredder(beforeUnlink: probe.inspect)
 
-        let removedBytes = try shredder.shred(candidate)
+        let removedBytes = try shredder.shred(candidate, progress: progressProbe.record)
 
         XCTAssertEqual(removedBytes, Int64(original.count))
         XCTAssertTrue(probe.didInspect)
         XCTAssertTrue(probe.wasFullyOverwritten)
         XCTAssertFalse(FileManager.default.fileExists(atPath: file.path))
+
+        let progressEvents = progressProbe.events
+        XCTAssertEqual(progressEvents.first?.stage, .overwriting)
+        XCTAssertEqual(progressEvents.first?.completedBytes, 0)
+        XCTAssertTrue(progressEvents.contains { $0.stage == .finalizing })
+        XCTAssertEqual(progressEvents.last?.stage, .complete)
+        XCTAssertEqual(progressEvents.last?.fractionCompleted, 1)
+
+        let overwriteBytes = progressEvents
+            .filter { $0.stage == .overwriting }
+            .map(\.completedBytes)
+        XCTAssertEqual(overwriteBytes, overwriteBytes.sorted())
+    }
+
+    func testFailedFinalRemovalNeverReportsComplete() throws {
+        let root = try makeRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let file = root.appending(path: "blocked.bin")
+        try Data(repeating: 0x52, count: 2 * 1024 * 1024).write(to: file)
+
+        let candidate = try SecureFileShredder().inspect(url: file)
+        let progressProbe = ShredProgressProbe()
+        let shredder = SecureFileShredder { _ in
+            throw SecureDeletionError.removeFailed(EPERM)
+        }
+
+        XCTAssertThrowsError(try shredder.shred(candidate, progress: progressProbe.record)) { error in
+            XCTAssertEqual(error as? SecureDeletionError, .removeFailed(EPERM))
+        }
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: file.path))
+        XCTAssertEqual(progressProbe.events.last?.stage, .finalizing)
+        XCTAssertFalse(progressProbe.events.contains { $0.stage == .complete })
     }
 
     func testInspectionRejectsDirectoriesSymlinksHardLinksAndPackages() throws {
@@ -90,6 +125,21 @@ final class SecureFileShredderTests: XCTestCase {
             .appending(path: "CleanMac-ShredderTests-\(UUID().uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         return root
+    }
+}
+
+private final class ShredProgressProbe: @unchecked Sendable {
+    private let lock = NSLock()
+    private var recordedEvents: [SecureDeletionProgress] = []
+
+    var events: [SecureDeletionProgress] {
+        lock.withLock { recordedEvents }
+    }
+
+    func record(_ progress: SecureDeletionProgress) {
+        lock.withLock {
+            recordedEvents.append(progress)
+        }
     }
 }
 

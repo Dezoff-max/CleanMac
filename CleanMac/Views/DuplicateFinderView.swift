@@ -210,7 +210,10 @@ struct DuplicateFinderView: View {
     private var scanningPanel: some View {
         InfoPanel {
             HStack(spacing: 14) {
-                DiskAnalysisProgressIndicator()
+                ModernScanProgressIndicator(
+                    systemImage: "doc.on.doc.fill",
+                    accessibilityLabel: progress?.phase.localizedTitle ?? L.t("duplicates.phase.enumerating")
+                )
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text(progress?.phase.localizedTitle ?? L.t("duplicates.phase.enumerating"))
