@@ -56,6 +56,6 @@
 
 ## Result
 
-- Status: in progress
-- Verification result: pending.
-- Notes: PR #14 is merged and green; release versioning/package publication remains.
+- Status: complete
+- Verification result: PR #14 and PR #15 core/macOS CI passed; 47/47 core tests; Debug build/sign/launch passed; local Release packaging and clean extraction passed; published workflow run `29220077936` passed; downloaded ZIP checksum, version `0.4.0` build `5`, `arm64` architecture, and strict ad-hoc signature all passed.
+- Notes: `v0.4.0` points to merge commit `125e528` and is published as the latest GitHub Release with ZIP and SHA-256 assets. Developer ID certificate and notary key steps were skipped because those secrets are not configured; the notes accurately label the asset ad-hoc signed and not notarized.

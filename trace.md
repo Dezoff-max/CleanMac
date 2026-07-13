@@ -148,3 +148,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: the known local Finder/File Provider metadata behavior recurred on the build product.
 - Fix: cleared extended attributes only from `build/XcodeData/Build/Products/Debug/CleanMac.app` and repeated the standard verification command.
 - Status: resolved; the Debug app is valid on disk, satisfies its designated requirement, and launches successfully.
+
+## 2026-07-13 - TASK-047 - Finder metadata on local convenience app
+
+- Symptom: the local Release ZIP and checksum passed, but a later direct signature check of `dist/CleanMac.app` found `com.apple.FinderInfo` reattached after packaging.
+- Cause: File Provider can mutate the Documents-backed convenience copy after the packaging script sanitizes and signs it.
+- Fix: treated the fresh ZIP extraction as the distribution source of truth, matching the packaging contract, and repeated checksum, version, architecture, and strict signature verification on both a clean local extraction and a clean GitHub asset download.
+- Status: resolved for the release artifact; both fresh extractions are valid, while the mutable convenience app is not used as release evidence.
