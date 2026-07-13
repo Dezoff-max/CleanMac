@@ -93,9 +93,11 @@ private struct SidebarSectionButton: View {
         if section == .applications {
             Image(nsImage: SidebarApplicationIcon.image)
                 .resizable()
+                .renderingMode(.template)
                 .interpolation(.high)
                 .antialiased(true)
                 .aspectRatio(contentMode: .fit)
+                .foregroundStyle(iconColor)
                 .padding(0.25)
         } else {
             Image(systemName: section.systemImage)
@@ -200,9 +202,18 @@ private struct SidebarSectionButton: View {
 
 private enum SidebarApplicationIcon {
     static let image: NSImage = {
-        let workspace = NSWorkspace.shared
-        if let appStoreURL = workspace.urlForApplication(withBundleIdentifier: "com.apple.AppStore") {
-            return workspace.icon(forFile: appStoreURL.path)
+        let resourcePath = "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/SidebarApplicationsFolder.icns"
+        if let source = NSImage(contentsOfFile: resourcePath),
+           let bitmap = source.representations
+            .compactMap({ $0 as? NSBitmapImageRep })
+            .first(where: { $0.pixelsWide == 36 && $0.pixelsHigh == 36 }),
+           let cgImage = bitmap.cgImage {
+            let image = NSImage(
+                cgImage: cgImage,
+                size: NSSize(width: 18, height: 18)
+            )
+            image.isTemplate = true
+            return image
         }
 
         return NSImage(

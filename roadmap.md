@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-055
+  Title: Monochrome Retina Applications sidebar icon
+  Goal: Keep the Applications mark recognizable without making it the only colored or visually broken sidebar icon.
+  What to do: Load Finder's system Applications icon, isolate its 36-pixel Retina representation as one 18-point template, tint it with the existing sidebar state color, and retain a monochrome fallback.
+  Files: `CleanMac/Views/SidebarView.swift`, Loop docs
+  Definition of done: one crisp App Store-style mark renders gray when unselected and white when selected; no stacked `.icns` variants, colored app icon, copied Apple asset, or blank fallback remains.
+  Verification: Debug build/launch; selected and unselected screenshots; full SwiftPM tests; release packaging/checksums; `git diff --check`
+  Priority: high
+  Impact: medium
+  Risk: low
+  Effort: small
+  Confidence: high
+  Score: medium impact / low risk / small
+
 - [x] ID: TASK-054
   Title: Safe stale Codex runtime review and native Applications icon
   Goal: Explain the large `~/.cache` usage through a narrowly scoped cleanup preview and make Applications instantly recognizable in the sidebar.

@@ -508,4 +508,13 @@ Append-only history. Do not erase previous entries.
 - Result: Passed. The real probe found two old exact installer runtimes totaling 1,772,158,976 bytes and excluded `codex-primary-runtime`; no cleanup ran. The native App Store icon is visible in both sidebar states. Debug and Release packaging passed.
 - Next step: Review and merge PR #17, then create a feature release only when requested.
 - Bottleneck: public distribution remains ad-hoc signed and not notarized until Developer ID credentials are configured. The known CoreSimulator version warning remains unrelated and non-blocking.
+
+## 2026-07-13 - TASK-055 - Monochrome Retina Applications sidebar icon
+
+- What changed: Replaced the full-color App Store application icon with Finder's own monochrome `SidebarApplicationsFolder.icns` mark. Instead of passing the multi-representation `.icns` directly to SwiftUI, CleanMac now extracts only its 36-pixel Retina bitmap, wraps it as one 18-point template image, and tints it with the existing sidebar state color. A monochrome SF Symbol remains the fallback, and no Apple binary asset is stored in the repository.
+- Files touched: `CleanMac/Views/SidebarView.swift`, `contract.md`, `project-analysis.md`, `roadmap.md`, `progress.md`, `trace.md`.
+- Checks: `./script/build_and_run.sh --verify`; live unselected and selected screenshots; full SwiftPM tests; release package/checksums; `git diff --check`.
+- Result: Passed. Applications renders as one crisp gray App Store-style mark when unselected and the same mark in white on the selected blue row. The earlier color mismatch and stacked striped `.icns` rendering are gone.
+- Next step: Review and merge the updated draft PR #17, then publish a release only when requested.
+- Bottleneck: public distribution remains ad-hoc signed and not notarized until Developer ID credentials are configured. The CoreSimulator warning remains unrelated and non-blocking.
 - Handoff: `dist/` contains `CleanMac.app`, `CleanMac.dmg`, `CleanMac.dmg.sha256`, the fallback ZIP, and its checksum. No cleanup, removal, Shredder, RAM purge, DNS flush, permission, or system setting was changed.

@@ -190,3 +190,10 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: the shared scanner skipped package descendants, but Codex runtimes contain package-shaped directories whose contents still consume disk space.
 - Fix: enumerate package descendants only for the narrowly scoped stale-runtime category and raise its dedicated safety cap to 100,000 descendants while preserving the existing cap and package behavior for every other category.
 - Status: resolved; the real read-only probe reports two eligible directories totaling 1,772,158,976 bytes and excludes `codex-primary-runtime`.
+
+## 2026-07-13 - TASK-055 - Finder Applications icon rendered as stripes
+
+- Symptom: the full App Store icon was the only colored sidebar item; replacing it with the complete system `SidebarApplicationsFolder.icns` made SwiftUI composite several bitmap representations into a striped mark.
+- Cause: the Finder `.icns` contains eight point/scale representations, and passing that multi-representation `NSImage` through the resizable template path did not select one stable bitmap.
+- Fix: select the exact 36×36 Retina representation, create a single 18-point `NSImage`, mark it as a template, and tint it with the existing selected/unselected icon color.
+- Status: resolved; live screenshots show one crisp gray mark when unselected and the same mark in white when selected.
