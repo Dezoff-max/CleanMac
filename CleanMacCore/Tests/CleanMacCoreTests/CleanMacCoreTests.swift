@@ -120,7 +120,8 @@ final class CleanMacCoreTests: XCTestCase {
         let paths = [
             CleanupCategory.developerPackageCaches,
             .developerIDECaches,
-            .developerAITemporaryFiles
+            .developerAITemporaryFiles,
+            .staleCodexRuntimeInstallers
         ].flatMap { resolver.rootURLs(for: $0).map(\.path) }
 
         let requiredSuffixes = [
@@ -134,6 +135,7 @@ final class CleanMacCoreTests: XCTestCase {
             "/.codex/.tmp",
             "/.codex/tmp",
             "/.codex/cache",
+            "/.cache/codex-runtimes",
             "/.claude/cache",
             "/.claude/paste-cache"
         ]
@@ -214,6 +216,76 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertFalse(report.items.contains { item in
             forbiddenFiles.contains { canonicalPath($0.path) == canonicalPath(item.path) }
         })
+    }
+
+    func testStaleCodexRuntimeScannerProtectsCurrentAndRecentRuntimes() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let referenceDate = Date()
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let runtimeRoot = home.appending(path: ".cache/codex-runtimes", directoryHint: .isDirectory)
+        let staleInstaller = runtimeRoot.appending(path: "codex-runtime-install-AbC123", directoryHint: .isDirectory)
+        let recentInstaller = runtimeRoot.appending(path: "codex-runtime-install-XyZ789", directoryHint: .isDirectory)
+        let currentRuntime = runtimeRoot.appending(path: CleanupPathRules.codexPrimaryRuntimeName, directoryHint: .isDirectory)
+        let invalidInstaller = runtimeRoot.appending(path: "codex-runtime-install-not_allowed", directoryHint: .isDirectory)
+
+        for directory in [staleInstaller, recentInstaller, currentRuntime, invalidInstaller] {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try writeBytes(count: 32, to: directory.appending(path: "runtime.bin"))
+        }
+        try setModificationDate(referenceDate.addingTimeInterval(-8 * 24 * 60 * 60), for: staleInstaller)
+        try setModificationDate(referenceDate.addingTimeInterval(-24 * 60 * 60), for: recentInstaller)
+        try setModificationDate(referenceDate.addingTimeInterval(-30 * 24 * 60 * 60), for: currentRuntime)
+        try setModificationDate(referenceDate.addingTimeInterval(-30 * 24 * 60 * 60), for: invalidInstaller)
+
+        let scanner = CleanupScanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+        let report = scanner.scan(
+            categories: [.staleCodexRuntimeInstallers],
+            options: CleanupScanOptions(
+                maxItemsPerCategory: 10,
+                maxDescendantsPerItem: 1,
+                maxStaleCodexRuntimeDescendants: 100
+            )
+        )
+
+        XCTAssertEqual(report.items.map(\.displayName), ["codex-runtime-install-AbC123"])
+        XCTAssertEqual(report.items.first?.risk, .review)
+        XCTAssertEqual(report.items.first?.reasons, [.staleCodexRuntimeInstaller])
+        XCTAssertEqual(report.items.first?.isSizeEstimate, false)
+        XCTAssertFalse(report.items.contains { $0.displayName == CleanupPathRules.codexPrimaryRuntimeName })
+    }
+
+    func testStaleCodexRuntimePlannerRevalidatesNameAgeAndDirectChild() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let referenceDate = Date()
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let runtimeRoot = home.appending(path: ".cache/codex-runtimes", directoryHint: .isDirectory)
+        let staleInstaller = runtimeRoot.appending(path: "codex-runtime-install-Old123", directoryHint: .isDirectory)
+        let recentInstaller = runtimeRoot.appending(path: "codex-runtime-install-New123", directoryHint: .isDirectory)
+        let currentRuntime = runtimeRoot.appending(path: CleanupPathRules.codexPrimaryRuntimeName, directoryHint: .isDirectory)
+        let invalidInstaller = runtimeRoot.appending(path: "codex-runtime-install-invalid_name", directoryHint: .isDirectory)
+        let nestedInstaller = staleInstaller.appending(path: "codex-runtime-install-Nested123", directoryHint: .isDirectory)
+
+        for directory in [staleInstaller, recentInstaller, currentRuntime, invalidInstaller, nestedInstaller] {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        }
+        try setModificationDate(referenceDate.addingTimeInterval(-8 * 24 * 60 * 60), for: staleInstaller)
+        try setModificationDate(referenceDate.addingTimeInterval(-24 * 60 * 60), for: recentInstaller)
+        try setModificationDate(referenceDate.addingTimeInterval(-30 * 24 * 60 * 60), for: currentRuntime)
+        try setModificationDate(referenceDate.addingTimeInterval(-30 * 24 * 60 * 60), for: invalidInstaller)
+        try setModificationDate(referenceDate.addingTimeInterval(-30 * 24 * 60 * 60), for: nestedInstaller)
+
+        let items = [staleInstaller, recentInstaller, currentRuntime, invalidInstaller, nestedInstaller].map {
+            makeScanItem(category: .staleCodexRuntimeInstallers, path: $0.path, isDirectory: true)
+        }
+        let plan = CleanupPlanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+            .plan(for: items, referenceDate: referenceDate)
+
+        XCTAssertEqual(plan.items.map(\.originalPath), [canonicalPath(staleInstaller.path)])
+        XCTAssertEqual(plan.rejectedItems.count, 4)
     }
 
     func testXcodeDeveloperStorageUsesReviewAndAgeRules() throws {
@@ -1167,6 +1239,7 @@ final class CleanMacCoreTests: XCTestCase {
             .downloads,
             .downloadedInstallers,
             .trash,
+            .staleCodexRuntimeInstallers,
             .xcodeDerivedData,
             .xcodeDeviceSupport,
             .xcodeSimulatorData,

@@ -155,6 +155,8 @@
 "results.safeMode.title" = "Safe Mode is on";
 "results.safeMode.message" = "Items marked Review stay visible, but are locked until you turn off Safe Mode in Settings.";
 "results.safeMode.locked" = "Locked by Safe Mode";
+"results.codexRuntimes.title" = "Old Codex installer runtimes found";
+"results.codexRuntimes.message" = "Only codex-runtime-install-* folders older than 7 days are shown. The current codex-primary-runtime is always protected, and nothing is selected automatically.";
 "results.cleanupDisabled.help" = "Cleanup moves allowlisted items to Trash after confirmation.";
 "results.summary.items" = "%d items";
 "results.summary.unavailable" = "Not available";
@@ -205,6 +207,8 @@
 "results.reason.developerIDECache.detail" = "This is an exact Cursor or VS Code cache folder; settings, extensions, workspaces, and backups are excluded.";
 "results.reason.developerAITemporaryFile.title" = "AI tool temporary data";
 "results.reason.developerAITemporaryFile.detail" = "This item is inside an exact Codex or Claude cache/temp folder; projects, sessions, history, and memory are excluded.";
+"results.reason.staleCodexRuntimeInstaller.title" = "Old Codex runtime installer";
+"results.reason.staleCodexRuntimeInstaller.detail" = "This is an incomplete or superseded codex-runtime-install-* directory older than 7 days. The active codex-primary-runtime is excluded.";
 "results.reason.staleLog.title" = "Old log";
 "results.reason.staleLog.detail" = "The log looks older than the active-use window, so it is suggested for safe cleanup review.";
 "results.reason.rotatedLog.title" = "Rotated log";
@@ -232,6 +236,7 @@
 
 "cleanup.confirm.title" = "Move selected items to Trash?";
 "cleanup.confirm.message" = "CleanMac will move %d selected item(s), %@ total, to Trash. You can restore them from Trash if needed.";
+"cleanup.confirm.codexRuntime.message" = "CleanMac will move %d selected item(s), %@ total, to Trash, including old Codex runtime installer folders. The current Codex runtime is protected. Confirm this reviewed cleanup.";
 "cleanup.noneSelected" = "Select at least one result before cleanup.";
 "cleanup.success" = "Moved %d item(s), %@ total, to Trash.";
 "cleanup.problems" = "Some items were not cleaned. Failed: %d, rejected by safety checks: %d.";
@@ -337,6 +342,8 @@
 "area.developerIDEs.detail" = "Cache folders only. Settings, extensions, workspaces, and backups are never included.";
 "area.developerAI.title" = "Codex and Claude Temporary Data";
 "area.developerAI.detail" = "Exact cache/temp folders only. Projects, sessions, history, shell snapshots, and memory stay untouched.";
+"area.staleCodexRuntimes.title" = "Old Codex Runtime Installers";
+"area.staleCodexRuntimes.detail" = "Finds only codex-runtime-install-* folders older than 7 days. The current runtime is excluded and results require review.";
 "area.logs.title" = "Logs";
 "area.logs.detail" = "Rotated and older diagnostic logs, skipping likely active files.";
 "area.temporary.title" = "Temporary Files";

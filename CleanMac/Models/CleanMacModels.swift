@@ -37,7 +37,7 @@ enum CleanMacSection: String, CaseIterable, Identifiable {
         case .systemMaintenance: "memorychip"
         case .duplicates: "square.on.square"
         case .shredder: "scissors"
-        case .applications: "app.badge.checkmark"
+        case .applications: "square.stack.3d.up.fill"
         case .settings: "gearshape"
         }
     }
@@ -124,6 +124,7 @@ extension CleanupScanReason {
         case .developerPackageCache: L.t("results.reason.developerPackageCache.title")
         case .developerIDECache: L.t("results.reason.developerIDECache.title")
         case .developerAITemporaryFile: L.t("results.reason.developerAITemporaryFile.title")
+        case .staleCodexRuntimeInstaller: L.t("results.reason.staleCodexRuntimeInstaller.title")
         case .staleLog: L.t("results.reason.staleLog.title")
         case .rotatedLog: L.t("results.reason.rotatedLog.title")
         case .staleTemporary: L.t("results.reason.staleTemporary.title")
@@ -148,6 +149,7 @@ extension CleanupScanReason {
         case .developerPackageCache: L.t("results.reason.developerPackageCache.detail")
         case .developerIDECache: L.t("results.reason.developerIDECache.detail")
         case .developerAITemporaryFile: L.t("results.reason.developerAITemporaryFile.detail")
+        case .staleCodexRuntimeInstaller: L.t("results.reason.staleCodexRuntimeInstaller.detail")
         case .staleLog: L.t("results.reason.staleLog.detail")
         case .rotatedLog: L.t("results.reason.rotatedLog.detail")
         case .staleTemporary: L.t("results.reason.staleTemporary.detail")
@@ -172,6 +174,7 @@ extension CleanupScanReason {
         case .developerPackageCache: "shippingbox.and.arrow.backward"
         case .developerIDECache: "curlybraces.square"
         case .developerAITemporaryFile: "sparkles.rectangle.stack"
+        case .staleCodexRuntimeInstaller: "shippingbox.and.arrow.backward.fill"
         case .staleLog: "doc.text.magnifyingglass"
         case .rotatedLog: "arrow.triangle.2.circlepath"
         case .staleTemporary: "clock.arrow.circlepath"
@@ -366,6 +369,15 @@ enum CleanMacCatalog {
                 pathHint: "~/.codex/{.tmp,tmp,cache}, ~/.claude/{cache,paste-cache}",
                 systemImage: "sparkles.rectangle.stack",
                 risk: .safe,
+                isDefaultSelected: true
+            ),
+            CleanupArea(
+                category: .staleCodexRuntimeInstallers,
+                title: L.t("area.staleCodexRuntimes.title"),
+                detail: L.t("area.staleCodexRuntimes.detail"),
+                pathHint: "~/.cache/codex-runtimes/codex-runtime-install-*",
+                systemImage: "shippingbox.and.arrow.backward.fill",
+                risk: .review,
                 isDefaultSelected: true
             ),
             CleanupArea(

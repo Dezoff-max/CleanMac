@@ -1,5 +1,19 @@
 # Roadmap
 
+- [x] ID: TASK-054
+  Title: Safe stale Codex runtime review and native Applications icon
+  Goal: Explain the large `~/.cache` usage through a narrowly scoped cleanup preview and make Applications instantly recognizable in the sidebar.
+  What to do: Scan only old exact Codex installer runtime directories, protect the active runtime, revalidate before Trash, add review-only warnings and confirmation, migrate selected scan areas once, and render the installed system App Store icon through `NSWorkspace`.
+  Files: cleanup core models/policy/scanner/planner/tests, scan preferences, Results UI, Sidebar UI, localizations, Loop docs
+  Definition of done: only direct exact installer runtimes older than seven days are reported; the current runtime and unsafe variants are excluded; results remain unselected and confirmation-gated; measured size is accurate; the sidebar shows the real Retina App Store icon with a fallback.
+  Verification: full SwiftPM tests; real read-only runtime probe; localization lint/key parity; Debug build/launch; selected/unselected sidebar review; release packaging/checksums; `git diff --check`
+  Priority: high
+  Impact: high
+  Risk: medium
+  Effort: medium
+  Confidence: high
+  Score: high impact / medium risk / medium
+
 - [x] ID: TASK-053
   Title: Modern scan progress and drag-to-Applications DMG
   Goal: Restore polished scan motion everywhere and ship a standard macOS drag-install image beside the app.

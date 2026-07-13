@@ -155,6 +155,8 @@
 "results.safeMode.title" = "Безопасный режим включён";
 "results.safeMode.message" = "Элементы «Нужно проверить» остаются видимыми, но выбрать их можно только после отключения безопасного режима в Настройках.";
 "results.safeMode.locked" = "Заблокировано безопасным режимом";
+"results.codexRuntimes.title" = "Найдены старые установочные runtimes Codex";
+"results.codexRuntimes.message" = "Показаны только папки codex-runtime-install-* старше 7 дней. Текущий codex-primary-runtime всегда защищён, ничего не выбирается автоматически.";
 "results.cleanupDisabled.help" = "Очистка перемещает разрешённые элементы в Корзину после подтверждения.";
 "results.summary.items" = "Элементов: %d";
 "results.summary.unavailable" = "Недоступно";
@@ -205,6 +207,8 @@
 "results.reason.developerIDECache.detail" = "Это точная папка кэша Cursor или VS Code; настройки, расширения, рабочие области и резервные копии исключены.";
 "results.reason.developerAITemporaryFile.title" = "Временные данные AI-инструмента";
 "results.reason.developerAITemporaryFile.detail" = "Элемент находится в точной папке кэша или временных файлов Codex/Claude; проекты, сессии, история и память исключены.";
+"results.reason.staleCodexRuntimeInstaller.title" = "Старый установочный runtime Codex";
+"results.reason.staleCodexRuntimeInstaller.detail" = "Это незавершённая или заменённая папка codex-runtime-install-* старше 7 дней. Активный codex-primary-runtime исключён.";
 "results.reason.staleLog.title" = "Старый лог";
 "results.reason.staleLog.detail" = "Лог выглядит старше окна активного использования, поэтому предложен для безопасной проверки очистки.";
 "results.reason.rotatedLog.title" = "Ротированный лог";
@@ -232,6 +236,7 @@
 
 "cleanup.confirm.title" = "Переместить выбранное в Корзину?";
 "cleanup.confirm.message" = "CleanMac переместит выбранные элементы: %d, общий объём: %@, в Корзину. При необходимости их можно восстановить.";
+"cleanup.confirm.codexRuntime.message" = "CleanMac переместит выбранные элементы: %d, общий объём: %@, в Корзину, включая старые установочные папки runtime Codex. Текущий runtime Codex защищён. Подтверди проверенную очистку.";
 "cleanup.noneSelected" = "Выбери хотя бы один результат перед очисткой.";
 "cleanup.success" = "Перемещено в Корзину: %d, общий объём: %@.";
 "cleanup.problems" = "Некоторые элементы не очищены. Ошибок: %d, отклонено проверкой безопасности: %d.";
@@ -337,6 +342,8 @@
 "area.developerIDEs.detail" = "Только кэши. Настройки, расширения, рабочие области и резервные копии не включаются.";
 "area.developerAI.title" = "Временные данные Codex и Claude";
 "area.developerAI.detail" = "Только точные папки кэша и временных файлов. Проекты, сессии, история, shell snapshots и память не затрагиваются.";
+"area.staleCodexRuntimes.title" = "Старые установочные runtimes Codex";
+"area.staleCodexRuntimes.detail" = "Находит только папки codex-runtime-install-* старше 7 дней. Текущий runtime исключён, результаты требуют проверки.";
 "area.logs.title" = "Логи";
 "area.logs.detail" = "Старые и ротированные диагностические логи, без активных файлов.";
 "area.temporary.title" = "Временные файлы";

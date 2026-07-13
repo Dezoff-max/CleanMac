@@ -176,3 +176,17 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: the first DMG staging folder lived under the Desktop-backed repository `dist/`, where File Provider could reattach metadata between sanitization and image creation.
 - Fix: stage the DMG in `/private/tmp`, copy without resource forks or extended attributes, sanitize there, then create and verify the read-only image from that isolated copy.
 - Status: resolved; the repeated package run verifies the DMG checksum, mounted app signature, and `/Applications` shortcut before writing release checksums.
+
+## 2026-07-13 - TASK-054 - Unavailable App Store SF Symbol
+
+- Symptom: the Applications sidebar icon was blank with `appstore`, while letter-based and hand-drawn substitutes did not resemble the native App Store artwork.
+- Cause: `appstore` is not available as an SF Symbol on the current macOS, so `NSImage(systemSymbolName:)` returns `nil`.
+- Fix: load the installed App Store application icon through `NSWorkspace`, render the Retina `NSImage` directly in SwiftUI, and keep `square.stack.3d.up.fill` only as a fallback when App Store is unavailable.
+- Status: resolved; live selected and unselected sidebar screenshots show the native App Store icon clearly.
+
+## 2026-07-13 - TASK-054 - Runtime package descendants were undercounted
+
+- Symptom: the first stale-runtime probe measured less space than `du` for an old Codex installer directory.
+- Cause: the shared scanner skipped package descendants, but Codex runtimes contain package-shaped directories whose contents still consume disk space.
+- Fix: enumerate package descendants only for the narrowly scoped stale-runtime category and raise its dedicated safety cap to 100,000 descendants while preserving the existing cap and package behavior for every other category.
+- Status: resolved; the real read-only probe reports two eligible directories totaling 1,772,158,976 bytes and excludes `codex-primary-runtime`.

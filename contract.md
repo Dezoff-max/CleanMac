@@ -2,67 +2,66 @@
 
 ## Task
 
-- ID: TASK-053
-- Title: Modern scan progress and drag-to-Applications DMG
+- ID: TASK-054
+- Title: Safe stale Codex runtime review and native Applications icon
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: performance work replaced the custom scan motion with system spinners, and local release packaging did not provide the standard macOS drag-install image.
-- Expected value: every real scan surface uses one coherent modern indicator, while `dist/` contains both `CleanMac.app` and an easy-to-install `CleanMac.dmg`.
-- Main risk: restoring frame-driven animation could reintroduce the previous high-CPU layout loop; DMG staging inside the Desktop-backed repository can also inherit File Provider metadata and invalidate the app signature.
-- Safety choice: use isolated state-driven layer animations with Reduce Motion support and no `TimelineView`; build the DMG from a sanitized `/private/tmp` staging copy and verify a fresh mounted image.
+- Why this task now: Disk Analysis correctly measured several gigabytes under `~/.cache`, but the standard cleanup scan did not include stale Codex runtime installer folders, and the Applications sidebar row needed an immediately recognizable icon.
+- Expected value: users can review and reclaim stale Codex installer runtimes without risking the active runtime, while Applications uses the real system App Store artwork at Retina quality.
+- Main risk: a broad `~/.cache` rule could remove active Codex components, and an unavailable SF Symbol can render as a blank or misleading sidebar icon.
+- Safety choice: allow only old direct children named `codex-runtime-install-[A-Za-z0-9]+`, protect `codex-primary-runtime`, revalidate immediately before Trash, keep results review-only and unselected, and load the installed App Store icon through `NSWorkspace` with a system-symbol fallback.
 
 ## Builder Scope
 
 - Allowed files:
-  - scan progress views and their call sites;
-  - `script/package_release.sh`;
-  - CI and Release workflows;
-  - release documentation and Loop documentation.
+  - cleanup models, path policy, scanner, planner, and focused core tests;
+  - scan-area preferences, Results warnings and confirmations, sidebar icon rendering;
+  - English/Russian localization and Loop documentation.
 - Allowed commands:
   - source and history inspection;
+  - read-only measurement of `~/.cache/codex-runtimes`;
   - Debug and Release builds;
   - full SwiftPM tests;
   - localization lint and key parity checks;
-  - app launch verification;
-  - DMG creation, read-only mount, signature and checksum checks;
+  - app launch and visual verification;
+  - release packaging, checksum, signature, and DMG checks;
   - git diff checks and approved GitHub publication.
 - Out of scope:
-  - starting destructive cleanup, application removal, Shredder, RAM purge, or DNS flush;
-  - Developer ID signing or notarization without credentials;
-  - changing scanner rules, results, or deletion behavior;
-  - changing repository visibility without confirmation.
+  - moving or deleting any real runtime during verification;
+  - scanning arbitrary contents of `~/.cache`;
+  - deleting `codex-primary-runtime`, recent installers, symlinks, nested paths, or malformed names;
+  - Developer ID signing or notarization without credentials.
 - Dependencies allowed: none
 - Destructive actions allowed: replacing generated ignored `dist/` artifacts only
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - standard cleanup scan, Disk Analysis, Duplicate Finder, and Applications scanning use the shared modern indicator;
-  - the old gray system spinner is absent from those scan surfaces;
-  - motion stops or becomes static when Reduce Motion is enabled;
-  - scan progress does not use `TimelineView` or invalidate the whole page on a display-frame schedule;
-  - `dist/CleanMac.dmg` sits beside `dist/CleanMac.app`;
-  - the mounted DMG contains `CleanMac.app` and an `Applications -> /Applications` shortcut;
-  - the app inside the mounted DMG passes strict signature verification;
-  - DMG and ZIP checksums validate;
-  - GitHub CI and tag Release workflows include the DMG artifact.
+  - only exact direct `codex-runtime-install-[A-Za-z0-9]+` directories older than seven days are reported;
+  - `codex-primary-runtime`, recent installers, nested paths, malformed names, and symlinks are excluded;
+  - planner repeats name, root, type, symlink, and age checks immediately before execution;
+  - stale runtime results use review risk, start unselected, remain locked by Safe Mode, and require a dedicated confirmation before moving to Trash;
+  - runtime package contents are measured accurately within the dedicated 100,000-descendant safety cap;
+  - existing saved scan selections receive the new area through a one-time schema migration without overriding an explicitly empty selection;
+  - the Applications sidebar row uses the installed system App Store Retina icon, with a visible fallback when App Store is unavailable;
+  - English and Russian localizations remain in parity.
 - Required verification:
-  - `bash -n script/package_release.sh`;
   - `swift test --package-path CleanMacCore`;
   - localization plist lint and RU/EN key parity;
+  - read-only scanner probe against the current user's Codex runtime cache;
   - `./script/build_and_run.sh --verify`;
+  - live selected and unselected Applications sidebar review;
   - `./script/package_release.sh`;
   - `zsh -lc 'cd dist && shasum -a 256 -c *.sha256'`;
-  - read-only DMG mount, shortcut inspection, and strict `codesign` verification;
   - `git diff --check`.
 - Manual checks:
-  - review at least one active scan surface without accepting cleanup or removal actions;
-  - do not execute RAM/DNS maintenance during verification.
+  - never accept cleanup, application-removal, RAM, DNS, or Shredder confirmation during verification;
+  - dismiss any macOS privacy prompt without changing consent unless the user explicitly requests it.
 
 ## Result
 
 - Status: complete
-- Verification result: passed. The Debug and Release app builds succeeded; all 48 SwiftPM tests passed; localization lint and RU/EN parity passed; launch verification passed; packaging produced and verified the app, DMG, ZIP, and both checksums; live standard scan and Disk Analysis showed the modern indicator; the read-only analysis was cancelled; source checks found no scan-progress `TimelineView`; `git diff --check` passed.
-- Notes: the brief CPU sample had one scan-worker spike, then settled near 11% while analysis remained active, rather than sustaining the old 111–124% layout baseline. No cleanup, application removal, Shredder action, RAM purge, or DNS flush ran.
+- Verification result: passed. All 50 SwiftPM tests passed; localization plist lint and RU/EN key parity passed; Debug build and launch verification passed; the real read-only probe found two exact stale installer runtimes totaling 1,772,158,976 bytes while excluding `codex-primary-runtime`; the actual system App Store icon rendered in selected and unselected sidebar states; release packaging produced and verified the app, DMG, ZIP, and checksums; `git diff --check` passed.
+- Notes: no runtime or user file was moved or deleted. The Applications review triggered a macOS privacy prompt, which was closed without choosing Allow or Deny. The known CoreSimulator version warning remains unrelated and non-blocking.

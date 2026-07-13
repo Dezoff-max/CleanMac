@@ -1,6 +1,23 @@
 import Darwin
 import Foundation
 
+enum CleanupPathRules {
+    static let codexRuntimeInstallerPrefix = "codex-runtime-install-"
+    static let codexPrimaryRuntimeName = "codex-primary-runtime"
+
+    static func isCodexRuntimeInstallerName(_ name: String) -> Bool {
+        guard name != codexPrimaryRuntimeName,
+              name.hasPrefix(codexRuntimeInstallerPrefix) else {
+            return false
+        }
+
+        let suffix = name.dropFirst(codexRuntimeInstallerPrefix.count)
+        return !suffix.isEmpty && suffix.utf8.allSatisfy { byte in
+            (48...57).contains(byte) || (65...90).contains(byte) || (97...122).contains(byte)
+        }
+    }
+}
+
 struct CleanupRootResolver {
     let homeDirectory: URL
     let temporaryDirectory: URL
@@ -54,6 +71,8 @@ struct CleanupRootResolver {
                 homeDirectory.appending(path: ".claude/paste-cache", directoryHint: .isDirectory),
                 homeDirectory.appending(path: "Library/Caches/com.anthropic.claudefordesktop", directoryHint: .isDirectory)
             ]
+        case .staleCodexRuntimeInstallers:
+            [homeDirectory.appending(path: ".cache/codex-runtimes", directoryHint: .isDirectory)]
         case .logs:
             [homeDirectory.appending(path: "Library/Logs", directoryHint: .isDirectory)]
         case .temporaryFiles:
