@@ -44,7 +44,9 @@ struct MainWindowView: View {
                 .navigationTitle(selectedSection.title)
                 .toolbar {
                     ToolbarItemGroup {
-                        if selectedSection != .diskAnalysis, selectedSection != .duplicates {
+                        if selectedSection != .diskAnalysis,
+                           selectedSection != .duplicates,
+                           selectedSection != .shredder {
                             Button {
                                 runScan()
                             } label: {
@@ -132,6 +134,8 @@ struct MainWindowView: View {
             DiskAnalysisView()
         case .duplicates:
             DuplicateFinderView()
+        case .shredder:
+            ShredderView()
         case .applications:
             ApplicationsView()
         case .settings:
@@ -196,7 +200,10 @@ struct MainWindowView: View {
         let scanStartedAt = Date()
 
         Task {
-            let progressChannel = AsyncStream.makeStream(of: CleanupScanProgress.self)
+            let progressChannel = AsyncStream.makeStream(
+                of: CleanupScanProgress.self,
+                bufferingPolicy: .bufferingNewest(1)
+            )
             let scanTask = Task.detached(priority: .userInitiated) {
                 let report = CleanupScanner().scan(categories: categories) { progress in
                     progressChannel.continuation.yield(progress)

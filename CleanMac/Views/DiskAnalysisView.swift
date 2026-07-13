@@ -644,8 +644,11 @@ struct DiskAnalysisView: View {
         problemMessage = nil
 
         let minimumLargeFileSize = LargeFileThreshold.megabytes50.bytes
-        let progressChannel = AsyncStream.makeStream(of: DiskAnalysisProgress.self)
-        let worker = Task.detached(priority: .userInitiated) {
+        let progressChannel = AsyncStream.makeStream(
+            of: DiskAnalysisProgress.self,
+            bufferingPolicy: .bufferingNewest(1)
+        )
+        let worker = Task.detached(priority: .utility) {
             defer { progressChannel.continuation.finish() }
             return try DiskAnalyzer().scan(
                 root: rootURL,

@@ -6,7 +6,7 @@
 
 <p align="center">
   Safe, local-first cleanup for macOS with review-first scanning,<br>
-  Safe Mode, and Trash-only removal.
+  Safe Mode, Trash-based cleanup, and an isolated Smart Shredder.
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/Dezoff-max/CleanMac" alt="MIT License"></a>
 </p>
 
-CleanMac is a native SwiftUI utility that scans selected macOS locations, explains every cleanup candidate, and moves only confirmed items to Trash. Everything runs locally: the code contains no scan-result uploads, analytics, or cloud accounts.
+CleanMac is a native SwiftUI utility that scans selected macOS locations, explains every cleanup candidate, and moves confirmed cleanup items to Trash. An isolated Smart Shredder is available only for files the user selects explicitly. Everything runs locally: the code contains no scan-result uploads, analytics, or cloud accounts.
 
 > [!IMPORTANT]
 > The current public build is ad-hoc signed and is not notarized by Apple. macOS Gatekeeper may block the downloaded app. You can build CleanMac from source for development; do not disable system security to run an unsigned file.
@@ -37,7 +37,8 @@ CleanMac is a native SwiftUI utility that scans selected macOS locations, explai
 - **Safe scanning.** User and browser caches, logs, temporary files, Xcode Derived Data, Node/SwiftPM caches, Downloads, installers, and Trash.
 - **Explainable review.** Categories, sizes, risk levels, recommendation reasons, exact paths, and locations that could not be read.
 - **Safe Mode.** Enabled by default and prevents selection of items that require manual review.
-- **Trash-only cleanup.** Accepted paths are validated again before execution; permanent deletion is not used.
+- **Trash-based cleanup.** Normal cleanup, duplicate removal, and application removal validate accepted paths again and move them to Trash.
+- **Smart Shredder.** A separate hacker-style workspace performs best-effort overwrite and direct deletion only after file review, acknowledgement, and an exact typed phrase. It rejects folders, links, packages, protected roots, and changed files.
 - **Session restore.** Items moved during the current session can be restored when their original path is available.
 - **Application removal.** Finds third-party apps in `/Applications` and `~/Applications`, supports multi-selection, and offers optional exact bundle-ID leftovers.
 - **Menu bar and scheduled scans.** Disk status, the latest scan summary, safe scan scheduling, and local notifications while CleanMac is running.
@@ -50,9 +51,10 @@ CleanMac is a native SwiftUI utility that scans selected macOS locations, explai
 2. Every candidate belongs to a known category and an allowlisted root path.
 3. Cleanup requires explicit selection and a separate confirmation.
 4. Paths are validated again immediately before execution.
-5. Accepted files are moved to Trash instead of being permanently deleted.
+5. Normal cleanup files are moved to Trash instead of being permanently deleted.
 6. During application removal, the `.app` bundle is moved first. Its leftovers remain untouched if that step fails.
-7. CleanMac does not escalate privileges or install a system helper.
+7. Smart Shredder is isolated from scans, recommendations, scheduling, Trash history, and restore. Its direct deletion is intentionally irreversible at the filesystem level, but physical erasure cannot be guaranteed on SSD/APFS.
+8. CleanMac does not escalate privileges or install a system helper.
 
 ## Installation
 
@@ -117,7 +119,7 @@ docs/                 Documentation and screenshots
 ## Contributing
 
 1. Create a focused branch from `main`.
-2. Preserve the safety flow: scan → review → confirm → Trash.
+2. Preserve the standard safety flow: scan → review → confirm → Trash. Keep irreversible actions isolated inside Smart Shredder.
 3. Add tests for changes to scanning, path validation, or removal behavior.
 4. Before opening a pull request, run `swift test --package-path CleanMacCore` and `./script/build_and_run.sh --verify`.
 

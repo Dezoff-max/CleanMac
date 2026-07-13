@@ -2,64 +2,63 @@
 
 ## Task
 
-- ID: TASK-044
-- Title: Low disk space warning
+- ID: TASK-046
+- Title: Smart irreversible file shredder
 - Mode: continue
 
 ## Planner Notes
 
-- Why this task now: the menu-bar dashboard already samples free disk capacity and can surface an actionable warning before storage is exhausted.
-- Expected value: a clear under-10% warning, an immediate path to Disk Analysis, and a restrained local notification.
-- Main risk: repeated one-second samples can spam notifications, and requesting notification permission automatically would be intrusive.
-- Safety choice: keep the menu warning live, notify at most once per 24 hours only when macOS permission is already granted, and never start scanning automatically.
+- Why this task now: the user explicitly requested a separate hacker-style tool for deleting selected files without the Trash or CleanMac restore path.
+- Expected value: a deliberately isolated destructive workflow with review, clear limitations, strong confirmation, and fail-closed path validation.
+- Main risk: per-file overwrite cannot guarantee physical media erasure on SSD/APFS because copy-on-write, clones, snapshots, asynchronous TRIM, and flash wear leveling may preserve older blocks.
+- Safety choice: describe the operation as best-effort irreversible direct deletion; accept only explicitly selected regular files; reject directories, symlinks, hard links, packages, protected system roots, and files changed after review; use descriptor-based overwrite plus identity revalidation and direct unlink.
 
 ## Builder Scope
 
 - Allowed files:
-  - `CleanMacCore/Sources/CleanMacCore/LowDiskSpaceWarningPolicy.swift`;
-  - `CleanMacCore/Tests/CleanMacCoreTests/LowDiskSpaceWarningPolicyTests.swift`;
-  - `CleanMac/Support/StatusSystemMetrics.swift`;
-  - `CleanMac/Support/CleanMacLowDiskSpaceMonitor.swift`;
-  - `CleanMac/Support/CleanMacNotificationService.swift`;
-  - `CleanMac/Support/CleanMacPreferences.swift`;
-  - `CleanMac/Support/MainWindowController.swift`;
-  - `CleanMac/Views/StatusMenuView.swift`;
+  - `CleanMacCore/Sources/CleanMacCore/SecureFileShredder.swift`;
+  - focused `CleanMacCore` tests;
+  - `CleanMac/Models/CleanMacModels.swift`;
+  - `CleanMac/Support/ShredderWorkspaceService.swift`;
+  - `CleanMac/Views/ShredderView.swift`;
   - `CleanMac/Views/MainWindowView.swift`;
-  - `CleanMac/CleanMacApp.swift`;
   - RU/EN localization;
+  - `README.md`;
   - Loop documentation files.
 - Allowed commands:
-  - source inspection and Debug build/launch;
-  - focused policy fixtures and full core tests;
-  - read-only menu navigation review without sending a real notification;
+  - source inspection;
+  - direct deletion only inside disposable test fixture directories;
   - `swift test --package-path CleanMacCore`;
-  - standard Git/PR/CI checks and merge after green status.
+  - Debug build and `./script/build_and_run.sh --verify`;
+  - localization and Git diff checks;
+  - non-destructive UI review up to, but not accepting, the final destructive confirmation.
 - Out of scope:
-  - automatic scanning/cleanup, notification permission prompts, Settings redesign, release/version/package changes, dependencies, or architecture changes.
+  - deleting any real user file during verification, directories, application bundles, privileged/system files, background shredding, scheduled shredding, dependencies, release/version/package changes, signing, or publication.
 - Dependencies allowed: none
-- Destructive actions allowed: none
+- Destructive actions allowed: disposable test fixtures only
 
 ## Evaluator Checklist
 
 - Done criteria:
-  - Low space means valid total capacity with free fraction strictly below 10%.
-  - Notification eligibility is limited to once per 24 hours and persisted only after successful delivery.
-  - The monitor checks at launch and every 30 minutes without requesting permission.
-  - The menu warning recommends scanning and provides a direct Disk Analysis button.
-  - Navigation reveals the existing main window or opens one, then selects Disk Analysis without starting analysis.
+  - Shredder is a separate sidebar destination and does not reuse normal cleanup, Trash, restore, or scheduled scan flows.
+  - Review accepts only explicitly selected regular files and records device/inode/size/mtime identity.
+  - Execution opens without following symlinks, verifies the same single-link regular file, overwrites through the file descriptor, syncs, truncates, revalidates identity, and unlinks directly.
+  - Protected roots, directories, symlinks, hard links, packages, and changed/replaced files fail closed.
+  - Final action requires both an acknowledgement and an exact typed phrase; no cancellation is offered after execution starts.
+  - UI clearly states that SSD/APFS physical recovery cannot be guaranteed and recommends FileVault for future protection.
+  - Neo-glow styling is concentrated on armed/danger states and supports both app appearances.
 - Required verification:
-  - focused threshold/boundary/cooldown tests;
+  - focused shredder tests and full `swift test --package-path CleanMacCore`;
+  - localization lint/key parity;
   - Debug build and signed launch verification;
-  - live menu-to-Disk-Analysis navigation without triggering a scan or notification;
-  - `swift test --package-path CleanMacCore`;
-  - `git diff --check`;
-  - green GitHub PR checks.
+  - live RU/EN layout and confirmation review without accepting deletion;
+  - `git diff --check`.
 - Manual checks:
-  - Confirm normal disk space keeps the warning hidden.
-  - Do not change notification permission, start scanning, or move any user file during verification.
+  - Never select or delete a real user file during automated verification.
+  - Confirm normal cleanup and restore behavior remain unchanged.
 
 ## Result
 
 - Status: complete
-- Verification result: focused boundary/cooldown tests and all 43 core tests passed; localization lint/key parity, Debug build, ad-hoc signature/launch, normal-capacity hidden state, one-shot Disk Analysis routing, diff checks, and GitHub PR CI passed.
-- Notes: the warning uses the same available-capacity value shown in the menu-bar disk card; it never requests notification permission or starts a scan automatically. APFS purgeable-space behavior remains represented by macOS capacity APIs.
+- Verification result: focused shredder tests 4/4; full `CleanMacCore` suite 47/47; EN/RU localization lint and 583-key parity; Debug build, ad-hoc signature, and launch verification; live EN/light and RU/dark UI review; exact-phrase gating review; `git diff --check`.
+- Notes: The production path was not exercised against a real user file. Only disposable SwiftPM fixtures were shredded; the UI fixture was preserved. Apple documents that secure erase options are unavailable for SSDs, so the UI explicitly describes this as best-effort direct deletion rather than guaranteed physical-media erasure.

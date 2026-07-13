@@ -134,3 +134,17 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: `onAppear` applied the external selection before SwiftUI restored the existing `@SceneStorage` sidebar value.
 - Fix: consume the requested section from an ID-driven task after one main-actor yield, then clear the one-shot preference.
 - Status: resolved; the second clean launch opened directly on the Russian Disk Analysis screen and did not start a scan.
+
+## 2026-07-12 - TASK-046 - System alias escaped the first protected-root check
+
+- Symptom: the first full 47-test run let `/etc/hosts` pass inspection even though `/private/etc` was protected.
+- Cause: Foundation path resolution did not canonicalize the existing `/etc` parent alias in this validation path.
+- Fix: explicitly protect `/etc`, `/var/db`, `/var/root`, and `/var/vm` alongside their `/private` targets, then rerun the focused and full suites.
+- Status: resolved; the alias regression and all four shredder tests pass, and all 47 core tests are green.
+
+## 2026-07-12 - TASK-046 - Repeated generated app Finder metadata
+
+- Symptom: the first final launch verification built successfully but ad-hoc signing rejected `com.apple.FinderInfo` on the generated Debug app.
+- Cause: the known local Finder/File Provider metadata behavior recurred on the build product.
+- Fix: cleared extended attributes only from `build/XcodeData/Build/Products/Debug/CleanMac.app` and repeated the standard verification command.
+- Status: resolved; the Debug app is valid on disk, satisfies its designated requirement, and launches successfully.
