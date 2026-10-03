@@ -1,7 +1,19 @@
 # Roadmap
 
+- [ ] ID: TASK-058
+  Title: Startup freeze hotfix; v0.5.1
+  Goal: Restore responsive startup with existing preferences without resetting user choices.
+  What to do: Make preference migration idempotent; cover absent/empty/legacy/future-schema states; move disk reads to a coalesced background cache; use inert view snapshots and resolve native windows once.
+  Files: preference and disk/window support, dashboard/menu views, regression harness, Xcode version, README and release/Loop docs
+  Definition of done: six preference regressions and 62 core tests pass; Debug and installed Release remain responsive; verified 0.5.1 (7) assets are published and the downloaded payload installed.
+  Verification: preference harness, full core tests, Debug/Release UI and process samples, package/signature/checksum, CI, downloaded assets and installed executable path
+  Status: local tests, packaging and installed Release UI checks passed; CI/publication/downloaded-release verification pending.
+  Priority: urgent
+  Risk: medium
+
 - [x] ID: TASK-057
   Title: Useful storage dashboard, motion and workflow polish; v0.5.0
+  Follow-up: published 0.5.0 later exhibited a startup UI hang with existing preferences. The process-level launch check missed it; startup acceptance is reopened in TASK-058.
   Goal: Bring the reviewed PR #17 features into a release with a clear storage overview and reliable interactions.
   What to do: Add truthful disk segments and quick tool navigation, lifecycle-managed animation, stable hover targets, mutation coordination, navigation/close protection, accurate remaining scan totals, and selected-language formatters.
   Files: Dashboard and shared UI, operation views/support, DiskSpaceBreakdown model/tests, localization, release workflow and notes, Xcode version, Loop docs

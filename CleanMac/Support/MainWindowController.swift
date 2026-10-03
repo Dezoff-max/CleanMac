@@ -30,9 +30,16 @@ enum MainWindowController {
 
     @MainActor
     static func configure(_ window: NSWindow) {
-        window.identifier = identifier
-        window.tabbingMode = .disallowed
-        window.minSize = adjustedMinimumSize(for: window)
+        if window.identifier != identifier {
+            window.identifier = identifier
+        }
+        if window.tabbingMode != .disallowed {
+            window.tabbingMode = .disallowed
+        }
+        let minimumSize = adjustedMinimumSize(for: window)
+        if window.minSize != minimumSize {
+            window.minSize = minimumSize
+        }
         preserveWindowDuringFileOperations(window)
 
         let windowID = ObjectIdentifier(window)
@@ -157,19 +164,33 @@ private final class MainWindowCloseDelegate: NSObject, NSWindowDelegate {
 struct WindowAccessor: NSViewRepresentable {
     let onResolve: (NSWindow) -> Void
 
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
     func makeNSView(context: Context) -> NSView {
         let view = NSView(frame: .zero)
-        DispatchQueue.main.async {
-            if let window = view.window {
-                onResolve(window)
-            }
-        }
+        context.coordinator.resolve(view, onResolve: onResolve)
         return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        DispatchQueue.main.async {
-            if let window = nsView.window {
+        context.coordinator.resolve(nsView, onResolve: onResolve)
+    }
+
+    @MainActor
+    final class Coordinator {
+        private weak var resolvedWindow: NSWindow?
+        private var resolutionScheduled = false
+
+        func resolve(_ view: NSView, onResolve: @escaping (NSWindow) -> Void) {
+            guard !resolutionScheduled else { return }
+            resolutionScheduled = true
+            DispatchQueue.main.async { [weak self, weak view] in
+                guard let self else { return }
+                self.resolutionScheduled = false
+                guard let window = view?.window, window !== self.resolvedWindow else { return }
+                self.resolvedWindow = window
                 onResolve(window)
             }
         }

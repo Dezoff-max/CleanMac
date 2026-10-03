@@ -8,7 +8,15 @@ struct DashboardStorageCard: View {
 
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var snapshot = StatusDiskSnapshot.current()
+    // View values are recreated during layout. Never start a filesystem query
+    // from a State initial value, even when SwiftUI retains the old state.
+    @State private var snapshot = StatusDiskSnapshot.unavailable
+    @State private var refreshGeneration = 0
+
+    private struct RefreshID: Equatable {
+        let scenePhase: ScenePhase
+        let generation: Int
+    }
 
     private var capacity: DiskSpaceBreakdown { snapshot.capacity }
 
@@ -23,7 +31,7 @@ struct DashboardStorageCard: View {
                 Spacer(minLength: 4)
 
                 Button {
-                    snapshot = .current()
+                    refreshGeneration &+= 1
                 } label: {
                     Image(systemName: "arrow.clockwise")
                         .font(.caption.weight(.medium))
@@ -82,7 +90,7 @@ struct DashboardStorageCard: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .task(id: scenePhase) {
+        .task(id: RefreshID(scenePhase: scenePhase, generation: refreshGeneration)) {
             guard scenePhase == .active else { return }
             await refreshWhileVisible()
         }
@@ -162,15 +170,15 @@ struct DashboardStorageCard: View {
     }
 
     private func refreshWhileVisible() async {
-        snapshot = .current()
         while !Task.isCancelled {
             do {
+                let refreshed = try await StatusDiskSnapshotReader.shared.snapshot(forceRefresh: true)
+                try Task.checkCancellation()
+                snapshot = refreshed
                 try await Task.sleep(for: .seconds(30))
             } catch {
                 return
             }
-            guard !Task.isCancelled else { return }
-            snapshot = .current()
         }
     }
 }

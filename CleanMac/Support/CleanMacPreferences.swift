@@ -71,13 +71,14 @@ enum CleanMacScanPreferences {
 
     static func selectedAreaIDs(defaults: UserDefaults = .standard) -> Set<String> {
         let rawValue = defaults.string(forKey: CleanMacPreferenceKeys.selectedAreaIDs)
-        guard let rawValue else {
-            defaults.set(currentAreaSchemaVersion, forKey: CleanMacPreferenceKeys.selectedAreaSchemaVersion)
-            return defaultSelectedAreaIDs
-        }
-        guard !rawValue.isEmpty else {
-            defaults.set(currentAreaSchemaVersion, forKey: CleanMacPreferenceKeys.selectedAreaSchemaVersion)
-            return []
+        guard let rawValue, !rawValue.isEmpty else {
+            // SwiftUI can evaluate a @State initializer on every view creation.
+            // Rewriting an unchanged default here can invalidate AppStorage and
+            // rebuild the scene again, even though the selection did not change.
+            if defaults.integer(forKey: CleanMacPreferenceKeys.selectedAreaSchemaVersion) < currentAreaSchemaVersion {
+                defaults.set(currentAreaSchemaVersion, forKey: CleanMacPreferenceKeys.selectedAreaSchemaVersion)
+            }
+            return rawValue == nil ? defaultSelectedAreaIDs : []
         }
 
         let validIDs = Set(CleanMacCatalog.cleanupAreas.map(\.id))

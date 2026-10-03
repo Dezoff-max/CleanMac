@@ -70,6 +70,8 @@ CleanMac is a native SwiftUI utility that scans selected macOS locations, explai
 
 ## Installation
 
+The 0.5.1 source update fixes a startup freeze present in 0.5.0 with some existing scan preferences. Updating preserves settings and scan selections; a preference reset is not required. See the [0.5.1 release notes](docs/releases/v0.5.1.md).
+
 Download a package from [GitHub Releases](https://github.com/Dezoff-max/CleanMac/releases/latest). Packages produced from the current source include `CleanMac.dmg`: open it and drag `CleanMac.app` onto the included `Applications` shortcut. Older releases may provide only the fallback ZIP. Each generated archive has its own `.sha256` file:
 
 ```bash
@@ -104,11 +106,15 @@ cd CleanMac
 ./script/build_and_run.sh --verify
 ```
 
+The launch script checks that the process starts. Also confirm the window responds to navigation and menu actions; a running process alone does not establish UI responsiveness.
+
 Run the core test suite:
 
 ```bash
 swift test --package-path CleanMacCore
 ```
+
+After building the app, run `./script/test_preferences.sh` to check preference migrations without touching user settings.
 
 Create a local Release app, drag-to-Applications DMG, fallback ZIP, and SHA-256 files:
 

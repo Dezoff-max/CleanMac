@@ -24,7 +24,7 @@ struct StatusSystemSnapshot: Equatable {
         StatusSystemSnapshot(
             cpuFraction: 0,
             memory: .unavailable,
-            disk: .current(),
+            disk: .unavailable,
             battery: StatusBatterySnapshot.current(),
             downloadBytesPerSecond: 0,
             uploadBytesPerSecond: 0,
@@ -84,7 +84,7 @@ struct StatusMemorySnapshot: Equatable, Sendable {
     }
 }
 
-struct StatusDiskSnapshot: Equatable {
+struct StatusDiskSnapshot: Equatable, Sendable {
     let volumeName: String?
     let capacity: DiskSpaceBreakdown
 
@@ -114,7 +114,18 @@ struct StatusDiskSnapshot: Equatable {
         return LowDiskSpaceWarningPolicy.isLowSpace(totalBytes: totalBytes, freeBytes: freeBytes)
     }
 
-    static func current() -> StatusDiskSnapshot {
+    nonisolated static var unavailable: StatusDiskSnapshot {
+        StatusDiskSnapshot(
+            volumeName: nil,
+            capacity: DiskSpaceBreakdown(
+                totalBytes: 0,
+                importantUsageAvailableBytes: nil,
+                immediatelyAvailableBytes: nil
+            )
+        )
+    }
+
+    nonisolated static func current() -> StatusDiskSnapshot {
         let homeURL = FileManager.default.homeDirectoryForCurrentUser
         let attributes = (try? FileManager.default.attributesOfFileSystem(forPath: homeURL.path)) ?? [:]
         let resourceValues = try? homeURL.resourceValues(forKeys: [
@@ -139,7 +150,7 @@ struct StatusDiskSnapshot: Equatable {
         )
     }
 
-    private static func numberValue(_ value: Any?) -> Int64? {
+    nonisolated private static func numberValue(_ value: Any?) -> Int64? {
         if let number = value as? NSNumber {
             return number.int64Value
         }
@@ -202,7 +213,7 @@ struct StatusSystemSampler {
     private var previousCPU: CPUTicks?
     private var previousNetwork: (date: Date, counters: NetworkCounters)?
 
-    mutating func sample() -> StatusSystemSnapshot {
+    mutating func sample(disk: StatusDiskSnapshot) -> StatusSystemSnapshot {
         let now = Date()
         let currentCPU = readCPUTicks()
         let cpuFraction = cpuUsage(current: currentCPU, previous: previousCPU)
@@ -216,7 +227,7 @@ struct StatusSystemSampler {
         return StatusSystemSnapshot(
             cpuFraction: cpuFraction,
             memory: memory,
-            disk: .current(),
+            disk: disk,
             battery: StatusBatterySnapshot.current(),
             downloadBytesPerSecond: networkRates.received,
             uploadBytesPerSecond: networkRates.sent,
