@@ -18,9 +18,10 @@ final class CleanMacLowDiskSpaceMonitor {
             guard let self else { return }
 
             while !Task.isCancelled {
-                await CleanMacNotificationService.notifyLowDiskSpaceIfNeeded(.current())
-
                 do {
+                    let disk = try await StatusDiskSnapshotReader.shared.snapshot()
+                    try Task.checkCancellation()
+                    await CleanMacNotificationService.notifyLowDiskSpaceIfNeeded(disk)
                     try await Task.sleep(for: checkInterval)
                 } catch {
                     return

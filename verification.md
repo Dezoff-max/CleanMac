@@ -9,7 +9,8 @@
 
 - Install: none required.
 - Run/dev: `./script/build_and_run.sh`
-- Verify launch: `./script/build_and_run.sh --verify`
+- Verify process launch: `./script/build_and_run.sh --verify` (must be followed by responsive UI checks).
+- Preference regressions: `./script/test_preferences.sh`; after Release build, `./script/test_preferences.sh build/XcodeData/Build/Products/Release`.
 - Build: `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`
 - Test: `swift test --package-path CleanMacCore`
 - Package: `./script/package_release.sh`
@@ -45,7 +46,8 @@
 
 | Area | Command or check | When to run | Success signal | Fallback |
 | --- | --- | --- | --- | --- |
-| macOS app launch | `./script/build_and_run.sh --verify` | UI, app lifecycle, assets, or project changes | Build succeeds and `pgrep -x CleanMac` finds the app | Run the xcodebuild command from this file and inspect launch logs |
+| macOS app launch | `./script/build_and_run.sh --verify`, then interact with the visible window and sample after startup | UI, app lifecycle, assets, or project changes | Build/process check passes; navigation, menus and close/reopen respond with existing preferences; no sustained idle CPU or memory growth | Capture `sample` and CPU/RSS observations; process existence alone is not a pass |
+| Preference migration | `./script/test_preferences.sh` against Debug and Release products | Scan-selection persistence or view initialization changes | All six cases pass; repeated reads do not rewrite current settings; explicit empty and newer-schema values are preserved | Run the absent-selection/schema-1 reproducer against the prior implementation; never reset real preferences |
 | Menu bar dashboard | Open the status item in both CleanMac appearance modes and observe at least two refreshes | Menu-bar layout, metrics, localization, appearance, or actions change | Light selection renders a light popover, dark selection renders a dark popover, live metric values remain valid, and Open focuses the main window | Inspect the accessibility tree and capture light/dark screenshots; do not trigger scan, cleanup, or removal actions |
 | Low disk space warning | Core threshold/cooldown fixtures plus a read-only main-window route check | Disk capacity policy, status monitor, notification delivery, menu warning, or requested-section routing changes | Exactly 10% stays normal; below 10% warns; successful notifications are limited to once per 24 hours; the menu action selects Disk Analysis without starting a scan | Run `LowDiskSpaceWarningPolicyTests`; on a normal disk confirm the warning stays hidden; exercise the requested-section route without changing notification permission or faking user disk capacity |
 | Settings and launch at login | Inspect `SMAppService.mainApp.status`, launch once normally and once with `open -g`, then restore through app activation and menu-bar Open | Settings navigation, permissions placement, Login Item, or app launch lifecycle changes | Permissions exists only inside Settings; system status is localized; background launch has zero main windows; activation/menu-bar Open reveals the existing window | Do not toggle Login Item during automated verification; use the current read-only status and inspect registration/error paths in code |
@@ -70,6 +72,16 @@
 
 - Core suite: 62 tests pass, including 11 storage-capacity cases (double counting, full disk, unavailable/negative/inconsistent samples and overflow limits). On this Mac use `swift test --package-path CleanMacCore --scratch-path /private/tmp/cleanmac-core-validation` to avoid File Provider metadata on XCTest bundles.
 - Both localization plists parse; RU/EN key sets match (686 keys).
-- Debug build, strict ad-hoc signature and launch pass. Live UI confirms quick-tool navigation, selected-language storage labels, read-only analysis cancellation and no forced navigation after a scan completed while Settings was open.
+- Debug build, strict ad-hoc signature and the reviewed navigation/scan paths passed at the time. The installed 0.5.0 process check later proved insufficient: existing preferences could trigger a startup UI hang. Responsive startup acceptance is superseded by TASK-058; do not treat the earlier launch statement as proof that the installed interface worked.
 - No cleanup, application removal, Shredder operation, RAM purge or DNS flush was executed against user data.
 - Release packaging, publication and Applications installation are recorded in the final TASK-057 progress entry.
+
+
+## TASK-058 hotfix verification
+
+- Six preference regression cases pass against the real implementation; original 0.5.0 fails the absent-selection/schema-1 reproducer. Cases cover absent, explicit empty, first-launch, legacy empty/nonempty and future-schema settings without touching the user's defaults.
+- Full core suite: 62 tests pass.
+- Debug startup: visible and responsive after 45 seconds; about 0.1% CPU and 128 MiB RSS.
+- Local Release package: strict ZIP extraction and mounted-DMG signatures pass. Verified ZIP installed as version 0.5.1 (7) at `/Applications/CleanMac.app`.
+- Installed local Release UI: menu navigation, disk refresh, System, return to Overview and window close/recreation respond. Sample reports 83.6 MB physical footprint (143.1 MB peak); main thread largely waits in `mach_msg`, without the disk-capacity/dashboard busy loop.
+- Pending: CI, v0.5.1 publication, clean published-asset download/checksum/signature/version checks, and installation/relaunch of that exact downloaded payload. These are not covered by the local package result.

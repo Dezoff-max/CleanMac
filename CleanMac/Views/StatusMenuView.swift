@@ -347,15 +347,15 @@ struct StatusMenuView: View {
     }
 
     private func refreshMetrics() async {
-        snapshot = sampler.sample()
-
         while !Task.isCancelled {
             do {
+                let disk = try await StatusDiskSnapshotReader.shared.snapshot()
+                try Task.checkCancellation()
+                snapshot = sampler.sample(disk: disk)
                 try await Task.sleep(for: .seconds(1))
             } catch {
                 return
             }
-            snapshot = sampler.sample()
         }
     }
 }

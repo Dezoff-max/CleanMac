@@ -212,3 +212,13 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: toolchain caches live outside the workspace and File Provider attaches extended attributes to generated bundles in Documents.
 - Fix: authorized the build tools to use their existing caches and placed SwiftPM scratch output under `/private/tmp/cleanmac-core-validation`.
 - Result: the baseline 51-test suite passed. Subsequent integration validation uses the same temporary scratch location.
+
+
+## 2026-10-03 - TASK-058 - Published 0.5.0 startup freeze
+
+- Symptom: the installed 0.5.0 process existed but its UI hung; sampling showed the main thread consuming about 100% CPU and memory around 1.5 GB.
+- Cause: with selection schema 1 already stored but `selectedAreaIDs` absent, the preferences getter wrote the schema unconditionally. The eager `MainWindowView` state initializer repeatedly invoked this getter, producing an AppStorage/body invalidation loop. Synchronous disk-capacity work on the UI thread and repeated native-window callbacks compounded the work.
+- Verification gap: build/signature checks and `pgrep` established that the executable started, not that its interface responded. The former stable-launch statement for TASK-057 was incorrect and is corrected in progress/verification records.
+- Fix: idempotent migration with six real-code regression cases; background/coalesced/cached disk reads; inert initial snapshots; native-window resolution once. Existing preferences are retained.
+- Evidence: the absent-selection regression fails against 0.5.0 and passes after the fix. All six preference checks and 62 core tests pass. Debug after 45 seconds: about 0.1% CPU and 128 MiB RSS. Installed local 0.5.1 (7): navigation/refresh/close/recreation responsive, physical footprint 83.6 MB (143.1 MB peak), main thread largely waiting rather than looping.
+- Status: locally resolved and packaged; CI, GitHub publication and validation of the downloaded published payload remain pending.

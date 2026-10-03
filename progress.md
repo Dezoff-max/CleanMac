@@ -535,9 +535,31 @@ Append-only history. Do not erase previous entries.
 - What changed: Built on PR #17, added an accurate live disk overview and six tool routes inspired by the supplied PureMac screenshot; adaptive hero/cards; RU/EN volume/date/time formatting; stable hover geometry; lifecycle-managed scan/Shredder loops and Reduce Motion. Added shared file-mutation coordination, preserved busy windows on close, respected user navigation after scan completion, recalculated remaining scan totals, corrected empty-result text and DNS command error chaining. Prepared version 0.5.0 (6), repository release notes and explicit test/version verification before release publication.
 - Files touched: dashboard/shared/progress/operation views; application support and formatters; DiskSpaceBreakdown core model and tests; EN/RU strings; Xcode version; README and Loop/release docs.
 - Checks run: 62 core tests (0 failures) using the temporary SwiftPM scratch path; 11 capacity edge cases; Debug build, strict ad-hoc signature and launch; 686 matching RU/EN keys; live quick navigation/read-only scan/cancellation review; local DMG/ZIP packaging with strict signature verification; YAML and shell syntax; git diff check.
-- Result: implementation verified locally. All tests pass, and UI review identified and corrected both wide-grid imbalance and the default-window hero stacking issue.
+- Result: tests and the reviewed UI paths passed at this stage; wide-grid imbalance and hero stacking were corrected. This did not cover the existing-preference startup state that later froze in 0.5.0; see TASK-058.
 - Next step: package the committed revision, push/update PR #17, merge after CI, tag and publish v0.5.0, verify downloaded assets, install/open in /Applications.
 - Bottleneck: no Developer ID/notarization credentials; artifacts are explicitly labelled ad-hoc.
 - Handoff: no real user files were removed and no memory/DNS command was executed. The user explicitly requested GitHub release publication and Applications installation.
 
 - Publication adjustment: GitHub OAuth permits repository writes but not workflow edits. The optional new workflow gates were reverted before pushing; the existing release workflow remains unchanged and release checks are performed explicitly. No additional account permissions were requested.
+
+
+## 2026-10-03 - TASK-057 - Published and installed CleanMac 0.5.0
+
+- What changed: Merged PR #17 after successful CI, created v0.5.0 on main commit `40e5ffe5044641fff0cb69f7fac1bc257ea60698`, published the reviewed Russian release notes and four verified assets, and installed the downloaded app into `/Applications/CleanMac.app`.
+- Files touched: final release/Loop verification records.
+- Checks run: PR CI `37126432168`; Release workflow `37126671067`; clean GitHub asset download; SHA-256 of ZIP and DMG; strict codesign verification of extracted ZIP and mounted DMG; Applications shortcut check; version 0.5.0/build 6 and arm64 inspection; installed app strict signature and running executable path.
+- Result: publication, payload integrity and executable path passed. Release was published at https://github.com/Dezoff-max/CleanMac/releases/tag/v0.5.0 and the process path was `/Applications/CleanMac.app/Contents/MacOS/CleanMac`. The process check did not establish responsive UI; a startup hang was subsequently found and is tracked in TASK-058.
+- Next step: superseded by urgent TASK-058 to repair and verify the startup hang.
+- Bottleneck: the later startup hang invalidates the earlier no-blocker assessment. Developer ID/notarization remains unavailable; published notes explicitly state ad-hoc signing.
+- Handoff: Installed the exact GitHub ZIP payload. User files, permissions, security settings, RAM and DNS were not changed.
+
+
+## 2026-10-03 - TASK-058 - Startup freeze hotfix, local verification
+
+- What changed: Made scan-selection migration idempotent without resetting preferences; added six regressions against real app preference code; moved disk-capacity queries to a coalesced background cache; made initial snapshots inert; limited native-window resolution to once per representable. Prepared 0.5.1 (7) and corrected the overstated 0.5.0 launch verification.
+- Files touched: preferences and disk/window support; dashboard/menu views; Xcode version; `Tests/CleanMacPreferencesRegression.swift`; `script/test_preferences.sh`; README and release/Loop docs.
+- Checks run: Debug build and responsive UI after 45 seconds (about 0.1% CPU, 128 MiB RSS); six preference checks pass while the 0.5.0 implementation fails the absent-selection reproducer; all 62 core tests; local Release packaging with strict ZIP and mounted-DMG signature verification; local verified ZIP installed as 0.5.1 (7) in `/Applications/CleanMac.app`; navigation, disk refresh, System, Overview, and close/recreation UI checks.
+- Result: local installed Release remains responsive. Process sample shows 83.6 MB physical footprint, 143.1 MB peak and the main thread largely waiting in `mach_msg`; no repeated disk-capacity/dashboard busy loop appears.
+- Next step: commit, run CI, publish v0.5.1, download and verify its assets, then install and verify the exact published payload.
+- Bottleneck: CI, publication and downloaded-release verification are pending. The local installed build is not yet the downloaded GitHub release.
+- Handoff: do not reset preferences as a workaround. No user files were removed and no memory/DNS action or security-setting change was performed during these checks.

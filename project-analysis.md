@@ -28,10 +28,13 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - Verify launch: `./script/build_and_run.sh --verify`
 - Package: `./script/package_release.sh`
 - Test: `swift test --package-path CleanMacCore`
+- Preference regressions after app build: `./script/test_preferences.sh`
 - Build: `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`
 - Lint/typecheck: no dedicated lint command found.
 
 ## Completed Parts
+
+- The 0.5.1 hotfix makes scan-selection migration idempotent, preserves preferences, reads disk capacity through a coalesced background cache, uses inert initial snapshots and resolves native windows once. Six preference regressions and 62 core tests pass; locally installed Release navigation/refresh/close/recreation are responsive. Publication and downloaded-release validation remain pending.
 
 - The v0.5.0 overview adds a live capacity breakdown and six quick tool routes. Available capacity includes the macOS-reclaimable estimate exactly once; unknown values are explicit, and 11 Core tests cover capacity edge cases.
 - Decorative scan/Shredder loops now stop when the scene is inactive or Reduce Motion is enabled. Sidebar/card hit targets remain stable, scan chips adapt to width, and volume/date/time formatting follows the in-app RU/EN choice.
@@ -79,10 +82,12 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 - Settings can enable read-only auto scan while the app is running; it supports daily, hourly, and every-two-hours frequencies, uses the currently selected scan areas, and updates menu bar status.
 - Settings can register the main app through `SMAppService.mainApp` to launch at login, displays the authoritative macOS enabled/disabled/approval/unavailable status, reports registration failures, and links to Login Items when user action is required. Login-style background launch keeps the main window hidden until the user activates CleanMac or chooses Open from the menu bar.
 - Scheduled auto scan can show localized macOS completion notifications when the notification toggle is enabled and system permission allows it; Settings includes a test notification button to diagnose macOS permission/delivery state. Manual scans remain silent.
-- Public GitHub Release `v0.4.0` is the latest release and includes the verified arm64 ad-hoc ZIP and SHA-256 assets. It ships the low-disk warning, custom-folder picker fix, scan thermal optimization, Smart Shredder, and refreshed public screenshots.
+- GitHub release `v0.5.0` was published with verified arm64 ad-hoc DMG/ZIP and SHA-256 assets. Its installed executable path was correct, but a process-level check missed a startup UI hang with existing scan preferences. TASK-058 prepares 0.5.1 (7); local checks pass, with CI/publication/downloaded-payload verification still pending.
 - Release packaging creates a clean unsigned/ad-hoc app, a compressed DMG with `CleanMac.app` and an `Applications` shortcut, a fallback ZIP, and portable SHA-256 files. It stages the DMG outside the Desktop-backed File Provider path, strictly verifies a fresh mounted image and ZIP extraction, and can optionally sign with Developer ID, enable hardened runtime, submit to Apple notary service, staple, and recreate both archives when credentials are configured.
 
 ## Unfinished Or Risky Parts
+
+- Complete CI and publish the locally verified 0.5.1 hotfix, then validate and install the exact downloaded release. Do not rely on process existence alone as a UI launch check.
 
 - This Mac has `0 valid identities found`, so actual Developer ID signing/notarization cannot be performed locally yet; macOS Gatekeeper rejects the current ad-hoc zip as expected.
 - Permissions are live for Full Disk Access status, but the app still relies on System Settings for granting access.
