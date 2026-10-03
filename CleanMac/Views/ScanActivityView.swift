@@ -2,6 +2,8 @@ import CleanMacCore
 import SwiftUI
 
 struct ScanActivityView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let selectedAreas: [CleanupArea]
     let progress: CleanupScanProgress?
 
@@ -24,7 +26,7 @@ struct ScanActivityView: View {
                 verticalLayout
             }
         }
-        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.98)))
     }
 
     private var horizontalLayout: some View {
@@ -160,7 +162,11 @@ struct ScanActivityView: View {
     }
 
     private var areaRail: some View {
-        HStack(spacing: 8) {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 150), alignment: .leading)],
+            alignment: .leading,
+            spacing: 8
+        ) {
             ForEach(visibleAreas) { area in
                 ScanAreaChip(area: area, state: chipState(for: area))
             }
@@ -253,9 +259,15 @@ private struct AnimatedScanProgressTrack: View {
     let progress: Double
     let accessibilityLabel: String
 
-    @State private var isShimmering = false
-
     var body: some View {
+        CleanMacContinuousMotion { phase in
+            track(phase: phase)
+        }
+        .frame(height: 8)
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private func track(phase: CleanMacMotionPhase) -> some View {
         GeometryReader { proxy in
             let trackWidth = proxy.size.width
             let filledWidth = max(8, trackWidth * min(max(progress, 0), 1))
@@ -274,7 +286,7 @@ private struct AnimatedScanProgressTrack: View {
                     )
                     .frame(width: filledWidth)
                     .overlay(alignment: .leading) {
-                        if !reduceMotion {
+                        if phase.isEnabled {
                             Capsule()
                                 .fill(
                                     LinearGradient(
@@ -284,72 +296,55 @@ private struct AnimatedScanProgressTrack: View {
                                     )
                                 )
                                 .frame(width: 48)
-                                .offset(x: isShimmering ? filledWidth : -48)
+                                .offset(x: phase.isAnimating ? filledWidth : -48)
                                 .animation(
                                     .linear(duration: 1.5).repeatForever(autoreverses: false),
-                                    value: isShimmering
+                                    value: phase.isAnimating
                                 )
                         }
                     }
                     .clipShape(Capsule())
-                    .animation(.easeOut(duration: 0.24), value: progress)
+                    .animation(CleanMacMotion.progress(reduceMotion: reduceMotion), value: progress)
             }
-        }
-        .frame(height: 8)
-        .accessibilityLabel(accessibilityLabel)
-        .onAppear {
-            isShimmering = !reduceMotion
-        }
-        .onChange(of: reduceMotion) { _, _ in
-            isShimmering = !reduceMotion
         }
     }
 }
 
 private struct ScanSignalBars: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     let progress: Double
 
     private let barCount = 5
 
-    @State private var isAnimating = false
-
     var body: some View {
-        HStack(alignment: .bottom, spacing: 5) {
-            ForEach(0..<barCount, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 3, style: .continuous)
-                    .fill(barColor(for: index))
-                    .frame(width: 8, height: barHeight(for: index))
-                    .animation(
-                        reduceMotion
-                            ? .easeOut(duration: 0.2)
-                            : .easeInOut(duration: 0.7 + Double(index) * 0.08)
+        CleanMacContinuousMotion { phase in
+            HStack(alignment: .bottom, spacing: 5) {
+                ForEach(0..<barCount, id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(barColor(for: index))
+                        .frame(width: 8, height: 44)
+                        .scaleEffect(x: 1, y: barHeight(for: index, phase: phase) / 44, anchor: .bottom)
+                        .animation(
+                            .easeInOut(duration: 0.7 + Double(index) * 0.08)
                                 .repeatForever(autoreverses: true)
                                 .delay(Double(index) * 0.06),
-                        value: isAnimating
-                    )
+                            value: phase.isAnimating
+                        )
+                }
             }
         }
         .frame(height: 44, alignment: .bottom)
         .accessibilityHidden(true)
-        .onAppear {
-            isAnimating = !reduceMotion
-        }
-        .onChange(of: reduceMotion) { _, _ in
-            isAnimating = !reduceMotion
-        }
     }
 
-    private func barHeight(for index: Int) -> CGFloat {
+    private func barHeight(for index: Int, phase: CleanMacMotionPhase) -> CGFloat {
         let clampedProgress = min(max(progress, 0.08), 1)
         let step = Double(index + 1) / Double(barCount)
         let base = CGFloat(12 + 18 * clampedProgress * step)
-        guard !reduceMotion else {
+        guard phase.isEnabled else {
             return base
         }
         let amplitude = CGFloat(7 + index * 2)
-        return isAnimating ? min(44, base + amplitude) : max(10, base - amplitude * 0.45)
+        return phase.isAnimating ? min(44, base + amplitude) : max(10, base - amplitude * 0.45)
     }
 
     private func barColor(for index: Int) -> Color {
@@ -411,9 +406,11 @@ private struct ScanAreaChip: View {
         Label(area.title, systemImage: state.systemImage)
             .font(.caption.weight(.medium))
             .lineLimit(1)
+            .truncationMode(.tail)
             .foregroundStyle(state.foregroundStyle)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
             .background(state.foregroundStyle.opacity(state.backgroundOpacity), in: Capsule())
+            .help(area.title)
     }
 }

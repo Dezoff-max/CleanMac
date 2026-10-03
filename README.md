@@ -39,6 +39,10 @@ CleanMac is a native SwiftUI utility that scans selected macOS locations, explai
 
 ## Features
 
+- **Storage overview.** A live capacity breakdown distinguishes occupied space, immediately free space, and space macOS may reclaim. Available capacity already includes the reclaimable estimate, so it is never counted twice.
+- **Quick tools.** Open disk analysis, duplicates, applications, system maintenance, scan areas, and settings directly from the overview.
+- **Considerate motion.** Scan indicators and interactive cards respect Reduce Motion; decorative scan loops stop when the scene becomes inactive.
+
 - **Safe scanning.** User and browser caches, logs, temporary files, Xcode Derived Data, Node/SwiftPM caches, Downloads, installers, and Trash.
 - **Explainable review.** Categories, sizes, risk levels, recommendation reasons, exact paths, and locations that could not be read.
 - **Safe Mode.** Enabled by default and prevents selection of items that require manual review.

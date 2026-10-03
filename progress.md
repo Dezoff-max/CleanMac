@@ -528,3 +528,16 @@ Append-only history. Do not erase previous entries.
 - Next step: Review draft PR #17 and merge or release only after explicit approval.
 - Bottleneck: public distribution remains ad-hoc signed and not notarized until Developer ID credentials are configured. The known stale CoreSimulator warning remains unrelated and non-blocking.
 - Handoff: No real user file was selected or removed. Only agent-created disposable copies under `/private/tmp` were securely deleted during live verification.
+
+
+## 2026-10-03 - TASK-057 - Dashboard and reliable motion/workflows
+
+- What changed: Built on PR #17, added an accurate live disk overview and six tool routes inspired by the supplied PureMac screenshot; adaptive hero/cards; RU/EN volume/date/time formatting; stable hover geometry; lifecycle-managed scan/Shredder loops and Reduce Motion. Added shared file-mutation coordination, preserved busy windows on close, respected user navigation after scan completion, recalculated remaining scan totals, corrected empty-result text and DNS command error chaining. Prepared version 0.5.0 (6), repository release notes and explicit test/version verification before release publication.
+- Files touched: dashboard/shared/progress/operation views; application support and formatters; DiskSpaceBreakdown core model and tests; EN/RU strings; Xcode version; README and Loop/release docs.
+- Checks run: 62 core tests (0 failures) using the temporary SwiftPM scratch path; 11 capacity edge cases; Debug build, strict ad-hoc signature and launch; 686 matching RU/EN keys; live quick navigation/read-only scan/cancellation review; local DMG/ZIP packaging with strict signature verification; YAML and shell syntax; git diff check.
+- Result: implementation verified locally. All tests pass, and UI review identified and corrected both wide-grid imbalance and the default-window hero stacking issue.
+- Next step: package the committed revision, push/update PR #17, merge after CI, tag and publish v0.5.0, verify downloaded assets, install/open in /Applications.
+- Bottleneck: no Developer ID/notarization credentials; artifacts are explicitly labelled ad-hoc.
+- Handoff: no real user files were removed and no memory/DNS command was executed. The user explicitly requested GitHub release publication and Applications installation.
+
+- Publication adjustment: GitHub OAuth permits repository writes but not workflow edits. The optional new workflow gates were reverted before pushing; the existing release workflow remains unchanged and release checks are performed explicitly. No additional account permissions were requested.

@@ -62,8 +62,6 @@ struct ShredderAnimationView: View {
     let session: ShredderAnimationSession
     let palette: NeoShredderPalette
 
-    @State private var bladesRotated = false
-
     private let stripCount = 20
 
     var body: some View {
@@ -84,14 +82,6 @@ struct ShredderAnimationView: View {
         }
         .shadow(color: palette.shadow, radius: 18, y: 10)
         .shadow(color: stageTint.opacity(session.phase.isWorking ? 0.24 : 0.12), radius: 22)
-        .task(id: session.phase) {
-            bladesRotated = false
-            guard session.phase.isWorking, !reduceMotion else { return }
-            await Task.yield()
-            withAnimation(.linear(duration: 0.72).repeatForever(autoreverses: false)) {
-                bladesRotated = true
-            }
-        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(L.f(
             "shredder.animation.accessibility",
@@ -204,9 +194,18 @@ struct ShredderAnimationView: View {
 
             VStack(spacing: 9) {
                 HStack(spacing: 9) {
-                    Image(systemName: "gearshape.2.fill")
-                        .foregroundStyle(stageTint)
-                        .rotationEffect(.degrees(bladesRotated ? 360 : 0))
+                    CleanMacContinuousMotion { motion in
+                        Image(systemName: "gearshape.2.fill")
+                            .foregroundStyle(stageTint)
+                            .rotationEffect(.degrees(session.phase.isWorking && motion.isAnimating ? 360 : 0))
+                            .animation(
+                                motion.isEnabled && session.phase.isWorking
+                                    ? .linear(duration: 0.72).repeatForever(autoreverses: false)
+                                    : nil,
+                                value: motion.isAnimating
+                            )
+                    }
+                    .id(session.phase.isWorking)
 
                     Text(L.t("shredder.animation.machine"))
                         .font(.system(size: 10, weight: .bold, design: .monospaced))

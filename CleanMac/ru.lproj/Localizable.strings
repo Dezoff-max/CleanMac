@@ -677,3 +677,35 @@
 "onboarding.ready.title" = "Всё готово!";
 "onboarding.ready.subtitle" = "Запустите безопасное сканирование или откройте отдельный инструмент в боковом меню.";
 "onboarding.ready.badge" = "Ничего не удаляется без подтверждения";
+
+"results.empty.scanned.title" = "Нет кандидатов для очистки";
+"results.empty.scanned.description" = "В проверенных областях не осталось кандидатов. Запусти новый скан, чтобы обновить результаты.";
+
+/* Dashboard overview and live storage */
+"dashboard.overview.subtitle" = "Место на диске и полезные инструменты";
+"dashboard.overview.scanBadge" = "УМНАЯ ОЧИСТКА";
+"dashboard.overview.hero" = "Больше места для важного.";
+"dashboard.overview.description" = "Найди кэши и старые файлы, затем выбери, что убрать.";
+"dashboard.overview.found" = "Потенциально можно освободить: найдено %d элементов. Проверь их перед очисткой.";
+"dashboard.overview.safety" = "Сканирование только читает файлы. Очистку подтверждаешь ты.";
+"dashboard.overview.scannedAt" = "Последний скан: %@";
+"dashboard.overview.review" = "К результатам";
+"dashboard.overview.noAreas" = "Выбери области, чтобы начать сканирование.";
+"dashboard.tools.title" = "Инструменты для твоего Mac";
+"dashboard.tools.disk" = "Узнай, что занимает место, и найди большие файлы.";
+"dashboard.tools.duplicates" = "Найди одинаковые копии и сохрани оригинал.";
+"dashboard.tools.applications" = "Проверь приложения и связанные с ними файлы.";
+"dashboard.tools.system" = "Проверь память и запусти обслуживание вручную.";
+"dashboard.tools.scan" = "Выбери папки и кэши для проверки.";
+"dashboard.tools.settings" = "Настрой доступы, автосканирование и запуск.";
+"dashboard.storage.title" = "Хранилище";
+"dashboard.storage.refresh" = "Обновить сведения о диске";
+"dashboard.storage.used" = "Занято";
+"dashboard.storage.reclaimable" = "Очищаемое macOS";
+"dashboard.storage.free" = "Свободно сейчас";
+"dashboard.storage.available" = "Доступно";
+"dashboard.storage.total" = "Всего %@";
+"dashboard.storage.analyze" = "Анализ";
+"dashboard.storage.unavailable" = "Сведения о ёмкости диска недоступны.";
+"dashboard.storage.explanation" = "Доступное место включает очищаемый резерв macOS. Это не объём очистки по скану CleanMac.";
+"dashboard.storage.accessibility" = "Доступно %@ из %@";

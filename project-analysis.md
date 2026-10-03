@@ -33,6 +33,10 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 
 ## Completed Parts
 
+- The v0.5.0 overview adds a live capacity breakdown and six quick tool routes. Available capacity includes the macOS-reclaimable estimate exactly once; unknown values are explicit, and 11 Core tests cover capacity edge cases.
+- Decorative scan/Shredder loops now stop when the scene is inactive or Reduce Motion is enabled. Sidebar/card hit targets remain stable, scan chips adapt to width, and volume/date/time formatting follows the in-app RU/EN choice.
+- Shared mutation coordination prevents conflicting scans and removals; navigation is held during file mutations and a close hides the busy window without losing its progress. Scan completion respects the current section, remaining results recalculate after cleanup, and an empty scan no longer implies successful cleanup.
+
 - First launch now opens a localized four-step system-adaptive onboarding inside the primary window. It introduces only shipped CleanMac capabilities, checks Full Disk Access without prompting, opens privacy settings only from an explicit button, and persists completion or skip so later launches open the main UI directly.
 - Repository was cleaned and renamed to CleanMac.
 - App icon, menu bar icon, Dashboard brand icon, status menu brand icon, design assets, and docs icon use the supplied detailed broom artwork from `Design/source-icon.png`.

@@ -10,6 +10,7 @@ struct ResultsView: View {
     @Binding var selectedResultIDs: Set<String>
     let isCleaning: Bool
     let isRestoring: Bool
+    let isOperationBusy: Bool
     let cleanupStatusMessage: String?
     let cleanupProblemMessage: String?
     let restoreStatusMessage: String?
@@ -129,7 +130,7 @@ struct ResultsView: View {
                         selectedCount: selectedResults.count,
                         selectedSizeBytes: selectedSizeBytes
                     )
-                } else if report != nil {
+                } else if report != nil, cleanupStatusMessage != nil {
                     StatusBanner(
                         title: L.t("cleanup.complete.title"),
                         message: L.t("cleanup.complete.message"),
@@ -164,6 +165,7 @@ struct ResultsView: View {
                 } else {
                     selectionToolbar
                     reviewWorkspace
+                        .disabled(isOperationBusy)
                     cleanupHistoryPanel
                 }
             }
@@ -234,9 +236,9 @@ struct ResultsView: View {
     private var emptyResultsPanel: some View {
         InfoPanel {
             ContentUnavailableView(
-                L.t("results.empty.title"),
+                L.t(report == nil ? "results.empty.title" : "results.empty.scanned.title"),
                 systemImage: "doc.text.magnifyingglass",
-                description: Text(L.t("results.empty.description"))
+                description: Text(L.t(report == nil ? "results.empty.description" : "results.empty.scanned.description"))
             )
             .frame(maxWidth: .infinity, minHeight: 220)
         }
@@ -296,6 +298,7 @@ struct ResultsView: View {
                 Label(L.t("button.clearVisible"), systemImage: "xmark.circle")
             }
         }
+        .disabled(isOperationBusy)
     }
 
     private var cleanupButton: some View {
@@ -305,7 +308,7 @@ struct ResultsView: View {
             Label(isCleaning ? L.t("button.cleaning") : L.t("button.moveToTrash"), systemImage: "trash")
         }
         .buttonStyle(.borderedProminent)
-        .disabled(isCleaning || selectedResults.isEmpty)
+        .disabled(isOperationBusy || selectedResults.isEmpty)
     }
 
     private var reviewWorkspace: some View {
@@ -460,6 +463,7 @@ struct ResultsView: View {
                                     reveal(item.status == .restored ? item.originalPath : item.displayTrashedPath)
                                 }
                             )
+                            .disabled(isOperationBusy)
                         }
                     }
                 }

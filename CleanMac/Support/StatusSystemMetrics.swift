@@ -86,26 +86,32 @@ struct StatusMemorySnapshot: Equatable, Sendable {
 
 struct StatusDiskSnapshot: Equatable {
     let volumeName: String?
-    let totalBytes: Int64
-    let freeBytes: Int64
+    let capacity: DiskSpaceBreakdown
+
+    var totalBytes: Int64 {
+        capacity.totalBytes
+    }
+
+    var freeBytes: Int64 {
+        capacity.availableBytes
+    }
 
     var usedBytes: Int64 {
-        max(totalBytes - freeBytes, 0)
+        capacity.usedBytes
     }
 
     var usedFraction: Double {
-        guard totalBytes > 0 else {
-            return 0
-        }
-        return min(max(Double(usedBytes) / Double(totalBytes), 0), 1)
+        capacity.usedFraction
     }
 
     var freeFraction: Double? {
-        LowDiskSpaceWarningPolicy.freeFraction(totalBytes: totalBytes, freeBytes: freeBytes)
+        guard capacity.isAvailable else { return nil }
+        return LowDiskSpaceWarningPolicy.freeFraction(totalBytes: totalBytes, freeBytes: freeBytes)
     }
 
     var isLowSpace: Bool {
-        LowDiskSpaceWarningPolicy.isLowSpace(totalBytes: totalBytes, freeBytes: freeBytes)
+        guard capacity.isAvailable else { return false }
+        return LowDiskSpaceWarningPolicy.isLowSpace(totalBytes: totalBytes, freeBytes: freeBytes)
     }
 
     static func current() -> StatusDiskSnapshot {
@@ -119,38 +125,31 @@ struct StatusDiskSnapshot: Equatable {
         ])
 
         let resourceTotalBytes = Int64(resourceValues?.volumeTotalCapacity ?? 0)
-        let systemTotalBytes = numberValue(attributes[.systemSize])
+        let systemTotalBytes = numberValue(attributes[.systemSize]) ?? 0
         let totalBytes = resourceTotalBytes > 0 ? resourceTotalBytes : systemTotalBytes
-
-        let importantUsageBytes = resourceValues?.volumeAvailableCapacityForImportantUsage ?? 0
-        let availableBytes = Int64(resourceValues?.volumeAvailableCapacity ?? 0)
-        let systemFreeBytes = numberValue(attributes[.systemFreeSize])
-        let freeBytes = if importantUsageBytes > 0 {
-            importantUsageBytes
-        } else if availableBytes > 0 {
-            availableBytes
-        } else {
-            systemFreeBytes
-        }
 
         return StatusDiskSnapshot(
             volumeName: resourceValues?.volumeLocalizedName,
-            totalBytes: totalBytes,
-            freeBytes: min(max(freeBytes, 0), totalBytes)
+            capacity: DiskSpaceBreakdown(
+                totalBytes: totalBytes,
+                importantUsageAvailableBytes: resourceValues?.volumeAvailableCapacityForImportantUsage,
+                immediatelyAvailableBytes: resourceValues?.volumeAvailableCapacity.map { Int64($0) },
+                systemFreeBytes: numberValue(attributes[.systemFreeSize])
+            )
         )
     }
 
-    private static func numberValue(_ value: Any?) -> Int64 {
+    private static func numberValue(_ value: Any?) -> Int64? {
         if let number = value as? NSNumber {
-            return max(number.int64Value, 0)
+            return number.int64Value
         }
         if let intValue = value as? Int {
-            return max(Int64(intValue), 0)
+            return Int64(intValue)
         }
         if let int64Value = value as? Int64 {
-            return max(int64Value, 0)
+            return int64Value
         }
-        return 0
+        return nil
     }
 }
 

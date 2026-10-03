@@ -69,8 +69,6 @@ private struct SidebarSectionButton: View {
             .background(rowBackground)
             .overlay(rowBorder)
             .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .offset(x: rowOffset)
-            .scaleEffect(rowScale, anchor: .leading)
             .shadow(color: shadowColor, radius: shadowRadius, y: 2)
         }
         .buttonStyle(SidebarPressButtonStyle())
@@ -79,9 +77,7 @@ private struct SidebarSectionButton: View {
         .help(section.title)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .onHover { hovering in
-            withAnimation(rowAnimation) {
-                isHovered = hovering
-            }
+            isHovered = hovering
         }
         .animation(rowAnimation, value: isSelected)
         .animation(rowAnimation, value: isHovered)
@@ -167,14 +163,6 @@ private struct SidebarSectionButton: View {
         isSelected ? .white : .primary
     }
 
-    private var rowOffset: CGFloat {
-        isHovered && !isSelected && !reduceMotion ? 3 : 0
-    }
-
-    private var rowScale: CGFloat {
-        isHovered && !isSelected && !reduceMotion ? 1.015 : 1
-    }
-
     private var iconScale: CGFloat {
         (isHovered || isKeyboardFocused) && !reduceMotion ? 1.08 : 1
     }
@@ -196,7 +184,7 @@ private struct SidebarSectionButton: View {
     }
 
     private var rowAnimation: Animation? {
-        reduceMotion ? nil : .easeOut(duration: 0.16)
+        CleanMacMotion.feedback(reduceMotion: reduceMotion)
     }
 }
 
@@ -228,10 +216,9 @@ private struct SidebarPressButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.972 : 1)
-            .brightness(configuration.isPressed && !reduceMotion ? -0.025 : 0)
+            .brightness(configuration.isPressed ? -0.045 : 0)
             .animation(
-                reduceMotion ? nil : .spring(response: 0.22, dampingFraction: 0.72),
+                CleanMacMotion.feedback(reduceMotion: reduceMotion),
                 value: configuration.isPressed
             )
     }

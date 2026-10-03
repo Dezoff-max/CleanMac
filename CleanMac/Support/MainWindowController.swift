@@ -1,4 +1,5 @@
 import AppKit
+import ObjectiveC
 import SwiftUI
 
 enum MainWindowController {
@@ -7,6 +8,7 @@ enum MainWindowController {
     private static let minimumSize = NSSize(width: 900, height: 680)
     private static var fittedWindowIDs = Set<ObjectIdentifier>()
     private static var suppressInitialPresentation = false
+    @MainActor private static var closeDelegateAssociation: UInt8 = 0
 
     @MainActor
     static func prepareForInitialPresentation(isBackgroundLaunch: Bool) {
@@ -31,6 +33,7 @@ enum MainWindowController {
         window.identifier = identifier
         window.tabbingMode = .disallowed
         window.minSize = adjustedMinimumSize(for: window)
+        preserveWindowDuringFileOperations(window)
 
         let windowID = ObjectIdentifier(window)
         guard !fittedWindowIDs.contains(windowID) else {
@@ -46,6 +49,14 @@ enum MainWindowController {
                 finishInitialPresentation(of: window)
             }
         }
+    }
+
+    @MainActor
+    private static func preserveWindowDuringFileOperations(_ window: NSWindow) {
+        guard !(window.delegate is MainWindowCloseDelegate) else { return }
+        let delegate = MainWindowCloseDelegate(forwardingTo: window.delegate)
+        objc_setAssociatedObject(window, &closeDelegateAssociation, delegate, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        window.delegate = delegate
     }
 
     @MainActor
@@ -109,6 +120,37 @@ enum MainWindowController {
         }
 
         window.setFrame(frame, display: true)
+    }
+}
+
+/// Keeps the SwiftUI window and its operation state alive when the user closes
+/// it during a file mutation. All other delegate behavior stays with SwiftUI.
+@MainActor
+private final class MainWindowCloseDelegate: NSObject, NSWindowDelegate {
+    private weak var forwardedDelegate: (any NSWindowDelegate)?
+
+    init(forwardingTo delegate: (any NSWindowDelegate)?) {
+        forwardedDelegate = delegate
+        super.init()
+    }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if UserDefaults.standard.bool(forKey: CleanMacPreferenceKeys.fileOperationInProgress) {
+            sender.orderOut(nil)
+            return false
+        }
+        return forwardedDelegate?.windowShouldClose?(sender) ?? true
+    }
+
+    override func responds(to selector: Selector!) -> Bool {
+        super.responds(to: selector) || forwardedDelegate?.responds(to: selector) == true
+    }
+
+    override func forwardingTarget(for selector: Selector!) -> Any? {
+        if let forwardedDelegate, forwardedDelegate.responds(to: selector) {
+            return forwardedDelegate
+        }
+        return super.forwardingTarget(for: selector)
     }
 }
 

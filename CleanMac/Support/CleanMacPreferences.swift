@@ -18,6 +18,7 @@ enum CleanMacPreferenceKeys {
     static let lowDiskSpaceLastNotificationTimestamp = "CleanMac.lowDiskSpaceLastNotificationTimestamp"
     static let requestedSection = "CleanMac.requestedSection"
     static let scanInProgress = "CleanMac.scanInProgress"
+    static let fileOperationInProgress = "CleanMac.fileOperationInProgress"
 }
 
 enum CleanMacScanSource: String {

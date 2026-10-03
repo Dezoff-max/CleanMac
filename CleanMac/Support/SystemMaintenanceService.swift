@@ -103,7 +103,7 @@ struct SystemMaintenanceService: Sendable {
                 Command(
                     displayCommandLine: "/usr/bin/dscacheutil -flushcache\n/usr/bin/killall -HUP mDNSResponder",
                     administratorScript: """
-                    /usr/bin/dscacheutil -flushcache
+                    /usr/bin/dscacheutil -flushcache &&
                     /usr/bin/killall -HUP mDNSResponder
                     """,
                     requiredExecutablePaths: ["/usr/bin/dscacheutil", "/usr/bin/killall"]

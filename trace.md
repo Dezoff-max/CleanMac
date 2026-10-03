@@ -204,3 +204,11 @@ Append-only trace of failures, restarts, and judgment divergences.
 - Cause: the normal workspace panels remained mounted while an irreversible operation was running, leaving too little vertical space for the complete focused animation scene.
 - Fix: while an animation session exists, replace the normal Shredder content with one stable focused operation view that contains the Quick Look preview, mechanism, falling strips, real progress, and final state.
 - Status: resolved; disposable-file screenshots show the complete scene at the 98% finalizing state and at the 100% post-unlink success state without clipping.
+
+
+## 2026-10-03 - TASK-057 - Local build environment
+
+- Symptom: sandboxed Swift/Xcode validation could not write toolchain caches; the first unsandboxed Swift 6.4 test build then rejected Finder metadata on the Documents-backed test bundle.
+- Cause: toolchain caches live outside the workspace and File Provider attaches extended attributes to generated bundles in Documents.
+- Fix: authorized the build tools to use their existing caches and placed SwiftPM scratch output under `/private/tmp/cleanmac-core-validation`.
+- Result: the baseline 51-test suite passed. Subsequent integration validation uses the same temporary scratch location.

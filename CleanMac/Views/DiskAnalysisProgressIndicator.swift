@@ -8,9 +8,6 @@ struct ModernScanProgressIndicator: View {
     let progress: Double?
     let size: CGFloat
 
-    @State private var isRotating = false
-    @State private var isPulsing = false
-
     init(
         systemImage: String,
         accessibilityLabel: String,
@@ -32,6 +29,15 @@ struct ModernScanProgressIndicator: View {
     }
 
     var body: some View {
+        CleanMacContinuousMotion { phase in
+            indicator(phase: phase)
+        }
+        .frame(width: size, height: size)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private func indicator(phase: CleanMacMotionPhase) -> some View {
         ZStack {
             Circle()
                 .fill(
@@ -46,12 +52,10 @@ struct ModernScanProgressIndicator: View {
                         endRadius: size * 0.52
                     )
                 )
-                .scaleEffect(isPulsing ? 1.04 : 0.94)
+                .scaleEffect(phase.isAnimating ? 1.04 : 1)
                 .animation(
-                    reduceMotion
-                        ? nil
-                        : .easeInOut(duration: 1.3).repeatForever(autoreverses: true),
-                    value: isPulsing
+                    .easeInOut(duration: 1.3).repeatForever(autoreverses: true),
+                    value: phase.isAnimating
                 )
 
             Circle()
@@ -71,7 +75,7 @@ struct ModernScanProgressIndicator: View {
                     )
                     .padding(size * 0.10)
                     .rotationEffect(.degrees(-90))
-                    .animation(.easeOut(duration: 0.24), value: clampedProgress)
+                    .animation(CleanMacMotion.progress(reduceMotion: reduceMotion), value: clampedProgress)
             }
 
             Circle()
@@ -84,13 +88,11 @@ struct ModernScanProgressIndicator: View {
                     style: StrokeStyle(lineWidth: max(2.5, size * 0.052), lineCap: .round)
                 )
                 .padding(size * 0.19)
-                .rotationEffect(.degrees(isRotating ? 360 : 0))
+                .rotationEffect(.degrees(phase.isAnimating ? 360 : 0))
                 .shadow(color: Color.cyan.opacity(0.28), radius: size * 0.08)
                 .animation(
-                    reduceMotion
-                        ? nil
-                        : .linear(duration: 2.2).repeatForever(autoreverses: false),
-                    value: isRotating
+                    .linear(duration: 2.2).repeatForever(autoreverses: false),
+                    value: phase.isAnimating
                 )
 
             Circle()
@@ -100,39 +102,21 @@ struct ModernScanProgressIndicator: View {
                     style: StrokeStyle(lineWidth: max(1.5, size * 0.028), lineCap: .round)
                 )
                 .padding(size * 0.27)
-                .rotationEffect(.degrees(isRotating ? -360 : 0))
+                .rotationEffect(.degrees(phase.isAnimating ? -360 : 0))
                 .animation(
-                    reduceMotion
-                        ? nil
-                        : .linear(duration: 1.65).repeatForever(autoreverses: false),
-                    value: isRotating
+                    .linear(duration: 1.65).repeatForever(autoreverses: false),
+                    value: phase.isAnimating
                 )
 
             Image(systemName: systemImage)
                 .font(.system(size: size * 0.27, weight: .semibold))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.tint)
-                .scaleEffect(isPulsing ? 1.04 : 0.96)
+                .scaleEffect(phase.isAnimating ? 1.04 : 1)
                 .animation(
-                    reduceMotion
-                        ? nil
-                        : .easeInOut(duration: 1.3).repeatForever(autoreverses: true),
-                    value: isPulsing
+                    .easeInOut(duration: 1.3).repeatForever(autoreverses: true),
+                    value: phase.isAnimating
                 )
         }
-        .frame(width: size, height: size)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityLabel)
-        .onAppear {
-            updateAnimationState()
-        }
-        .onChange(of: reduceMotion) { _, _ in
-            updateAnimationState()
-        }
-    }
-
-    private func updateAnimationState() {
-        isRotating = !reduceMotion
-        isPulsing = !reduceMotion
     }
 }

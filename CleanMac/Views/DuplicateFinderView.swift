@@ -2,6 +2,9 @@ import CleanMacCore
 import SwiftUI
 
 struct DuplicateFinderView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(CleanMacPreferenceKeys.fileOperationInProgress) private var fileOperationInProgress = false
+    @AppStorage(CleanMacPreferenceKeys.scanInProgress) private var cleanupScanInProgress = false
     @State private var source: DuplicateSearchSource = .downloads
     @State private var customFolderURL: URL?
     @State private var includeLargeFiles = false
@@ -202,7 +205,7 @@ struct DuplicateFinderView: View {
                     Label(L.t("duplicates.scan.button"), systemImage: "play.fill")
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(sourceURL == nil || isCleaning || isChoosingCustomFolder)
+                .disabled(sourceURL == nil || isCleaning || isChoosingCustomFolder || fileOperationInProgress)
             }
         }
     }
@@ -308,6 +311,7 @@ struct DuplicateFinderView: View {
                         Button(L.t("duplicates.deferred.enable")) {
                             includeLargeFiles = true
                         }
+                        .disabled(isCleaning)
                     }
 
                     ForEach(Array(report.deferredLargeCandidates.prefix(5))) { file in
@@ -397,7 +401,7 @@ struct DuplicateFinderView: View {
                 )
             }
             .buttonStyle(.borderedProminent)
-            .disabled(selectedCopyIDs.isEmpty || isCleaning || isScanning)
+            .disabled(selectedCopyIDs.isEmpty || isCleaning || isScanning || fileOperationInProgress || cleanupScanInProgress)
         }
     }
 
@@ -412,6 +416,7 @@ struct DuplicateFinderView: View {
                 )
             }
         }
+        .disabled(isCleaning)
     }
 
     private var initialState: some View {
@@ -470,7 +475,8 @@ struct DuplicateFinderView: View {
     }
 
     private func startScan() {
-        guard let rootURL = sourceURL, !isScanning, !isCleaning else {
+        guard let rootURL = sourceURL, !isScanning, !isCleaning, !fileOperationInProgress,
+              !UserDefaults.standard.bool(forKey: CleanMacPreferenceKeys.fileOperationInProgress) else {
             return
         }
 
@@ -584,7 +590,7 @@ struct DuplicateFinderView: View {
     }
 
     private func toggleExpanded(_ groupID: String) {
-        withAnimation(.easeInOut(duration: 0.16)) {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.16)) {
             if expandedGroupIDs.contains(groupID) {
                 expandedGroupIDs.remove(groupID)
             } else {
@@ -594,16 +600,21 @@ struct DuplicateFinderView: View {
     }
 
     private func cleanSelectedCopies() {
-        guard let rootURL = sourceURL, !selectedCopyIDs.isEmpty, !isCleaning else {
+        guard let rootURL = sourceURL, !selectedCopyIDs.isEmpty, !isCleaning, !isScanning,
+              !fileOperationInProgress, !cleanupScanInProgress,
+              !UserDefaults.standard.bool(forKey: CleanMacPreferenceKeys.fileOperationInProgress),
+              !UserDefaults.standard.bool(forKey: CleanMacPreferenceKeys.scanInProgress) else {
             return
         }
         isCleaning = true
+        fileOperationInProgress = true
         statusMessage = nil
         problemMessage = nil
         let groupSnapshot = groups
         let selectionSnapshot = selectedCopyIDs
 
         Task {
+            defer { fileOperationInProgress = false }
             let cleanupReport = await Task.detached(priority: .userInitiated) {
                 let plan = DuplicateCleanupPlanner(root: rootURL).plan(
                     groups: groupSnapshot,

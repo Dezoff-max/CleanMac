@@ -677,3 +677,35 @@
 "onboarding.ready.title" = "You're All Set!";
 "onboarding.ready.subtitle" = "Start a safe scan or open an individual tool from the sidebar.";
 "onboarding.ready.badge" = "Nothing is removed without confirmation";
+
+"results.empty.scanned.title" = "No cleanup candidates";
+"results.empty.scanned.description" = "No candidates remain in the checked areas. Run a new scan to refresh the results.";
+
+/* Dashboard overview and live storage */
+"dashboard.overview.subtitle" = "Your storage, at a glance";
+"dashboard.overview.scanBadge" = "SMART CLEANUP";
+"dashboard.overview.hero" = "Make room for what matters.";
+"dashboard.overview.description" = "Find caches and old files, then choose what to remove.";
+"dashboard.overview.found" = "Potential space in %d items. Review the scan before cleaning.";
+"dashboard.overview.safety" = "Scanning only reads files. You approve cleanup.";
+"dashboard.overview.scannedAt" = "Last scan: %@";
+"dashboard.overview.review" = "Review Results";
+"dashboard.overview.noAreas" = "Choose scan areas to get started.";
+"dashboard.tools.title" = "Tools for your Mac";
+"dashboard.tools.disk" = "See what takes up space and find large files.";
+"dashboard.tools.duplicates" = "Find identical copies and keep an original.";
+"dashboard.tools.applications" = "Review apps and their related files.";
+"dashboard.tools.system" = "Check memory usage and run manual maintenance.";
+"dashboard.tools.scan" = "Choose the folders and caches to scan.";
+"dashboard.tools.settings" = "Manage access, auto scans and startup.";
+"dashboard.storage.title" = "Storage";
+"dashboard.storage.refresh" = "Refresh storage capacity";
+"dashboard.storage.used" = "Used";
+"dashboard.storage.reclaimable" = "Reclaimable by macOS";
+"dashboard.storage.free" = "Free now";
+"dashboard.storage.available" = "Available";
+"dashboard.storage.total" = "%@ capacity";
+"dashboard.storage.analyze" = "Analyze";
+"dashboard.storage.unavailable" = "Storage capacity is unavailable.";
+"dashboard.storage.explanation" = "Available includes space macOS can reclaim. It is separate from CleanMac’s scan estimate.";
+"dashboard.storage.accessibility" = "%@ available out of %@";

@@ -64,3 +64,12 @@
 | Release package | `./script/package_release.sh` | Packaging, release, or CI artifact changes | `dist/CleanMac.app`, `dist/CleanMac.dmg`, fallback ZIP, and both `.sha256` files are created; a read-only mounted DMG contains the app plus `Applications -> /Applications`; mounted app signature and checksums pass | Inspect `build/XcodeData/Build/Products/Release`, then mount the DMG under `/private/tmp` and validate its contents |
 | Privacy usage and entitlements | Extract `dist/*.zip` to a temporary directory; inspect its `Info.plist` and run `codesign -d --entitlements :-` on the extracted app | Permission, hardened runtime, or Apple Events changes | Usage description is present, required entitlement values are `true`, and strict signature verification passes | Inspect `dist/CleanMac.app` immediately after clearing FinderInfo added by File Provider |
 | CI | GitHub Actions run | After pushed app/build changes | Test, Debug build, and release artifact jobs are green | Inspect failing job logs and reproduce locally |
+
+
+## TASK-057 release verification
+
+- Core suite: 62 tests pass, including 11 storage-capacity cases (double counting, full disk, unavailable/negative/inconsistent samples and overflow limits). On this Mac use `swift test --package-path CleanMacCore --scratch-path /private/tmp/cleanmac-core-validation` to avoid File Provider metadata on XCTest bundles.
+- Both localization plists parse; RU/EN key sets match (686 keys).
+- Debug build, strict ad-hoc signature and launch pass. Live UI confirms quick-tool navigation, selected-language storage labels, read-only analysis cancellation and no forced navigation after a scan completed while Settings was open.
+- No cleanup, application removal, Shredder operation, RAM purge or DNS flush was executed against user data.
+- Release packaging, publication and Applications installation are recorded in the final TASK-057 progress entry.

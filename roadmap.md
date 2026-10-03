@@ -1,5 +1,16 @@
 # Roadmap
 
+- [ ] ID: TASK-057
+  Title: Useful storage dashboard, motion and workflow polish; v0.5.0
+  Goal: Bring the reviewed PR #17 features into a release with a clear storage overview and reliable interactions.
+  What to do: Add truthful disk segments and quick tool navigation, lifecycle-managed animation, stable hover targets, mutation coordination, navigation/close protection, accurate remaining scan totals, and selected-language formatters.
+  Files: Dashboard and shared UI, operation views/support, DiskSpaceBreakdown model/tests, localization, release workflow and notes, Xcode version, Loop docs
+  Definition of done: 62 core tests and Debug verification pass; checked DMG/ZIP are published as v0.5.0; the verified app is installed and launched from /Applications.
+  Verification: full core tests; RU/EN key parity; Debug/UI review; release package/signature/checksum; green CI; downloaded assets; installed executable path
+  Priority: high
+  Risk: medium
+
+
 - [x] ID: TASK-056
   Title: Real Smart Shredder destruction animation
   Goal: Make irreversible deletion visibly follow the real overwrite and unlink operation instead of a decorative timer.

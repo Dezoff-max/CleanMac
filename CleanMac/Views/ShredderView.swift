@@ -9,6 +9,8 @@ private enum ShredderExecutionResult: Sendable {
 struct ShredderView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(CleanMacPreferenceKeys.fileOperationInProgress) private var fileOperationInProgress = false
+    @AppStorage(CleanMacPreferenceKeys.scanInProgress) private var scanInProgress = false
 
     @State private var candidates: [SecureDeletionCandidate] = []
     @State private var isChoosingFiles = false
@@ -35,6 +37,10 @@ struct ShredderView: View {
 
     private var isConfirmationValid: Bool {
         acknowledgedLimitations && confirmationText == confirmationPhrase
+    }
+
+    private var isOperationBusy: Bool {
+        isShredding || fileOperationInProgress || scanInProgress
     }
 
     var body: some View {
@@ -216,7 +222,7 @@ struct ShredderView: View {
                 Label(L.t("shredder.add"), systemImage: "plus.rectangle.on.folder")
             }
             .buttonStyle(NeoShredderButtonStyle(palette: palette))
-            .disabled(isChoosingFiles || isShredding)
+            .disabled(isChoosingFiles || isOperationBusy)
 
             Button {
                 showingConfirmation = true
@@ -231,7 +237,7 @@ struct ShredderView: View {
                 }
             }
             .buttonStyle(NeoShredderButtonStyle(palette: palette, isDanger: true))
-            .disabled(candidates.isEmpty || isShredding || isChoosingFiles)
+            .disabled(candidates.isEmpty || isOperationBusy || isChoosingFiles)
         }
     }
 
@@ -375,7 +381,7 @@ struct ShredderView: View {
                     showingConfirmation = false
                     executeShredder()
                 }
-                .disabled(!isConfirmationValid)
+                .disabled(!isConfirmationValid || isOperationBusy)
             }
         }
         .padding(24)
@@ -383,7 +389,7 @@ struct ShredderView: View {
     }
 
     private func chooseFiles() {
-        guard !isChoosingFiles, !isShredding else { return }
+        guard !isChoosingFiles, !isOperationBusy else { return }
         isChoosingFiles = true
         statusMessage = nil
         problemMessage = nil
@@ -422,15 +428,23 @@ struct ShredderView: View {
         }
     }
 
+    @MainActor
     private func executeShredder() {
-        guard !candidates.isEmpty, !isShredding else { return }
+        guard !candidates.isEmpty, !isOperationBusy, isConfirmationValid,
+              !UserDefaults.standard.bool(forKey: CleanMacPreferenceKeys.fileOperationInProgress),
+              !UserDefaults.standard.bool(forKey: CleanMacPreferenceKeys.scanInProgress) else { return }
         let reviewedCandidates = candidates
         isShredding = true
+        fileOperationInProgress = true
         completedCount = 0
         statusMessage = nil
         problemMessage = nil
 
         Task { @MainActor in
+            defer {
+                isShredding = false
+                fileOperationInProgress = false
+            }
             var removedBytes: Int64 = 0
             var removedIDs = Set<String>()
             var failures: [String] = []
@@ -479,7 +493,6 @@ struct ShredderView: View {
 
             animationSession = nil
             candidates.removeAll { removedIDs.contains($0.id) }
-            isShredding = false
             statusMessage = L.f(
                 "shredder.status.complete",
                 removedIDs.count,

@@ -3,6 +3,9 @@ import CleanMacCore
 import SwiftUI
 
 struct ApplicationsView: View {
+    @AppStorage(CleanMacPreferenceKeys.fileOperationInProgress) private var fileOperationInProgress = false
+    @AppStorage(CleanMacPreferenceKeys.scanInProgress) private var scanInProgress = false
+
     @State private var applications: [InstalledApplication] = []
     @State private var selectedApplicationID: String?
     @State private var selectedApplicationIDs = Set<String>()
@@ -18,6 +21,10 @@ struct ApplicationsView: View {
 
     private var selectedApplication: InstalledApplication? {
         applications.first { $0.id == selectedApplicationID }
+    }
+
+    private var isOperationBusy: Bool {
+        isScanning || isRemoving || fileOperationInProgress || scanInProgress
     }
 
     private var filteredApplications: [InstalledApplication] {
@@ -126,6 +133,7 @@ struct ApplicationsView: View {
             Button(removalButtonTitle, role: .destructive) {
                 removeSelectedApplications()
             }
+            .disabled(isOperationBusy)
         } message: {
             Text(L.f(
                 confirmationMessageKey,
@@ -157,7 +165,7 @@ struct ApplicationsView: View {
                     }
                     .buttonStyle(.borderless)
                     .help(L.t("applications.refresh"))
-                    .disabled(isScanning || isRemoving)
+                    .disabled(isOperationBusy)
                 }
 
                 HStack(spacing: 8) {
@@ -428,7 +436,7 @@ struct ApplicationsView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.red)
-                        .disabled(isRemoving || isScanning || selectedApplications.isEmpty)
+                        .disabled(isOperationBusy || selectedApplications.isEmpty)
                     }
                 }
             }
@@ -495,7 +503,7 @@ struct ApplicationsView: View {
 
     @MainActor
     private func refreshApplications() async {
-        guard !isScanning, !isRemoving else {
+        guard !isOperationBusy else {
             return
         }
         isScanning = true
@@ -530,12 +538,17 @@ struct ApplicationsView: View {
         isScanning = false
     }
 
+    @MainActor
     private func removeSelectedApplications() {
         let removalApplications = selectedApplications
-        guard !isRemoving, !removalApplications.isEmpty else {
+        guard !isOperationBusy,
+              !UserDefaults.standard.bool(forKey: CleanMacPreferenceKeys.fileOperationInProgress),
+              !UserDefaults.standard.bool(forKey: CleanMacPreferenceKeys.scanInProgress),
+              !removalApplications.isEmpty else {
             return
         }
         isRemoving = true
+        fileOperationInProgress = true
         statusMessage = nil
         problemMessage = nil
 
@@ -548,7 +561,11 @@ struct ApplicationsView: View {
         let excludedBundleIdentifiers = Set([Bundle.main.bundleIdentifier].compactMap { $0 })
         let excludedApplicationPaths = Set([Bundle.main.bundleURL.path])
 
-        Task {
+        Task { @MainActor in
+            defer {
+                isRemoving = false
+                fileOperationInProgress = false
+            }
             let reports = await Task.detached(priority: .userInitiated) {
                 removalApplications.map { application in
                     let plan = ApplicationRemovalPlanner(
@@ -562,7 +579,6 @@ struct ApplicationsView: View {
                 }
             }.value
 
-            isRemoving = false
             let movedApplicationIDs = Set(reports.compactMap { applicationID, report in
                 report.applicationMoved ? applicationID : nil
             })

@@ -1,14 +1,6 @@
 import Foundation
 
 enum CleanMacFormatters {
-    private static let byteFormatter: ByteCountFormatter = {
-        let formatter = ByteCountFormatter()
-        formatter.allowedUnits = [.useKB, .useMB, .useGB, .useTB]
-        formatter.countStyle = .file
-        formatter.includesActualByteCount = false
-        return formatter
-    }()
-
     private static let relativeFormatter: RelativeDateTimeFormatter = {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .short
@@ -26,17 +18,25 @@ enum CleanMacFormatters {
         guard value > 0 else {
             return L.t("size.zero")
         }
-        return byteFormatter.string(fromByteCount: value)
+        return ByteCountFormatStyle(
+            style: .file,
+            allowedUnits: [.kb, .mb, .gb, .tb],
+            spellsOutZero: false,
+            includesActualByteCount: false,
+            locale: CleanMacLanguage.current.locale
+        ).format(value)
     }
 
     static func relativeDate(_ date: Date?) -> String {
         guard let date else {
             return L.t("date.unknown")
         }
+        relativeFormatter.locale = CleanMacLanguage.current.locale
         return relativeFormatter.localizedString(for: date, relativeTo: Date())
     }
 
     static func time(_ date: Date) -> String {
-        timeFormatter.string(from: date)
+        timeFormatter.locale = CleanMacLanguage.current.locale
+        return timeFormatter.string(from: date)
     }
 }
