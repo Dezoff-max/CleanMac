@@ -563,3 +563,14 @@ Append-only history. Do not erase previous entries.
 - Next step: commit, run CI, publish v0.5.1, download and verify its assets, then install and verify the exact published payload.
 - Bottleneck: CI, publication and downloaded-release verification are pending. The local installed build is not yet the downloaded GitHub release.
 - Handoff: do not reset preferences as a workaround. No user files were removed and no memory/DNS action or security-setting change was performed during these checks.
+
+
+## 2026-10-03 - TASK-058 - Published and installed verified hotfix
+
+- What changed: merged PR #18 and published v0.5.1 (7) on commit `d145cfc33c33911ad093c14a732e1d06468f76f3`; installed the exact downloaded GitHub ZIP payload in `/Applications/CleanMac.app`.
+- Files touched: final contract, roadmap, analysis, trace, verification and progress records; no app-source changes after release verification.
+- Checks run: PR CI `37128002272` and Release `37128215263` succeeded; ZIP/DMG SHA-256, strict signatures, bundle ID, arm64, version/build, DMG Applications shortcut and installed executable equality passed. Live installed GitHub build responds to disk refresh, Settings and return to Overview; after 62 seconds idle CPU was 0.0% and RSS 170768 KiB.
+- Result: complete. https://github.com/Dezoff-max/CleanMac/releases/tag/v0.5.1 is public, stable and latest. The reported freeze no longer reproduces with existing settings.
+- Next step: none required for this hotfix.
+- Bottleneck: none. Existing ad-hoc/non-notarized distribution is unchanged and disclosed in release notes.
+- Handoff: user preferences and permissions were preserved; verification did not perform cleanup, uninstall, Shredder, RAM purge or DNS flush. The previous app bundle was retained temporarily during replacement.
