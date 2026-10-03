@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] ID: TASK-057
+- [x] ID: TASK-057
   Title: Useful storage dashboard, motion and workflow polish; v0.5.0
   Goal: Bring the reviewed PR #17 features into a release with a clear storage overview and reliable interactions.
   What to do: Add truthful disk segments and quick tool navigation, lifecycle-managed animation, stable hover targets, mutation coordination, navigation/close protection, accurate remaining scan totals, and selected-language formatters.

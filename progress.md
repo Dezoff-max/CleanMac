@@ -541,3 +541,14 @@ Append-only history. Do not erase previous entries.
 - Handoff: no real user files were removed and no memory/DNS command was executed. The user explicitly requested GitHub release publication and Applications installation.
 
 - Publication adjustment: GitHub OAuth permits repository writes but not workflow edits. The optional new workflow gates were reverted before pushing; the existing release workflow remains unchanged and release checks are performed explicitly. No additional account permissions were requested.
+
+
+## 2026-10-03 - TASK-057 - Published and installed CleanMac 0.5.0
+
+- What changed: Merged PR #17 after successful CI, created v0.5.0 on main commit `40e5ffe5044641fff0cb69f7fac1bc257ea60698`, published the reviewed Russian release notes and four verified assets, and installed the downloaded app into `/Applications/CleanMac.app`.
+- Files touched: final release/Loop verification records.
+- Checks run: PR CI `37126432168`; Release workflow `37126671067`; clean GitHub asset download; SHA-256 of ZIP and DMG; strict codesign verification of extracted ZIP and mounted DMG; Applications shortcut check; version 0.5.0/build 6 and arm64 inspection; installed app strict signature and running executable path.
+- Result: Passed. Release is public, stable and latest at https://github.com/Dezoff-max/CleanMac/releases/tag/v0.5.0. Running process was confirmed as `/Applications/CleanMac.app/Contents/MacOS/CleanMac`.
+- Next step: optional future features; no remaining blocker for this release or installation.
+- Bottleneck: none for this task. Developer ID/notarization remains unavailable; published notes explicitly state ad-hoc signing.
+- Handoff: Installed the exact GitHub ZIP payload. User files, permissions, security settings, RAM and DNS were not changed.

@@ -39,5 +39,8 @@ previously implemented features are preserved and reviewed before release.
 
 ## Result
 
-- Status: implementation verified locally; final publication and installation pending.
+- Status: complete. CI, downloaded release assets and Applications installation verified.
 - Version target: 0.5.0 (6).
+
+- Published release: https://github.com/Dezoff-max/CleanMac/releases/tag/v0.5.0
+- Release commit: `40e5ffe5044641fff0cb69f7fac1bc257ea60698`.
