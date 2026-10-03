@@ -23,6 +23,7 @@ struct MainWindowView: View {
     @AppStorage("CleanMac.confirmBeforeCleanup") private var confirmBeforeCleanup = true
     @AppStorage("CleanMac.showMenuBarStatus") private var showMenuBarStatus = true
     @AppStorage(CleanMacPreferenceKeys.scanInProgress) private var scanInProgress = false
+    @AppStorage(CleanMacPreferenceKeys.fileOperationInProgress) private var fileOperationInProgress = false
     @AppStorage(CleanMacPreferenceKeys.requestedSection) private var requestedSectionID = ""
 
     private let minimumScanAnimationDuration: TimeInterval = 1.15
@@ -34,11 +35,22 @@ struct MainWindowView: View {
 
     private var isAnyScanInProgress: Bool {
         isScanning || scanInProgress
+            || UserDefaults.standard.bool(forKey: CleanMacPreferenceKeys.scanInProgress)
+    }
+
+    private var isOperationBusy: Bool {
+        isAnyScanInProgress || isFileMutationInProgress
+    }
+
+    private var isFileMutationInProgress: Bool {
+        isCleaning || isRestoring || fileOperationInProgress
+            || UserDefaults.standard.bool(forKey: CleanMacPreferenceKeys.fileOperationInProgress)
     }
 
     var body: some View {
         NavigationSplitView {
             SidebarView(selection: $selectedSectionID)
+                .disabled(isFileMutationInProgress)
         } detail: {
             detailView
                 .navigationTitle(selectedSection.title)
@@ -46,6 +58,7 @@ struct MainWindowView: View {
                     ToolbarItemGroup {
                         if selectedSection != .diskAnalysis,
                            selectedSection != .duplicates,
+                           selectedSection != .systemMaintenance,
                            selectedSection != .shredder {
                             Button {
                                 runScan()
@@ -53,15 +66,17 @@ struct MainWindowView: View {
                                 Label(isAnyScanInProgress ? L.t("button.scanning") : L.t("button.scan"), systemImage: "magnifyingglass")
                             }
                             .accessibilityLabel(isAnyScanInProgress ? L.t("button.scanning") : L.t("button.scan"))
-                            .disabled(isAnyScanInProgress || selectedAreaIDs.isEmpty)
+                            .disabled(isOperationBusy || selectedAreaIDs.isEmpty)
                         }
 
                         Button {
+                            guard !isFileMutationInProgress else { return }
                             selectedSectionID = CleanMacSection.settings.rawValue
                         } label: {
                             Label(L.t("section.settings"), systemImage: "gearshape")
                         }
                         .accessibilityLabel(L.t("section.settings"))
+                        .disabled(isFileMutationInProgress)
                     }
                 }
                 .background(WindowAccessor { window in
@@ -85,6 +100,11 @@ struct MainWindowView: View {
             await Task.yield()
             applyRequestedSection(requestedSectionID)
         }
+        .onChange(of: fileOperationInProgress) { _, isBusy in
+            if !isBusy {
+                applyRequestedSection(requestedSectionID)
+            }
+        }
     }
 
     @ViewBuilder
@@ -97,16 +117,23 @@ struct MainWindowView: View {
                 selectedAreaCount: selectedAreaIDs.count,
                 selectedAreas: selectedAreas,
                 isScanning: isAnyScanInProgress,
+                isOperationBusy: isOperationBusy,
                 scanError: scanError,
                 onStartScan: runScan,
                 onChooseAreas: {
+                    guard !isFileMutationInProgress else { return }
                     selectedSectionID = CleanMacSection.scan.rawValue
+                },
+                onOpenSection: { section in
+                    guard !isFileMutationInProgress else { return }
+                    selectedSectionID = section.rawValue
                 }
             )
         case .scan:
             ScanView(
                 selectedAreaIDs: $selectedAreaIDs,
                 isScanning: isAnyScanInProgress,
+                isOperationBusy: isOperationBusy,
                 scanProgress: scanProgress,
                 onStartScan: runScan
             )
@@ -119,6 +146,7 @@ struct MainWindowView: View {
                 selectedResultIDs: $selectedResultIDs,
                 isCleaning: isCleaning,
                 isRestoring: isRestoring,
+                isOperationBusy: isOperationBusy,
                 cleanupStatusMessage: cleanupStatusMessage,
                 cleanupProblemMessage: cleanupProblemMessage,
                 restoreStatusMessage: restoreStatusMessage,
@@ -127,11 +155,14 @@ struct MainWindowView: View {
                 onConfirmCleanup: cleanupSelectedItems,
                 onRestoreHistoryItem: restoreHistoryItem,
                 onOpenPermissions: {
+                    guard !isFileMutationInProgress else { return }
                     selectedSectionID = CleanMacSection.settings.rawValue
                 }
             )
         case .diskAnalysis:
             DiskAnalysisView()
+        case .systemMaintenance:
+            SystemMaintenanceView()
         case .duplicates:
             DuplicateFinderView()
         case .shredder:
@@ -154,7 +185,7 @@ struct MainWindowView: View {
     }
 
     private func applyRequestedSection(_ rawValue: String) {
-        guard !rawValue.isEmpty else {
+        guard !rawValue.isEmpty, !isFileMutationInProgress else {
             return
         }
         defer { requestedSectionID = "" }
@@ -169,7 +200,7 @@ struct MainWindowView: View {
     }
 
     private func runScan() {
-        guard !isAnyScanInProgress else {
+        guard !isOperationBusy else {
             return
         }
 
@@ -229,7 +260,9 @@ struct MainWindowView: View {
             scanResults = report.items.map(ScanResult.init)
             CleanMacScanPreferences.storeLastScan(report, source: .manual)
             selectedResultIDs = Set(report.items.filter { $0.risk == .safe }.map(\.id))
-            selectedSectionID = CleanMacSection.results.rawValue
+            if selectedSection == .scan {
+                selectedSectionID = CleanMacSection.results.rawValue
+            }
             isScanning = false
             scanInProgress = false
             scanProgress = nil
@@ -243,7 +276,7 @@ struct MainWindowView: View {
     }
 
     private func cleanupSelectedItems() {
-        guard !isCleaning else {
+        guard !isOperationBusy else {
             return
         }
 
@@ -260,12 +293,14 @@ struct MainWindowView: View {
         }
 
         isCleaning = true
+        fileOperationInProgress = true
         cleanupStatusMessage = nil
         cleanupProblemMessage = nil
         restoreStatusMessage = nil
         restoreProblemMessage = nil
 
         Task {
+            defer { fileOperationInProgress = false }
             let report = await Task.detached(priority: .userInitiated) {
                 let plan = CleanupPlanner().plan(for: selectedItems)
                 return CleanupExecutor().execute(plan: plan)
@@ -275,6 +310,7 @@ struct MainWindowView: View {
             scanItems.removeAll { movedIDs.contains($0.id) }
             scanResults.removeAll { movedIDs.contains($0.id) }
             selectedResultIDs.subtract(movedIDs)
+            refreshRemainingScanReport()
             isCleaning = false
 
             var historySaveFailed = false
@@ -316,8 +352,30 @@ struct MainWindowView: View {
         selectedResultIDs.formIntersection(safeItemIDs)
     }
 
+    private func refreshRemainingScanReport() {
+        guard let report = scanReport else { return }
+
+        let summaries = report.summaries.map { summary in
+            let remainingItems = scanItems.filter { $0.category == summary.category }
+            return CleanupCategorySummary(
+                category: summary.category,
+                scannedPath: summary.scannedPath,
+                itemCount: remainingItems.count,
+                totalSizeBytes: remainingItems.reduce(0) { $0 + $1.sizeBytes },
+                isAvailable: summary.isAvailable
+            )
+        }
+        scanReport = CleanupScanReport(
+            scannedAt: report.scannedAt,
+            durationSeconds: report.durationSeconds,
+            items: scanItems,
+            summaries: summaries,
+            issues: report.issues
+        )
+    }
+
     private func restoreHistoryItem(_ historyID: UUID) {
-        guard !isRestoring else {
+        guard !isOperationBusy else {
             return
         }
         guard let historyIndex = cleanupHistory.firstIndex(where: { $0.id == historyID }) else {
@@ -330,11 +388,13 @@ struct MainWindowView: View {
         }
 
         isRestoring = true
+        fileOperationInProgress = true
         restoreStatusMessage = nil
         restoreProblemMessage = nil
         let historyRecord = cleanupHistory[historyIndex]
 
         Task {
+            defer { fileOperationInProgress = false }
             let report = await Task.detached(priority: .userInitiated) {
                 CleanupRestorer().restore(historyRecords: [historyRecord])
             }.value

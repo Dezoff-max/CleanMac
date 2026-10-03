@@ -4,6 +4,7 @@ import SwiftUI
 struct ScanView: View {
     @Binding var selectedAreaIDs: Set<String>
     let isScanning: Bool
+    let isOperationBusy: Bool
     let scanProgress: CleanupScanProgress?
     let onStartScan: () -> Void
 
@@ -59,6 +60,7 @@ struct ScanView: View {
                         scanActions
                     }
                 }
+                .disabled(isOperationBusy)
 
                 VStack(spacing: 10) {
                     ForEach(visibleAreas) { area in
@@ -77,6 +79,7 @@ struct ScanView: View {
                         )
                     }
                 }
+                .disabled(isOperationBusy)
             }
         }
     }
@@ -153,7 +156,7 @@ struct ScanView: View {
             Label(isScanning ? L.t("button.scanning") : L.t("button.scanSelected"), systemImage: "play.fill")
         }
         .buttonStyle(.borderedProminent)
-        .disabled(isScanning || selectedAreaIDs.isEmpty)
+        .disabled(isOperationBusy || selectedAreaIDs.isEmpty)
     }
 }
 

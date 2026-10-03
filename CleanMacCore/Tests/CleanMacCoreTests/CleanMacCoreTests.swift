@@ -120,7 +120,8 @@ final class CleanMacCoreTests: XCTestCase {
         let paths = [
             CleanupCategory.developerPackageCaches,
             .developerIDECaches,
-            .developerAITemporaryFiles
+            .developerAITemporaryFiles,
+            .staleCodexRuntimeInstallers
         ].flatMap { resolver.rootURLs(for: $0).map(\.path) }
 
         let requiredSuffixes = [
@@ -134,6 +135,7 @@ final class CleanMacCoreTests: XCTestCase {
             "/.codex/.tmp",
             "/.codex/tmp",
             "/.codex/cache",
+            "/.cache/codex-runtimes",
             "/.claude/cache",
             "/.claude/paste-cache"
         ]
@@ -214,6 +216,76 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertFalse(report.items.contains { item in
             forbiddenFiles.contains { canonicalPath($0.path) == canonicalPath(item.path) }
         })
+    }
+
+    func testStaleCodexRuntimeScannerProtectsCurrentAndRecentRuntimes() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let referenceDate = Date()
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let runtimeRoot = home.appending(path: ".cache/codex-runtimes", directoryHint: .isDirectory)
+        let staleInstaller = runtimeRoot.appending(path: "codex-runtime-install-AbC123", directoryHint: .isDirectory)
+        let recentInstaller = runtimeRoot.appending(path: "codex-runtime-install-XyZ789", directoryHint: .isDirectory)
+        let currentRuntime = runtimeRoot.appending(path: CleanupPathRules.codexPrimaryRuntimeName, directoryHint: .isDirectory)
+        let invalidInstaller = runtimeRoot.appending(path: "codex-runtime-install-not_allowed", directoryHint: .isDirectory)
+
+        for directory in [staleInstaller, recentInstaller, currentRuntime, invalidInstaller] {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try writeBytes(count: 32, to: directory.appending(path: "runtime.bin"))
+        }
+        try setModificationDate(referenceDate.addingTimeInterval(-8 * 24 * 60 * 60), for: staleInstaller)
+        try setModificationDate(referenceDate.addingTimeInterval(-24 * 60 * 60), for: recentInstaller)
+        try setModificationDate(referenceDate.addingTimeInterval(-30 * 24 * 60 * 60), for: currentRuntime)
+        try setModificationDate(referenceDate.addingTimeInterval(-30 * 24 * 60 * 60), for: invalidInstaller)
+
+        let scanner = CleanupScanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+        let report = scanner.scan(
+            categories: [.staleCodexRuntimeInstallers],
+            options: CleanupScanOptions(
+                maxItemsPerCategory: 10,
+                maxDescendantsPerItem: 1,
+                maxStaleCodexRuntimeDescendants: 100
+            )
+        )
+
+        XCTAssertEqual(report.items.map(\.displayName), ["codex-runtime-install-AbC123"])
+        XCTAssertEqual(report.items.first?.risk, .review)
+        XCTAssertEqual(report.items.first?.reasons, [.staleCodexRuntimeInstaller])
+        XCTAssertEqual(report.items.first?.isSizeEstimate, false)
+        XCTAssertFalse(report.items.contains { $0.displayName == CleanupPathRules.codexPrimaryRuntimeName })
+    }
+
+    func testStaleCodexRuntimePlannerRevalidatesNameAgeAndDirectChild() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let referenceDate = Date()
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let runtimeRoot = home.appending(path: ".cache/codex-runtimes", directoryHint: .isDirectory)
+        let staleInstaller = runtimeRoot.appending(path: "codex-runtime-install-Old123", directoryHint: .isDirectory)
+        let recentInstaller = runtimeRoot.appending(path: "codex-runtime-install-New123", directoryHint: .isDirectory)
+        let currentRuntime = runtimeRoot.appending(path: CleanupPathRules.codexPrimaryRuntimeName, directoryHint: .isDirectory)
+        let invalidInstaller = runtimeRoot.appending(path: "codex-runtime-install-invalid_name", directoryHint: .isDirectory)
+        let nestedInstaller = staleInstaller.appending(path: "codex-runtime-install-Nested123", directoryHint: .isDirectory)
+
+        for directory in [staleInstaller, recentInstaller, currentRuntime, invalidInstaller, nestedInstaller] {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        }
+        try setModificationDate(referenceDate.addingTimeInterval(-8 * 24 * 60 * 60), for: staleInstaller)
+        try setModificationDate(referenceDate.addingTimeInterval(-24 * 60 * 60), for: recentInstaller)
+        try setModificationDate(referenceDate.addingTimeInterval(-30 * 24 * 60 * 60), for: currentRuntime)
+        try setModificationDate(referenceDate.addingTimeInterval(-30 * 24 * 60 * 60), for: invalidInstaller)
+        try setModificationDate(referenceDate.addingTimeInterval(-30 * 24 * 60 * 60), for: nestedInstaller)
+
+        let items = [staleInstaller, recentInstaller, currentRuntime, invalidInstaller, nestedInstaller].map {
+            makeScanItem(category: .staleCodexRuntimeInstallers, path: $0.path, isDirectory: true)
+        }
+        let plan = CleanupPlanner(homeDirectory: home, temporaryDirectory: root.appending(path: "Temp"))
+            .plan(for: items, referenceDate: referenceDate)
+
+        XCTAssertEqual(plan.items.map(\.originalPath), [canonicalPath(staleInstaller.path)])
+        XCTAssertEqual(plan.rejectedItems.count, 4)
     }
 
     func testXcodeDeveloperStorageUsesReviewAndAgeRules() throws {
@@ -533,13 +605,22 @@ final class CleanMacCoreTests: XCTestCase {
         let savedState = home.appending(path: "Library/Saved Application State/com.example.editor.savedState", directoryHint: .isDirectory)
         let logs = home.appending(path: "Library/Logs/com.example.editor", directoryHint: .isDirectory)
         let applicationSupport = home.appending(path: "Library/Application Support/com.example.editor", directoryHint: .isDirectory)
+        let container = home.appending(path: "Library/Containers/com.example.editor", directoryHint: .isDirectory)
+        let groupContainer = home.appending(path: "Library/Group Containers/com.example.editor", directoryHint: .isDirectory)
+        let httpStorage = home.appending(path: "Library/HTTPStorages/com.example.editor", directoryHint: .isDirectory)
+        let webKit = home.appending(path: "Library/WebKit/com.example.editor", directoryHint: .isDirectory)
+        let cookies = home.appending(path: "Library/Cookies/com.example.editor.binarycookies")
+        let applicationScripts = home.appending(path: "Library/Application Scripts/com.example.editor", directoryHint: .isDirectory)
+        let launchAgent = home.appending(path: "Library/LaunchAgents/com.example.editor.plist")
 
-        for folder in [cache, savedState, logs, applicationSupport] {
+        for folder in [cache, savedState, logs, applicationSupport, container, groupContainer, httpStorage, webKit, applicationScripts] {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             try writeBytes(count: 8, to: folder.appending(path: "data.bin"))
         }
-        try FileManager.default.createDirectory(at: preferences.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try writeBytes(count: 8, to: preferences)
+        for file in [preferences, cookies, launchAgent] {
+            try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try writeBytes(count: 8, to: file)
+        }
 
         let alias = sharedApplications.appending(path: "Example Alias.app")
         try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: thirdPartyApp)
@@ -557,7 +638,7 @@ final class CleanMacCoreTests: XCTestCase {
             Set(report.applications.first?.leftovers.map(\.kind) ?? []),
             Set(ApplicationLeftoverKind.allCases)
         )
-        XCTAssertFalse(report.applications.first?.leftovers.contains { $0.path == applicationSupport.path } ?? true)
+        XCTAssertTrue(report.applications.first?.leftovers.contains { $0.path == applicationSupport.path } ?? false)
         XCTAssertTrue(FileManager.default.fileExists(atPath: thirdPartyApp.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: applicationSupport.path))
     }
@@ -612,11 +693,68 @@ final class CleanMacCoreTests: XCTestCase {
         XCTAssertEqual(report.failedItems.count, 0)
         XCTAssertEqual(report.rejectedItems.count, 0)
         XCTAssertEqual(movedPaths.first, appURL.path)
-        XCTAssertEqual(Set(movedPaths.dropFirst()), Set([cache.path, preferences.path]))
+        XCTAssertEqual(Set(movedPaths.dropFirst()), Set([cache.path, preferences.path, applicationSupport.path]))
         XCTAssertFalse(FileManager.default.fileExists(atPath: appURL.path))
         XCTAssertFalse(FileManager.default.fileExists(atPath: cache.path))
         XCTAssertFalse(FileManager.default.fileExists(atPath: preferences.path))
-        XCTAssertTrue(FileManager.default.fileExists(atPath: applicationSupport.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: applicationSupport.path))
+    }
+
+    func testApplicationRemovalCanDeleteAppAndExactLeftoversPermanently() throws {
+        let root = try makeTemporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let home = root.appending(path: "Home", directoryHint: .isDirectory)
+        let applications = root.appending(path: "Applications", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: applications, withIntermediateDirectories: true)
+
+        let appURL = try makeFakeApplication(
+            named: "Example",
+            bundleIdentifier: "com.example.editor",
+            in: applications
+        )
+        let cache = home.appending(path: "Library/Caches/com.example.editor", directoryHint: .isDirectory)
+        let applicationSupport = home.appending(path: "Library/Application Support/com.example.editor", directoryHint: .isDirectory)
+        for folder in [cache, applicationSupport] {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try writeBytes(count: 8, to: folder.appending(path: "data.bin"))
+        }
+
+        let application = try XCTUnwrap(InstalledApplicationScanner(
+            applicationDirectories: [applications],
+            homeDirectory: home,
+            maxDescendantsPerItem: 100
+        ).scan().applications.first)
+        let plan = ApplicationRemovalPlanner(
+            applicationDirectories: [applications],
+            homeDirectory: home
+        ).plan(
+            for: application,
+            selectedLeftoverIDs: Set(application.leftovers.map(\.id))
+        )
+
+        var deletedPaths: [String] = []
+        let report = ApplicationRemovalExecutor(
+            trashHandler: { _ in
+                XCTFail("Permanent removal must not use Trash")
+                throw NSError(domain: "CleanMacCoreTests", code: 2)
+            },
+            permanentDeleteHandler: { url in
+                deletedPaths.append(url.path)
+                try FileManager.default.removeItem(at: url)
+            }
+        ).execute(plan: plan, mode: .deletePermanently)
+
+        XCTAssertEqual(report.mode, .deletePermanently)
+        XCTAssertTrue(report.applicationMoved)
+        XCTAssertEqual(report.failedItems.count, 0)
+        XCTAssertEqual(report.rejectedItems.count, 0)
+        XCTAssertEqual(deletedPaths.first, appURL.path)
+        XCTAssertEqual(Set(deletedPaths.dropFirst()), Set([cache.path, applicationSupport.path]))
+        XCTAssertTrue(report.movedItems.allSatisfy { $0.trashedPath == nil })
+        XCTAssertFalse(FileManager.default.fileExists(atPath: appURL.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: cache.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: applicationSupport.path))
     }
 
     func testApplicationRemovalDoesNotTouchLeftoversWhenAppMoveFails() throws {
@@ -1101,6 +1239,7 @@ final class CleanMacCoreTests: XCTestCase {
             .downloads,
             .downloadedInstallers,
             .trash,
+            .staleCodexRuntimeInstallers,
             .xcodeDerivedData,
             .xcodeDeviceSupport,
             .xcodeSimulatorData,

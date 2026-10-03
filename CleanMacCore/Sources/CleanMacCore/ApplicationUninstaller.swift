@@ -10,6 +10,19 @@ public enum ApplicationLeftoverKind: String, CaseIterable, Sendable {
     case preferences
     case savedApplicationState
     case logs
+    case applicationSupport
+    case container
+    case groupContainer
+    case httpStorage
+    case webKit
+    case cookies
+    case applicationScripts
+    case launchAgent
+}
+
+public enum ApplicationRemovalMode: String, CaseIterable, Sendable {
+    case moveToTrash
+    case deletePermanently
 }
 
 public struct ApplicationLeftover: Identifiable, Equatable, Sendable {
@@ -295,6 +308,22 @@ public struct InstalledApplicationScanner {
             homeDirectory.appending(path: "Library/Saved Application State/\(bundleIdentifier).savedState", directoryHint: .isDirectory)
         case .logs:
             homeDirectory.appending(path: "Library/Logs/\(bundleIdentifier)", directoryHint: .isDirectory)
+        case .applicationSupport:
+            homeDirectory.appending(path: "Library/Application Support/\(bundleIdentifier)", directoryHint: .isDirectory)
+        case .container:
+            homeDirectory.appending(path: "Library/Containers/\(bundleIdentifier)", directoryHint: .isDirectory)
+        case .groupContainer:
+            homeDirectory.appending(path: "Library/Group Containers/\(bundleIdentifier)", directoryHint: .isDirectory)
+        case .httpStorage:
+            homeDirectory.appending(path: "Library/HTTPStorages/\(bundleIdentifier)", directoryHint: .isDirectory)
+        case .webKit:
+            homeDirectory.appending(path: "Library/WebKit/\(bundleIdentifier)", directoryHint: .isDirectory)
+        case .cookies:
+            homeDirectory.appending(path: "Library/Cookies/\(bundleIdentifier).binarycookies")
+        case .applicationScripts:
+            homeDirectory.appending(path: "Library/Application Scripts/\(bundleIdentifier)", directoryHint: .isDirectory)
+        case .launchAgent:
+            homeDirectory.appending(path: "Library/LaunchAgents/\(bundleIdentifier).plist")
         }
     }
 
@@ -569,17 +598,20 @@ public struct ApplicationRemovalFailedItem: Identifiable, Equatable, Sendable {
 
 public struct ApplicationRemovalReport: Equatable, Sendable {
     public let completedAt: Date
+    public let mode: ApplicationRemovalMode
     public let movedItems: [ApplicationRemovalMovedItem]
     public let failedItems: [ApplicationRemovalFailedItem]
     public let rejectedItems: [ApplicationRemovalRejectedItem]
 
     public init(
         completedAt: Date,
+        mode: ApplicationRemovalMode = .moveToTrash,
         movedItems: [ApplicationRemovalMovedItem],
         failedItems: [ApplicationRemovalFailedItem],
         rejectedItems: [ApplicationRemovalRejectedItem]
     ) {
         self.completedAt = completedAt
+        self.mode = mode
         self.movedItems = movedItems
         self.failedItems = failedItems
         self.rejectedItems = rejectedItems
@@ -600,10 +632,16 @@ public struct ApplicationRemovalReport: Equatable, Sendable {
 
 public struct ApplicationRemovalExecutor {
     public typealias TrashHandler = (URL) throws -> URL?
+    public typealias PermanentDeleteHandler = (URL) throws -> Void
 
     private let trashHandler: TrashHandler
+    private let permanentDeleteHandler: PermanentDeleteHandler
 
-    public init(fileManager: FileManager = .default, trashHandler: TrashHandler? = nil) {
+    public init(
+        fileManager: FileManager = .default,
+        trashHandler: TrashHandler? = nil,
+        permanentDeleteHandler: PermanentDeleteHandler? = nil
+    ) {
         if let trashHandler {
             self.trashHandler = trashHandler
         } else {
@@ -613,12 +651,24 @@ public struct ApplicationRemovalExecutor {
                 return resultingURL as URL?
             }
         }
+
+        if let permanentDeleteHandler {
+            self.permanentDeleteHandler = permanentDeleteHandler
+        } else {
+            self.permanentDeleteHandler = { url in
+                try fileManager.removeItem(at: url)
+            }
+        }
     }
 
-    public func execute(plan: ApplicationRemovalPlan) -> ApplicationRemovalReport {
+    public func execute(
+        plan: ApplicationRemovalPlan,
+        mode: ApplicationRemovalMode = .moveToTrash
+    ) -> ApplicationRemovalReport {
         guard let applicationItem = plan.applicationItem else {
             return ApplicationRemovalReport(
                 completedAt: Date(),
+                mode: mode,
                 movedItems: [],
                 failedItems: [],
                 rejectedItems: plan.rejectedItems
@@ -629,7 +679,7 @@ public struct ApplicationRemovalExecutor {
         var failedItems: [ApplicationRemovalFailedItem] = []
 
         do {
-            let trashedURL = try trashHandler(URL(fileURLWithPath: applicationItem.path))
+            let trashedURL = try remove(item: applicationItem, mode: mode)
             movedItems.append(ApplicationRemovalMovedItem(
                 item: applicationItem,
                 trashedPath: trashedURL?.path
@@ -641,6 +691,7 @@ public struct ApplicationRemovalExecutor {
             ))
             return ApplicationRemovalReport(
                 completedAt: Date(),
+                mode: mode,
                 movedItems: movedItems,
                 failedItems: failedItems,
                 rejectedItems: plan.rejectedItems
@@ -649,7 +700,7 @@ public struct ApplicationRemovalExecutor {
 
         for leftoverItem in plan.leftoverItems {
             do {
-                let trashedURL = try trashHandler(URL(fileURLWithPath: leftoverItem.path))
+                let trashedURL = try remove(item: leftoverItem, mode: mode)
                 movedItems.append(ApplicationRemovalMovedItem(
                     item: leftoverItem,
                     trashedPath: trashedURL?.path
@@ -664,9 +715,24 @@ public struct ApplicationRemovalExecutor {
 
         return ApplicationRemovalReport(
             completedAt: Date(),
+            mode: mode,
             movedItems: movedItems,
             failedItems: failedItems,
             rejectedItems: plan.rejectedItems
         )
+    }
+
+    private func remove(
+        item: ApplicationRemovalPlanItem,
+        mode: ApplicationRemovalMode
+    ) throws -> URL? {
+        let url = URL(fileURLWithPath: item.path)
+        switch mode {
+        case .moveToTrash:
+            return try trashHandler(url)
+        case .deletePermanently:
+            try permanentDeleteHandler(url)
+            return nil
+        }
     }
 }

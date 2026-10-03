@@ -160,3 +160,49 @@ struct RiskBadge: View {
             .foregroundStyle(risk == .safe ? .green : .orange)
     }
 }
+
+/// Shared feedback for whole-card actions. Motion stays local to the pressed or
+/// hovered card, so a pointer event never animates the surrounding page layout.
+struct CleanMacCardButtonStyle: ButtonStyle {
+    let tint: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        CardBody(configuration: configuration, tint: tint)
+    }
+
+    private struct CardBody: View {
+        let configuration: Configuration
+        let tint: Color
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
+        @Environment(\.colorScheme) private var colorScheme
+        @Environment(\.isEnabled) private var isEnabled
+        @State private var isHovered = false
+
+        private var highlighted: Bool { isEnabled && (isHovered || configuration.isPressed) }
+
+        var body: some View {
+            configuration.label
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(tint.opacity(highlighted ? 0.07 : 0))
+                        .allowsHitTesting(false)
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(highlighted ? tint.opacity(0.48) : Color(nsColor: .separatorColor).opacity(0.60))
+                        .allowsHitTesting(false)
+                }
+                .shadow(
+                    color: .black.opacity(highlighted ? (colorScheme == .dark ? 0.18 : 0.07) : 0),
+                    radius: highlighted ? 8 : 0,
+                    y: highlighted ? 3 : 0
+                )
+                .scaleEffect(reduceMotion || !isEnabled ? 1 : (configuration.isPressed ? 0.985 : 1))
+                .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: configuration.isPressed)
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: isHovered)
+                .onHover { isHovered = $0 }
+        }
+    }
+}

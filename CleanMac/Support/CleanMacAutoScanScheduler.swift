@@ -5,13 +5,20 @@ final class CleanMacAutoScanScheduler {
     private let defaults: UserDefaults
     private var timer: Timer?
     private var scanTask: Task<Void, Never>?
+    private var didResetProcessState = false
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
     }
 
     func start() {
-        defaults.set(false, forKey: CleanMacPreferenceKeys.scanInProgress)
+        if !didResetProcessState {
+            // These flags coordinate windows only for the lifetime of this process.
+            // Reset stale values once at launch, never when restarting the scheduler.
+            defaults.set(false, forKey: CleanMacPreferenceKeys.scanInProgress)
+            defaults.set(false, forKey: CleanMacPreferenceKeys.fileOperationInProgress)
+            didResetProcessState = true
+        }
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             self?.evaluateSchedule()
@@ -35,6 +42,9 @@ final class CleanMacAutoScanScheduler {
             return
         }
         guard !defaults.bool(forKey: CleanMacPreferenceKeys.scanInProgress) else {
+            return
+        }
+        guard !defaults.bool(forKey: CleanMacPreferenceKeys.fileOperationInProgress) else {
             return
         }
 

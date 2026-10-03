@@ -228,6 +228,7 @@ public struct CleanupScanner {
              .developerPackageCaches,
              .developerIDECaches,
              .developerAITemporaryFiles,
+             .staleCodexRuntimeInstallers,
              .downloadedInstallers,
              .xcodePreviews:
             3
@@ -283,6 +284,16 @@ public struct CleanupScanner {
         case .xcodeSimulatorData:
             let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
             return isOlderThan(values?.contentModificationDate, options.staleDeveloperDataAge)
+        case .staleCodexRuntimeInstallers:
+            let values = try? url.resourceValues(forKeys: [
+                .isDirectoryKey,
+                .isSymbolicLinkKey,
+                .contentModificationDateKey
+            ])
+            return values?.isDirectory == true
+                && values?.isSymbolicLink != true
+                && CleanupPathRules.isCodexRuntimeInstallerName(url.lastPathComponent)
+                && isOlderThan(values?.contentModificationDate, options.staleCodexRuntimeAge)
         default:
             return true
         }
@@ -305,6 +316,7 @@ public struct CleanupScanner {
         let measuredSize = measureSize(
             at: url,
             isDirectory: isDirectory,
+            category: category,
             options: options
         )
         let reasons = scanReasons(
@@ -337,6 +349,7 @@ public struct CleanupScanner {
     private func measureSize(
         at url: URL,
         isDirectory: Bool,
+        category: CleanupCategory,
         options: CleanupScanOptions
     ) -> (bytes: Int64, isEstimate: Bool) {
         guard isDirectory else {
@@ -348,18 +361,25 @@ public struct CleanupScanner {
         var scannedDescendants = 0
         var isEstimate = false
 
+        let enumerationOptions: FileManager.DirectoryEnumerationOptions = category == .staleCodexRuntimeInstallers
+            ? []
+            : [.skipsPackageDescendants]
         guard let enumerator = fileManager.enumerator(
             at: url,
             includingPropertiesForKeys: Array(resourceKeys),
-            options: [.skipsPackageDescendants],
+            options: enumerationOptions,
             errorHandler: { _, _ in true }
         ) else {
             return (bytes, true)
         }
 
+        let descendantLimit = category == .staleCodexRuntimeInstallers
+            ? options.maxStaleCodexRuntimeDescendants
+            : options.maxDescendantsPerItem
+
         for case let childURL as URL in enumerator {
             scannedDescendants += 1
-            if scannedDescendants > options.maxDescendantsPerItem {
+            if scannedDescendants > descendantLimit {
                 isEstimate = true
                 break
             }
@@ -413,6 +433,7 @@ public struct CleanupScanner {
              .xcodePreviews:
             .safe
         case .trash,
+             .staleCodexRuntimeInstallers,
              .downloads,
              .downloadedInstallers,
              .xcodeDerivedData,
@@ -445,6 +466,11 @@ public struct CleanupScanner {
             return [.developerIDECache]
         case .developerAITemporaryFiles:
             return [.developerAITemporaryFile]
+        case .staleCodexRuntimeInstallers:
+            return CleanupPathRules.isCodexRuntimeInstallerName(url.lastPathComponent)
+                && isOlderThan(resourceValues?.contentModificationDate, options.staleCodexRuntimeAge)
+                ? [.staleCodexRuntimeInstaller]
+                : []
         case .downloads:
             var reasons: [CleanupScanReason] = []
             if isDownloadedInstallerOrArchive(url) {

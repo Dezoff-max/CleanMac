@@ -361,6 +361,8 @@ struct StatusMenuView: View {
 }
 
 private struct StatusMetricCard: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let title: String
     let systemImage: String
     let fraction: Double
@@ -387,7 +389,7 @@ private struct StatusMetricCard: View {
                     )
                     .rotationEffect(.degrees(-90))
                     .shadow(color: Color.accentColor.opacity(0.28), radius: 4)
-                    .animation(.easeOut(duration: 0.45), value: fraction)
+                    .animation(CleanMacMotion.progress(reduceMotion: reduceMotion), value: fraction)
 
                 Text(value)
                     .font(.system(size: 18, weight: .bold, design: .rounded))

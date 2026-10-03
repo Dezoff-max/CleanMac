@@ -2,60 +2,42 @@
 
 ## Task
 
-- ID: TASK-047
-- Title: CleanMac v0.4.0 release
+- ID: TASK-057
+- Title: Dashboard, motion and workflow polish; CleanMac v0.5.0
 - Mode: continue
 
-## Planner Notes
+## Authorization and scope
 
-- Why this task now: the user explicitly requested that the release be updated after the thermal optimization and Smart Shredder feature were pushed.
-- Expected value: publish the verified feature set as the next minor release with reproducible archive and checksum assets.
-- Main risk: tagging an unverified commit or presenting an ad-hoc build as notarized.
-- Release choice: bump `0.3.0 (4)` to `0.4.0 (5)` because the release adds a user-facing feature; keep the existing ad-hoc/unsigned distribution wording unless signing secrets produce a genuinely signed/notarized artifact in CI.
+The user explicitly requested analysis and improvements to the app and animations,
+publication of an updated GitHub release, useful ideas from the supplied PureMac
+screenshot, and installation into Applications. Build on the existing PR #17 so
+previously implemented features are preserved and reviewed before release.
 
-## Builder Scope
+- Keep macOS 14+, native SwiftUI and CleanMacCore; no new dependencies.
+- Add a live, accurately labelled storage overview and quick tool navigation.
+- Improve adaptive layout, hover/press feedback and Reduce Motion behavior.
+- Prevent scan/cleanup/restore overlap and unwanted completion navigation.
+- Keep existing scan, confirmation, Trash and isolated permanent-action policies.
+- Update localizations, version/build, release notes and verification documentation.
+- Build/test/package, commit/push/merge verified work, create v0.5.0, publish DMG/ZIP
+  with checksums, verify downloaded assets, then install and open /Applications/CleanMac.app.
+- Do not run cleanup, uninstall, shredder, memory purge or DNS flush against real
+  user data/system state during review. Destructive tests may use disposable fixtures.
+- Do not change repository visibility, dependencies, deployment targets or security settings.
+- Do not invent signing credentials or describe an ad-hoc build as notarized.
 
-- Allowed files:
-  - `CleanMac.xcodeproj/project.pbxproj`;
-  - `README.md` and `docs/screenshots/`;
-  - release and Loop documentation files.
-- Allowed commands:
-  - source/version inspection;
-  - full SwiftPM tests;
-  - Debug build/launch verification;
-  - local Release packaging and fresh-extraction validation;
-  - non-destructive app navigation and screenshot capture without accepting cleanup or shredder actions;
-  - git branch/commit/push and GitHub PR merge;
-  - create and push tag `v0.4.0`;
-  - inspect/edit the corresponding GitHub Release and verify its downloaded assets.
-- Out of scope:
-  - new feature code, changing deployment targets/dependencies, inventing signing credentials, disabling security, deleting user files, or claiming notarization without evidence.
-- Dependencies allowed: none
-- Destructive actions allowed: generated build/dist artifacts only
+## Verification
 
-## Evaluator Checklist
-
-- Done criteria:
-  - bundle reports version `0.4.0` and build `5`;
-  - all core tests and Debug launch verification pass on the release commit;
-  - local Release ZIP extracts with a valid strict ad-hoc signature and matching SHA-256;
-  - release version commit is merged into `main` before tagging;
-  - tag `v0.4.0` points to that verified `main` commit;
-  - GitHub Release is published with ZIP and `.sha256` assets and accurate notes/limitations;
-  - downloaded assets pass checksum and fresh-extraction signature/version inspection.
-- Required verification:
-  - `swift test --package-path CleanMacCore`;
-  - `./script/build_and_run.sh --verify`;
-  - `./script/package_release.sh`;
-  - bundle version, architecture, signature, and checksum inspection;
-  - GitHub CI/Release workflow and clean asset download verification;
-  - `git diff --check`.
-- Manual checks:
-  - Keep release publication separate from commit/push and tag creation.
-  - Do not claim Developer ID signing or notarization unless the published asset proves it.
+- Full `swift test --package-path CleanMacCore`.
+- `./script/build_and_run.sh --verify` and non-destructive UI review.
+- RU/EN plist lint/key parity and `git diff --check`.
+- `./script/package_release.sh`; ZIP/DMG checksum, strict signature, bundle version
+  and architecture checks against fresh extraction/mount.
+- Green GitHub checks; release tag matches verified merged code.
+- Download published assets and validate checksums/version/signature.
+- Install the verified bundle into Applications and verify the running executable path.
 
 ## Result
 
-- Status: complete
-- Verification result: PR #14 and PR #15 core/macOS CI passed; 47/47 core tests; Debug build/sign/launch passed; local Release packaging and clean extraction passed; published workflow run `29220077936` passed; downloaded ZIP checksum, version `0.4.0` build `5`, `arm64` architecture, and strict ad-hoc signature all passed.
-- Notes: `v0.4.0` points to merge commit `125e528` and is published as the latest GitHub Release with ZIP and SHA-256 assets. Developer ID certificate and notary key steps were skipped because those secrets are not configured; the notes accurately label the asset ad-hoc signed and not notarized.
+- Status: implementation verified locally; final publication and installation pending.
+- Version target: 0.5.0 (6).

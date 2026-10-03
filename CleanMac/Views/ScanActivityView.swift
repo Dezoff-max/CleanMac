@@ -2,6 +2,8 @@ import CleanMacCore
 import SwiftUI
 
 struct ScanActivityView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let selectedAreas: [CleanupArea]
     let progress: CleanupScanProgress?
 
@@ -24,12 +26,12 @@ struct ScanActivityView: View {
                 verticalLayout
             }
         }
-        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.98)))
     }
 
     private var horizontalLayout: some View {
         HStack(alignment: .center, spacing: 18) {
-            ScanOrbitalIndicator(progress: progressFraction)
+            activityIndicator
 
             content
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -43,7 +45,7 @@ struct ScanActivityView: View {
     private var verticalLayout: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 14) {
-                ScanOrbitalIndicator(progress: progressFraction)
+                activityIndicator
                 header
             }
 
@@ -61,6 +63,15 @@ struct ScanActivityView: View {
             scanMetrics
             areaRail
         }
+    }
+
+    private var activityIndicator: some View {
+        ModernScanProgressIndicator(
+            systemImage: "magnifyingglass",
+            accessibilityLabel: L.t("scan.animation.title"),
+            progress: progressFraction,
+            size: 82
+        )
     }
 
     private var header: some View {
@@ -87,29 +98,10 @@ struct ScanActivityView: View {
     }
 
     private var progressTrack: some View {
-        GeometryReader { proxy in
-            let trackWidth = proxy.size.width
-            let filledWidth = max(8, trackWidth * progressFraction)
-
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(.quaternary)
-
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [.blue, .cyan, .green.opacity(0.82)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(width: filledWidth)
-                    .clipShape(Capsule())
-                    .animation(.easeOut(duration: 0.2), value: progressFraction)
-            }
-        }
-        .frame(height: 8)
-        .accessibilityLabel(L.f("scan.animation.percent", progressPercent))
+        AnimatedScanProgressTrack(
+            progress: progressFraction,
+            accessibilityLabel: L.f("scan.animation.percent", progressPercent)
+        )
     }
 
     private var scanMetrics: some View {
@@ -170,7 +162,11 @@ struct ScanActivityView: View {
     }
 
     private var areaRail: some View {
-        HStack(spacing: 8) {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 150), alignment: .leading)],
+            alignment: .leading,
+            spacing: 8
+        ) {
             ForEach(visibleAreas) { area in
                 ScanAreaChip(area: area, state: chipState(for: area))
             }
@@ -255,42 +251,62 @@ struct ScanActivityView: View {
         let name = URL(fileURLWithPath: path).lastPathComponent
         return name.isEmpty ? path : name
     }
-
 }
 
-private struct ScanOrbitalIndicator: View {
+private struct AnimatedScanProgressTrack: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let progress: Double
+    let accessibilityLabel: String
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(.blue.opacity(0.10))
-                .frame(width: 76, height: 76)
-
-            Circle()
-                .stroke(.blue.opacity(0.13), lineWidth: 12)
-                .frame(width: 60, height: 60)
-
-            Circle()
-                .trim(from: 0, to: max(0.04, progress))
-                .stroke(
-                    LinearGradient(
-                        colors: [.blue, .cyan, .green.opacity(0.82)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    style: StrokeStyle(lineWidth: 5, lineCap: .round)
-                )
-                .frame(width: 64, height: 64)
-                .rotationEffect(.degrees(-90))
-                .animation(.easeOut(duration: 0.2), value: progress)
-
-            ProgressView()
-                .controlSize(.small)
-                .tint(.blue)
+        CleanMacContinuousMotion { phase in
+            track(phase: phase)
         }
-        .frame(width: 82, height: 82)
-        .accessibilityHidden(true)
+        .frame(height: 8)
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private func track(phase: CleanMacMotionPhase) -> some View {
+        GeometryReader { proxy in
+            let trackWidth = proxy.size.width
+            let filledWidth = max(8, trackWidth * min(max(progress, 0), 1))
+
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(.quaternary)
+
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [.blue, .cyan, .mint],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: filledWidth)
+                    .overlay(alignment: .leading) {
+                        if phase.isEnabled {
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.clear, .white.opacity(0.46), .clear],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: 48)
+                                .offset(x: phase.isAnimating ? filledWidth : -48)
+                                .animation(
+                                    .linear(duration: 1.5).repeatForever(autoreverses: false),
+                                    value: phase.isAnimating
+                                )
+                        }
+                    }
+                    .clipShape(Capsule())
+                    .animation(CleanMacMotion.progress(reduceMotion: reduceMotion), value: progress)
+            }
+        }
     }
 }
 
@@ -300,22 +316,35 @@ private struct ScanSignalBars: View {
     private let barCount = 5
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 5) {
-            ForEach(0..<barCount, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 3, style: .continuous)
-                    .fill(barColor(for: index))
-                    .frame(width: 8, height: barHeight(for: index))
-                    .animation(.easeOut(duration: 0.2), value: progress)
+        CleanMacContinuousMotion { phase in
+            HStack(alignment: .bottom, spacing: 5) {
+                ForEach(0..<barCount, id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(barColor(for: index))
+                        .frame(width: 8, height: 44)
+                        .scaleEffect(x: 1, y: barHeight(for: index, phase: phase) / 44, anchor: .bottom)
+                        .animation(
+                            .easeInOut(duration: 0.7 + Double(index) * 0.08)
+                                .repeatForever(autoreverses: true)
+                                .delay(Double(index) * 0.06),
+                            value: phase.isAnimating
+                        )
+                }
             }
         }
         .frame(height: 44, alignment: .bottom)
         .accessibilityHidden(true)
     }
 
-    private func barHeight(for index: Int) -> CGFloat {
+    private func barHeight(for index: Int, phase: CleanMacMotionPhase) -> CGFloat {
         let clampedProgress = min(max(progress, 0.08), 1)
         let step = Double(index + 1) / Double(barCount)
-        return CGFloat(12 + 28 * clampedProgress * step)
+        let base = CGFloat(12 + 18 * clampedProgress * step)
+        guard phase.isEnabled else {
+            return base
+        }
+        let amplitude = CGFloat(7 + index * 2)
+        return phase.isAnimating ? min(44, base + amplitude) : max(10, base - amplitude * 0.45)
     }
 
     private func barColor(for index: Int) -> Color {
@@ -377,9 +406,11 @@ private struct ScanAreaChip: View {
         Label(area.title, systemImage: state.systemImage)
             .font(.caption.weight(.medium))
             .lineLimit(1)
+            .truncationMode(.tail)
             .foregroundStyle(state.foregroundStyle)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
             .background(state.foregroundStyle.opacity(state.backgroundOpacity), in: Capsule())
+            .help(area.title)
     }
 }

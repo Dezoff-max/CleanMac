@@ -10,6 +10,7 @@ struct ResultsView: View {
     @Binding var selectedResultIDs: Set<String>
     let isCleaning: Bool
     let isRestoring: Bool
+    let isOperationBusy: Bool
     let cleanupStatusMessage: String?
     let cleanupProblemMessage: String?
     let restoreStatusMessage: String?
@@ -29,6 +30,14 @@ struct ResultsView: View {
 
     private var selectedSizeBytes: Int64 {
         selectedResults.reduce(0) { $0 + $1.sizeBytes }
+    }
+
+    private var containsStaleCodexRuntimeInstallers: Bool {
+        results.contains { $0.category == .staleCodexRuntimeInstallers }
+    }
+
+    private var selectedStaleCodexRuntimeInstallers: Bool {
+        selectedResults.contains { $0.category == .staleCodexRuntimeInstallers }
     }
 
     private var visibleResults: [ScanResult] {
@@ -121,7 +130,7 @@ struct ResultsView: View {
                         selectedCount: selectedResults.count,
                         selectedSizeBytes: selectedSizeBytes
                     )
-                } else if report != nil {
+                } else if report != nil, cleanupStatusMessage != nil {
                     StatusBanner(
                         title: L.t("cleanup.complete.title"),
                         message: L.t("cleanup.complete.message"),
@@ -131,6 +140,15 @@ struct ResultsView: View {
                 }
 
                 statusBanners
+
+                if containsStaleCodexRuntimeInstallers {
+                    StatusBanner(
+                        title: L.t("results.codexRuntimes.title"),
+                        message: L.t("results.codexRuntimes.message"),
+                        systemImage: "shippingbox.and.arrow.backward.fill",
+                        tint: .orange
+                    )
+                }
 
                 if safeModeEnabled, results.contains(where: { $0.risk == .review }) {
                     StatusBanner(
@@ -147,6 +165,7 @@ struct ResultsView: View {
                 } else {
                     selectionToolbar
                     reviewWorkspace
+                        .disabled(isOperationBusy)
                     cleanupHistoryPanel
                 }
             }
@@ -217,9 +236,9 @@ struct ResultsView: View {
     private var emptyResultsPanel: some View {
         InfoPanel {
             ContentUnavailableView(
-                L.t("results.empty.title"),
+                L.t(report == nil ? "results.empty.title" : "results.empty.scanned.title"),
                 systemImage: "doc.text.magnifyingglass",
-                description: Text(L.t("results.empty.description"))
+                description: Text(L.t(report == nil ? "results.empty.description" : "results.empty.scanned.description"))
             )
             .frame(maxWidth: .infinity, minHeight: 220)
         }
@@ -279,6 +298,7 @@ struct ResultsView: View {
                 Label(L.t("button.clearVisible"), systemImage: "xmark.circle")
             }
         }
+        .disabled(isOperationBusy)
     }
 
     private var cleanupButton: some View {
@@ -288,7 +308,7 @@ struct ResultsView: View {
             Label(isCleaning ? L.t("button.cleaning") : L.t("button.moveToTrash"), systemImage: "trash")
         }
         .buttonStyle(.borderedProminent)
-        .disabled(isCleaning || selectedResults.isEmpty)
+        .disabled(isOperationBusy || selectedResults.isEmpty)
     }
 
     private var reviewWorkspace: some View {
@@ -443,6 +463,7 @@ struct ResultsView: View {
                                     reveal(item.status == .restored ? item.originalPath : item.displayTrashedPath)
                                 }
                             )
+                            .disabled(isOperationBusy)
                         }
                     }
                 }
@@ -452,7 +473,9 @@ struct ResultsView: View {
 
     private var cleanupConfirmationMessage: String {
         L.f(
-            "cleanup.confirm.message",
+            selectedStaleCodexRuntimeInstallers
+                ? "cleanup.confirm.codexRuntime.message"
+                : "cleanup.confirm.message",
             selectedResults.count,
             CleanMacFormatters.bytes(selectedSizeBytes)
         )

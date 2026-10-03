@@ -69,13 +69,15 @@ jobs:
           if gh release view "$tag_name" >/dev/null 2>&1; then
             echo "Release $tag_name already exists; replacing matching assets."
             gh release upload "$tag_name" \
+              dist/*.dmg \
               dist/*.zip \
               dist/*.sha256 \
               --clobber
           else
             gh release create "$tag_name" \
+              dist/*.dmg \
               dist/*.zip \
               dist/*.sha256 \
               --title "CleanMac $tag_name" \
-              --notes "Unsigned CleanMac build. Download the zip and verify it with the attached sha256 file."
+              --notes "Unsigned CleanMac build. Open the DMG and drag CleanMac to Applications, or use the ZIP archive. Verify either download with its attached SHA-256 file."
           fi

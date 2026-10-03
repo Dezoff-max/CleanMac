@@ -3,6 +3,9 @@ import CleanMacCore
 import SwiftUI
 
 struct ApplicationsView: View {
+    @AppStorage(CleanMacPreferenceKeys.fileOperationInProgress) private var fileOperationInProgress = false
+    @AppStorage(CleanMacPreferenceKeys.scanInProgress) private var scanInProgress = false
+
     @State private var applications: [InstalledApplication] = []
     @State private var selectedApplicationID: String?
     @State private var selectedApplicationIDs = Set<String>()
@@ -12,11 +15,16 @@ struct ApplicationsView: View {
     @State private var isScanning = false
     @State private var isRemoving = false
     @State private var isShowingConfirmation = false
+    @State private var removalMode: ApplicationRemovalMode = .moveToTrash
     @State private var statusMessage: String?
     @State private var problemMessage: String?
 
     private var selectedApplication: InstalledApplication? {
         applications.first { $0.id == selectedApplicationID }
+    }
+
+    private var isOperationBusy: Bool {
+        isScanning || isRemoving || fileOperationInProgress || scanInProgress
     }
 
     private var filteredApplications: [InstalledApplication] {
@@ -35,15 +43,13 @@ struct ApplicationsView: View {
 
     private var selectedLeftoverCount: Int {
         selectedApplications.reduce(0) { count, application in
-            count + application.leftovers.filter {
-                selectedLeftoverIDsByApplication[application.id, default: []].contains($0.id)
-            }.count
+            count + application.leftovers.filter { effectiveLeftoverIDs(for: application).contains($0.id) }.count
         }
     }
 
     private var selectedRemovalSize: Int64 {
         selectedApplications.reduce(0) { total, application in
-            let selectedLeftoverIDs = selectedLeftoverIDsByApplication[application.id] ?? []
+            let selectedLeftoverIDs = effectiveLeftoverIDs(for: application)
             let leftoverSize = application.leftovers
                 .filter { selectedLeftoverIDs.contains($0.id) }
                 .reduce(0) { $0 + $1.sizeBytes }
@@ -52,9 +58,28 @@ struct ApplicationsView: View {
     }
 
     private var removalButtonTitle: String {
-        selectedApplications.count == 1
-            ? L.t("applications.remove.button")
-            : L.f("applications.remove.multiple", selectedApplications.count)
+        switch removalMode {
+        case .moveToTrash:
+            selectedApplications.count == 1
+                ? L.t("applications.remove.button")
+                : L.f("applications.remove.multiple", selectedApplications.count)
+        case .deletePermanently:
+            selectedApplications.count == 1
+                ? L.t("applications.remove.permanent.button")
+                : L.f("applications.remove.permanent.multiple", selectedApplications.count)
+        }
+    }
+
+    private var confirmationTitle: String {
+        removalMode == .deletePermanently
+            ? L.t("applications.confirm.permanent.title")
+            : L.t("applications.confirm.title")
+    }
+
+    private var confirmationMessageKey: String {
+        removalMode == .deletePermanently
+            ? "applications.confirm.permanent.message"
+            : "applications.confirm.message"
     }
 
     var body: some View {
@@ -103,14 +128,15 @@ struct ApplicationsView: View {
         .task {
             await refreshApplications()
         }
-        .alert(L.t("applications.confirm.title"), isPresented: $isShowingConfirmation) {
+        .alert(confirmationTitle, isPresented: $isShowingConfirmation) {
             Button(L.t("button.cancel"), role: .cancel) {}
             Button(removalButtonTitle, role: .destructive) {
                 removeSelectedApplications()
             }
+            .disabled(isOperationBusy)
         } message: {
             Text(L.f(
-                "applications.confirm.message",
+                confirmationMessageKey,
                 selectedApplications.count,
                 selectedLeftoverCount,
                 CleanMacFormatters.bytes(selectedRemovalSize)
@@ -139,7 +165,7 @@ struct ApplicationsView: View {
                     }
                     .buttonStyle(.borderless)
                     .help(L.t("applications.refresh"))
-                    .disabled(isScanning || isRemoving)
+                    .disabled(isOperationBusy)
                 }
 
                 HStack(spacing: 8) {
@@ -168,10 +194,13 @@ struct ApplicationsView: View {
                 Divider()
 
                 if isScanning {
-                    HStack(spacing: 10) {
-                        ProgressView()
-                            .controlSize(.small)
+                    VStack(spacing: 12) {
+                        ModernScanProgressIndicator(
+                            systemImage: "app.badge",
+                            accessibilityLabel: L.t("applications.scanning")
+                        )
                         Text(L.t("applications.scanning"))
+                            .font(.subheadline.weight(.medium))
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, minHeight: 180)
@@ -307,10 +336,31 @@ struct ApplicationsView: View {
 
                     Divider()
 
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(L.t("applications.mode.title"))
+                            .font(.headline)
+
+                        Picker(L.t("applications.mode.title"), selection: $removalMode) {
+                            ForEach(ApplicationRemovalMode.allCases, id: \.self) { mode in
+                                Text(mode.title).tag(mode)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .disabled(isRemoving)
+
+                        Label(removalMode.detail, systemImage: removalMode.systemImage)
+                            .font(.caption)
+                            .foregroundStyle(removalMode == .deletePermanently ? .red : .secondary)
+                    }
+
+                    Divider()
+
                     VStack(alignment: .leading, spacing: 5) {
                         Text(L.t("applications.leftovers.title"))
                             .font(.headline)
-                        Text(L.t("applications.leftovers.message"))
+                        Text(removalMode == .deletePermanently
+                             ? L.t("applications.leftovers.permanent.message")
+                             : L.t("applications.leftovers.message"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -349,7 +399,7 @@ struct ApplicationsView: View {
                                     }
                                 }
                                 .toggleStyle(.checkbox)
-                                .disabled(isRemoving)
+                                .disabled(isRemoving || removalMode == .deletePermanently)
                             }
                         }
                     }
@@ -365,9 +415,11 @@ struct ApplicationsView: View {
                                 CleanMacFormatters.bytes(selectedRemovalSize)
                             ))
                             .font(.subheadline.weight(.medium))
-                            Text(L.t("applications.removal.trash"))
+                            Text(removalMode == .deletePermanently
+                                 ? L.t("applications.removal.permanent")
+                                 : L.t("applications.removal.trash"))
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(removalMode == .deletePermanently ? .red : .secondary)
                         }
 
                         Spacer()
@@ -379,12 +431,12 @@ struct ApplicationsView: View {
                                 ProgressView()
                                     .controlSize(.small)
                             } else {
-                                Label(removalButtonTitle, systemImage: "trash")
+                                Label(removalButtonTitle, systemImage: removalMode.systemImage)
                             }
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.red)
-                        .disabled(isRemoving || isScanning || selectedApplications.isEmpty)
+                        .disabled(isOperationBusy || selectedApplications.isEmpty)
                     }
                 }
             }
@@ -420,8 +472,16 @@ struct ApplicationsView: View {
 
     private func leftoverBinding(for id: String, applicationID: String) -> Binding<Bool> {
         Binding(
-            get: { selectedLeftoverIDsByApplication[applicationID, default: []].contains(id) },
+            get: {
+                if removalMode == .deletePermanently {
+                    return true
+                }
+                return selectedLeftoverIDsByApplication[applicationID, default: []].contains(id)
+            },
             set: { isSelected in
+                guard removalMode == .moveToTrash else {
+                    return
+                }
                 if isSelected {
                     selectedApplicationIDs.insert(applicationID)
                     selectedLeftoverIDsByApplication[applicationID, default: []].insert(id)
@@ -432,9 +492,18 @@ struct ApplicationsView: View {
         )
     }
 
+    private func effectiveLeftoverIDs(for application: InstalledApplication) -> Set<String> {
+        switch removalMode {
+        case .moveToTrash:
+            selectedLeftoverIDsByApplication[application.id] ?? []
+        case .deletePermanently:
+            Set(application.leftovers.map(\.id))
+        }
+    }
+
     @MainActor
     private func refreshApplications() async {
-        guard !isScanning, !isRemoving else {
+        guard !isOperationBusy else {
             return
         }
         isScanning = true
@@ -469,20 +538,34 @@ struct ApplicationsView: View {
         isScanning = false
     }
 
+    @MainActor
     private func removeSelectedApplications() {
         let removalApplications = selectedApplications
-        guard !isRemoving, !removalApplications.isEmpty else {
+        guard !isOperationBusy,
+              !UserDefaults.standard.bool(forKey: CleanMacPreferenceKeys.fileOperationInProgress),
+              !UserDefaults.standard.bool(forKey: CleanMacPreferenceKeys.scanInProgress),
+              !removalApplications.isEmpty else {
             return
         }
         isRemoving = true
+        fileOperationInProgress = true
         statusMessage = nil
         problemMessage = nil
 
-        let selectedLeftoverIDs = selectedLeftoverIDsByApplication
+        let removalMode = removalMode
+        let selectedLeftoverIDs = Dictionary(
+            uniqueKeysWithValues: removalApplications.map { application in
+                (application.id, effectiveLeftoverIDs(for: application))
+            }
+        )
         let excludedBundleIdentifiers = Set([Bundle.main.bundleIdentifier].compactMap { $0 })
         let excludedApplicationPaths = Set([Bundle.main.bundleURL.path])
 
-        Task {
+        Task { @MainActor in
+            defer {
+                isRemoving = false
+                fileOperationInProgress = false
+            }
             let reports = await Task.detached(priority: .userInitiated) {
                 removalApplications.map { application in
                     let plan = ApplicationRemovalPlanner(
@@ -492,11 +575,10 @@ struct ApplicationsView: View {
                         for: application,
                         selectedLeftoverIDs: selectedLeftoverIDs[application.id] ?? []
                     )
-                    return (application.id, ApplicationRemovalExecutor().execute(plan: plan))
+                    return (application.id, ApplicationRemovalExecutor().execute(plan: plan, mode: removalMode))
                 }
             }.value
 
-            isRemoving = false
             let movedApplicationIDs = Set(reports.compactMap { applicationID, report in
                 report.applicationMoved ? applicationID : nil
             })
@@ -509,7 +591,9 @@ struct ApplicationsView: View {
 
             if !movedApplicationIDs.isEmpty {
                 statusMessage = L.f(
-                    "applications.removal.success",
+                    removalMode == .deletePermanently
+                        ? "applications.removal.permanent.success"
+                        : "applications.removal.success",
                     movedApplicationIDs.count,
                     movedLeftoverCount,
                     CleanMacFormatters.bytes(totalMovedBytes)
@@ -542,6 +626,14 @@ private extension ApplicationLeftoverKind {
         case .preferences: L.t("applications.leftover.preferences")
         case .savedApplicationState: L.t("applications.leftover.savedState")
         case .logs: L.t("applications.leftover.logs")
+        case .applicationSupport: L.t("applications.leftover.applicationSupport")
+        case .container: L.t("applications.leftover.container")
+        case .groupContainer: L.t("applications.leftover.groupContainer")
+        case .httpStorage: L.t("applications.leftover.httpStorage")
+        case .webKit: L.t("applications.leftover.webKit")
+        case .cookies: L.t("applications.leftover.cookies")
+        case .applicationScripts: L.t("applications.leftover.applicationScripts")
+        case .launchAgent: L.t("applications.leftover.launchAgent")
         }
     }
 
@@ -551,6 +643,37 @@ private extension ApplicationLeftoverKind {
         case .preferences: "slider.horizontal.3"
         case .savedApplicationState: "macwindow"
         case .logs: "doc.text"
+        case .applicationSupport: "folder.badge.gearshape"
+        case .container: "shippingbox.circle"
+        case .groupContainer: "square.stack.3d.up"
+        case .httpStorage: "network"
+        case .webKit: "safari"
+        case .cookies: "circle.hexagongrid"
+        case .applicationScripts: "applescript"
+        case .launchAgent: "gearshape.arrow.triangle.2.circlepath"
+        }
+    }
+}
+
+private extension ApplicationRemovalMode {
+    var title: String {
+        switch self {
+        case .moveToTrash: L.t("applications.mode.trash")
+        case .deletePermanently: L.t("applications.mode.permanent")
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .moveToTrash: L.t("applications.mode.trash.detail")
+        case .deletePermanently: L.t("applications.mode.permanent.detail")
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .moveToTrash: "trash"
+        case .deletePermanently: "trash.slash"
         }
     }
 }
