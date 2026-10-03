@@ -31,7 +31,7 @@ Continue the requested GitHub release update and Applications installation by re
 
 ## Result
 
-- Status: local verification passed; CI, publication and final downloaded-release verification pending.
+- Status: complete. PR #18 merged after CI; v0.5.1 is public/latest, and the verified GitHub ZIP payload is installed and responsive.
 - Version target: 0.5.1 (7).
 - Debug: responsive after 45 seconds, about 0.1% CPU and 128 MiB RSS.
 - Preferences: all six regression cases pass; the original 0.5.0 implementation fails the absent-selection reproducer.
