@@ -70,7 +70,7 @@ CleanMac is a native SwiftUI utility that scans selected macOS locations, explai
 
 ## Installation
 
-The 0.5.1 source update fixes a startup freeze present in 0.5.0 with some existing scan preferences. Updating preserves settings and scan selections; a preference reset is not required. See the [0.5.1 release notes](docs/releases/v0.5.1.md).
+Version 0.5.2 (8) fixes a launch where clicking the CleanMac icon starts the process but leaves the main window hidden. Normal launches now show the window explicitly; macOS login/service launches retain background behavior. Settings and scan selections are preserved. See the [0.5.2 release notes](docs/releases/v0.5.2.md).
 
 Download a package from [GitHub Releases](https://github.com/Dezoff-max/CleanMac/releases/latest). Packages produced from the current source include `CleanMac.dmg`: open it and drag `CleanMac.app` onto the included `Applications` shortcut. Older releases may provide only the fallback ZIP. Each generated archive has its own `.sha256` file:
 

@@ -65,8 +65,18 @@ final class CleanMacAppDelegate: NSObject, NSApplicationDelegate {
     private let lowDiskSpaceMonitor = CleanMacLowDiskSpaceMonitor()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        MainWindowController.prepareForInitialPresentation(isBackgroundLaunch: !NSApp.isActive)
+        let isBackgroundLaunch = CleanMacLaunchContext.isBackgroundLaunch(
+            NSAppleEventManager.shared().currentAppleEvent
+        )
+        MainWindowController.prepareForInitialPresentation(isBackgroundLaunch: isBackgroundLaunch)
         NSApp.setActivationPolicy(.regular)
+        if !isBackgroundLaunch {
+            // LaunchServices initially treats LSUIElement apps as accessories.
+            // Promote an explicit launch instead of waiting for activation
+            // that may never arrive after the policy change.
+            NSApp.activate(ignoringOtherApps: true)
+            MainWindowController.handleReopen()
+        }
         configureDockIcon()
         CleanMacNotificationService.configure()
         requestNotificationAuthorizationIfUseful()

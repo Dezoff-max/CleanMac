@@ -34,6 +34,8 @@ CleanMac is a macOS menu bar and windowed system cleanup utility. The project wa
 
 ## Completed Parts
 
+- The 0.5.2 source update fixes a separate hidden-window launch race: ordinary Finder launches are no longer classified as background launches from a transient `NSApp.isActive` value. Seven launch-event regressions cover ordinary/login/service/reopen cases and run in CI. Publication and exact downloaded-app verification are tracked in TASK-059.
+
 - The 0.5.1 hotfix makes scan-selection migration idempotent, preserves preferences, reads disk capacity through a coalesced background cache, uses inert initial snapshots and resolves native windows once. Six preference regressions and 62 core tests pass; locally installed Release navigation/refresh/close/recreation are responsive. GitHub release v0.5.1 is public/latest; both downloaded assets passed checksums/signatures and the exact ZIP app is installed with responsive UI.
 
 - The v0.5.0 overview adds a live capacity breakdown and six quick tool routes. Available capacity includes the macOS-reclaimable estimate exactly once; unknown values are explicit, and 11 Core tests cover capacity edge cases.

@@ -1,6 +1,16 @@
 # Contract
 
-## Task
+## Current task: TASK-059 - Fix icon launch and publish v0.5.2
+
+- User request: diagnose and fix CleanMac not opening its window when launched by its icon; publish the corrected GitHub release and remove redundant local copies.
+- Preserve macOS 14+, SwiftUI/CleanMacCore, user preferences and application data. No dependencies or cleanup-behavior changes.
+- Determine background launch only from explicit macOS login/service Apple-event reasons. Ordinary launches must activate and show the main window even when SwiftUI resolves it later.
+- Add seven launch regressions to CI; verify six preference regressions, 62 core tests and visible/responsive Debug and installed Release UI.
+- Release target: 0.5.2 (8). Publish DMG/ZIP/SHA-256, download and verify them, install the downloaded app, then remove redundant local app/archive copies while preserving project source.
+- Signing remains ad-hoc; no Developer ID identity is installed. No notarization or macOS security-setting changes.
+- Current state: local code/tests/package checks and installed 0.5.2 Finder launch/UI passed; CI and publication verification pending. Final evidence belongs in progress.md and verification.md.
+
+## Previous completed task (historical record)
 
 - ID: TASK-058
 - Title: Repair startup freeze; CleanMac v0.5.1

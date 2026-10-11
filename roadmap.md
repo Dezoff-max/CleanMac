@@ -1,5 +1,12 @@
 # Roadmap
 
+- [ ] ID: TASK-059
+  Title: Restore window presentation on icon launch; v0.5.2
+  Goal: Make ordinary Finder/Dock launches show the main window without resetting preferences.
+  What to do: Detect explicit macOS login/service launch events instead of checking temporary activation state; activate normal launches; present windows resolved later by SwiftUI; add seven launch regressions to CI.
+  Verification: launch regressions, preference harness, core tests, Debug and installed Release UI, GitHub CI, published DMG/ZIP checksums/signatures and downloaded installed payload.
+  Status: local verification in progress; publication and removal of redundant local copies requested by the user.
+
 - [x] ID: TASK-058
   Title: Startup freeze hotfix; v0.5.1
   Goal: Restore responsive startup with existing preferences without resetting user choices.
