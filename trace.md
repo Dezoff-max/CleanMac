@@ -1,5 +1,13 @@
 # Trace
 
+## 2026-10-11 - TASK-059 - Icon launch hides the main window
+
+- Symptom: clicking CleanMac in Finder starts the process but leaves no main window. This is separate from the preference-loop freeze fixed in 0.5.1.
+- Evidence: the installed 0.5.1 (7) signature is valid; pre-investigation launches exit normally rather than crashing. A repeated Finder launch reproduces creation and subsequent `orderOut` of the main window while the process remains alive and idle. Explicit activation through the inspection tool makes it visible, which initially masked the problem.
+- Cause: the LSUIElement app uses `!NSApp.isActive` during startup as a proxy for a background launch. Finder activation can arrive later, so the delayed presentation code hides an ordinary launch.
+- Fix: classify only explicit login/service Apple-event reasons as background launches; promote ordinary launches to an active regular application and show the main window, including when SwiftUI resolves it later.
+- Validation: seven launch-policy cases, six preference regressions and 62 core tests pass. Debug UI is visible and responsive; release/publication verification is recorded in progress.md.
+
 Append-only trace of failures, restarts, and judgment divergences.
 
 ## 2026-07-09 - TASK-018 - Background under sidebar

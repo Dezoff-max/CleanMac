@@ -55,6 +55,11 @@ enum MainWindowController {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 finishInitialPresentation(of: window)
             }
+        } else {
+            // A launch/reopen can arrive before SwiftUI resolves this window.
+            // Complete that presentation once the native window is available.
+            window.alphaValue = 1
+            window.makeKeyAndOrderFront(nil)
         }
     }
 

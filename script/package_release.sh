@@ -169,6 +169,9 @@ build_notary_args() {
 
 cd "$ROOT_DIR"
 
+# Guard launch routing before producing CI or published release artifacts.
+./script/test_launch.sh
+
 rm -rf "$DIST_DIR"
 mkdir -p "$DIST_DIR"
 

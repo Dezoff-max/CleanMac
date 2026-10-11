@@ -11,6 +11,7 @@
 - Run/dev: `./script/build_and_run.sh`
 - Verify process launch: `./script/build_and_run.sh --verify` (must be followed by responsive UI checks).
 - Preference regressions: `./script/test_preferences.sh`; after Release build, `./script/test_preferences.sh build/XcodeData/Build/Products/Release`.
+- Launch regressions: `./script/test_launch.sh` (seven synthetic Apple-event cases; actual window visibility still requires UI verification).
 - Build: `xcodebuild -project CleanMac.xcodeproj -scheme CleanMac -configuration Debug -derivedDataPath build/XcodeData build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""`
 - Test: `swift test --package-path CleanMacCore`
 - Package: `./script/package_release.sh`

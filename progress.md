@@ -1,5 +1,15 @@
 # Progress
 
+## 2026-10-11 - TASK-059 - Fix icon-launch presentation; local v0.5.2 verification
+
+- What changed: replaced the transient inactivity heuristic with explicit macOS login/service Apple-event detection; ordinary launches activate and show the main window, including delayed SwiftUI window resolution. Added seven launch-policy regressions to the packaging entrypoint used by CI and Release. Prepared 0.5.2 (8) metadata and bilingual release notes.
+- Files touched: app lifecycle, MainWindowController, new CleanMacLaunchContext, launch regression harness/script, release packaging script, Xcode version metadata, README, release notes and project verification records.
+- Checks run: seven launch regressions; six preference regressions; all 62 core tests; Debug build/signature/launch/UI; Release packaging with fresh ZIP and read-only mounted-DMG signature checks; both SHA-256 files; installed local 0.5.2 (8) strict signature, Finder icon launch and Settings navigation; git diff --check.
+- Result: local checks pass. The original installed 0.5.1 Finder launch reproduced a hidden window while remaining idle; fixed 0.5.2 keeps the window visible and responsive. Installed executable path is /Applications/CleanMac.app/Contents/MacOS/CleanMac; idle CPU after startup is 0.0%.
+- Next step: publish through GitHub CI/Release, verify downloaded archives and installed payload, then remove redundant local app/archive copies as requested.
+- Bottleneck: no local blocker. Developer ID/notarization remains unavailable and is disclosed in release notes. Actual logout/login was not performed; login/service classification is covered by synthetic events.
+- Handoff: existing preferences and application data are preserved. No cleanup, application removal, Shredder, RAM purge, DNS flush or permission change was executed by the agent.
+
 Append-only history. Do not erase previous entries.
 
 ## 2026-07-08 - TASK-001 - Main window UI and launch lifecycle
